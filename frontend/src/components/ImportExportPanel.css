@@ -1,0 +1,256 @@
+.import-export-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+  border: 1px solid #e9ecef;
+}
+
+.import-export-panel h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.4rem;
+  font-weight: 600;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 10px;
+}
+
+.import-section, .export-section {
+  margin-bottom: 25px;
+}
+
+.import-section h4, .export-section h4 {
+  margin: 0 0 15px 0;
+  color: #555;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* File Drop Zone */
+.file-drop-zone {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-drop-zone:hover {
+  border-color: #007bff;
+  background: #e7f3ff;
+}
+
+.file-drop-zone.drag-active {
+  border-color: #28a745;
+  background: #e8f5e8;
+  border-style: solid;
+}
+
+.file-drop-zone.importing {
+  border-color: #ffc107;
+  background: #fff8e1;
+  cursor: not-allowed;
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.primary-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.secondary-text {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.file-info {
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 5px;
+}
+
+/* Import State */
+.importing-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.importing-state p {
+  margin: 0;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Spinner */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Import Results */
+.import-result {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.import-result.success {
+  background: #e8f5e8;
+  border-color: #28a745;
+}
+
+.import-result.has-errors {
+  background: #fff3cd;
+  border-color: #ffc107;
+}
+
+.import-result h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.result-summary {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.success-count {
+  color: #28a745;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.error-count {
+  color: #dc3545;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.error-list {
+  margin-top: 10px;
+}
+
+.error-list h6 {
+  margin: 0 0 8px 0;
+  color: #dc3545;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.error-list ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.error-list li {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+/* Export Section */
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.export-button:hover:not(:disabled) {
+  background: #218838;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+  transform: translateY(-1px);
+}
+
+.export-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.export-info {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .import-export-panel {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .file-drop-zone {
+    padding: 30px 15px;
+    min-height: 100px;
+  }
+  
+  .upload-icon {
+    font-size: 2rem;
+  }
+  
+  .primary-text {
+    font-size: 1rem;
+  }
+  
+  .result-summary {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

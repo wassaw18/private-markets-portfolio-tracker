@@ -1,0 +1,285 @@
+.investment-forecast-chart {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 25px;
+  margin-top: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Scenario Tabs */
+.scenario-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.scenario-tab {
+  padding: 8px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 20px;
+  background: white;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.scenario-tab.active {
+  font-weight: 600;
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.scenario-tab:hover:not(.active) {
+  border-color: #ccc;
+}
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  background: white;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background: #007bff;
+  color: white;
+  font-weight: 600;
+}
+
+.toggle-btn:hover:not(.active) {
+  background: #f8f9fa;
+}
+
+/* Summary Metrics */
+.forecast-summary-metrics {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  border: 1px solid #e9ecef;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.metric-label {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.metric-value {
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+.metric-value.positive {
+  color: #28a745;
+}
+
+.metric-value.negative {
+  color: #dc3545;
+}
+
+/* Chart Container */
+.forecast-chart {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: white;
+  border-radius: 8px;
+}
+
+.chart-svg .grid line {
+  stroke: #e9ecef;
+  stroke-width: 1;
+}
+
+.chart-svg .areas path {
+  opacity: 0.3;
+}
+
+.chart-svg .lines path {
+  stroke-width: 3;
+  fill: none;
+}
+
+.chart-svg .points circle {
+  stroke: white;
+  stroke-width: 2;
+}
+
+.chart-svg .points circle:hover {
+  r: 6;
+  stroke-width: 3;
+}
+
+.chart-svg .axes line {
+  stroke: #333;
+  stroke-width: 2;
+}
+
+.axis-label {
+  font-size: 12px;
+  fill: #666;
+  font-family: Arial, sans-serif;
+}
+
+/* Chart Legend */
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 20px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.legend-item span {
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* State Messages */
+.forecast-loading, .forecast-error, .forecast-no-data {
+  text-align: center;
+  padding: 40px 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.forecast-loading {
+  color: #666;
+  font-style: italic;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.forecast-error {
+  color: #721c24;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.forecast-no-data {
+  color: #856404;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+}
+
+.no-data {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .chart-svg {
+    width: 100%;
+    height: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .investment-forecast-chart {
+    padding: 20px;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .forecast-summary-metrics {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .chart-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .scenario-tabs {
+    order: 2;
+  }
+
+  .view-toggle {
+    order: 1;
+  }
+}

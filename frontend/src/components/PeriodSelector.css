@@ -1,0 +1,139 @@
+.period-selector {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.selector-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.selector-header label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.period-select {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.period-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.period-select optgroup {
+  font-weight: 600;
+  color: #666;
+}
+
+.period-select option {
+  padding: 8px;
+  font-weight: 400;
+  color: #333;
+}
+
+.custom-date-range {
+  display: flex;
+  gap: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.date-input-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.date-input {
+  padding: 8px 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.period-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.selected-period {
+  font-weight: 600;
+  color: #007bff;
+  font-size: 1rem;
+}
+
+.period-dates {
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .period-selector {
+    padding: 15px;
+  }
+  
+  .selector-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .period-select {
+    width: 100%;
+  }
+  
+  .custom-date-range {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .date-input-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .date-input-group label {
+    min-width: 80px;
+  }
+}

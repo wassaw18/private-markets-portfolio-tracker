@@ -1,0 +1,391 @@
+.portfolio-forecast-panel {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-top: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid #e9ecef;
+  cursor: pointer;
+  user-select: none;
+}
+
+.panel-header:hover {
+  background: #f8f9fa;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.scenario-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scenario-selector label {
+  color: #666;
+  font-weight: 500;
+}
+
+.scenario-select {
+  padding: 6px 12px;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+}
+
+.scenario-select:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.expand-icon {
+  font-size: 0.8rem;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.panel-content {
+  padding: 25px;
+}
+
+/* Forecast Summary */
+.forecast-summary {
+  margin-bottom: 30px;
+}
+
+.scenario-badge {
+  text-align: center;
+  color: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.scenario-badge h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.scenario-badge p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.summary-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.metric-label {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.metric-value {
+  color: #333;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+/* Key Insights */
+.key-insights {
+  margin-bottom: 30px;
+}
+
+.key-insights h4 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 8px;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.insight-card.warning {
+  border-color: #ffc107;
+  background: #fff3cd;
+}
+
+.insight-card.positive {
+  border-color: #28a745;
+  background: #d4edda;
+}
+
+.insight-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.insight-content h5 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.insight-content p {
+  margin: 0;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Annual Forecast Table */
+.annual-forecast-table {
+  margin-bottom: 30px;
+}
+
+.annual-forecast-table h4 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 8px;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.annual-forecast-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.annual-forecast-table th {
+  background: #f8f9fa;
+  color: #333;
+  font-weight: 600;
+  padding: 15px 12px;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.annual-forecast-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  font-family: 'Courier New', monospace;
+}
+
+.annual-forecast-table td.positive {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.annual-forecast-table td.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.status-positive {
+  background: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-negative {
+  background: #dc3545;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Liquidity Analysis */
+.liquidity-analysis {
+  margin-bottom: 30px;
+}
+
+.liquidity-analysis h4 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 8px;
+}
+
+.analysis-section {
+  margin-bottom: 25px;
+}
+
+.analysis-section h5 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.period-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.period-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  background: #f8f9fa;
+  min-width: 120px;
+}
+
+.period-card.warning {
+  border-color: #ffc107;
+  background: #fff3cd;
+}
+
+.period-card.positive {
+  border-color: #28a745;
+  background: #d4edda;
+}
+
+.period-year {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.period-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: #333;
+}
+
+/* Disclaimer */
+.forecast-disclaimer {
+  padding: 15px 20px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.forecast-disclaimer small {
+  color: #856404;
+  line-height: 1.4;
+}
+
+/* Loading and Error States */
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .panel-content {
+    padding: 20px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .period-cards {
+    justify-content: center;
+  }
+
+  .header-controls {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .scenario-selector {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .annual-forecast-table th,
+  .annual-forecast-table td {
+    padding: 8px 6px;
+    font-size: 0.8rem;
+  }
+}

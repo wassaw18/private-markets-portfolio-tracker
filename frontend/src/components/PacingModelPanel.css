@@ -1,0 +1,339 @@
+.pacing-model-panel {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-top: 25px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid #e9ecef;
+  cursor: pointer;
+  user-select: none;
+}
+
+.panel-header:hover {
+  background: #f8f9fa;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.generate-forecast-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.generate-forecast-btn:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.generate-forecast-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.expand-icon {
+  font-size: 0.8rem;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.panel-content {
+  padding: 25px;
+}
+
+/* Forecast Status */
+.forecast-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  border: 1px solid #e9ecef;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-item .label {
+  color: #666;
+  font-weight: 500;
+}
+
+.status.enabled {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.status.disabled {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.date {
+  color: #007bff;
+  font-weight: 500;
+}
+
+/* Parameters Grid */
+.parameters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.parameter-section {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.parameter-section h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 8px;
+}
+
+.parameter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.parameter-row:last-child {
+  margin-bottom: 0;
+}
+
+.parameter-row label {
+  font-weight: 500;
+  color: #333;
+  margin-right: 15px;
+}
+
+.parameter-value {
+  font-weight: 600;
+  color: #007bff;
+  font-family: 'Courier New', monospace;
+}
+
+.parameter-value.enabled {
+  color: #28a745;
+}
+
+.parameter-value.disabled {
+  color: #dc3545;
+}
+
+/* Form Controls */
+.parameter-input {
+  padding: 6px 10px;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
+  min-width: 80px;
+}
+
+.parameter-input:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.parameter-select {
+  padding: 6px 10px;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: white;
+  min-width: 200px;
+}
+
+.parameter-select:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.parameter-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Panel Actions */
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.save-btn, .edit-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn:hover:not(:disabled), .edit-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.save-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #545b62;
+}
+
+/* Model Info */
+.model-info {
+  background: #e7f3ff;
+  border: 1px solid #b8daff;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.model-info h5 {
+  margin: 0 0 12px 0;
+  color: #004085;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.model-info ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #004085;
+}
+
+.model-info li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.model-info strong {
+  font-weight: 600;
+}
+
+/* Error Handling */
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .panel-content {
+    padding: 20px;
+  }
+
+  .parameters-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .parameter-section {
+    padding: 15px;
+  }
+
+  .parameter-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .parameter-select {
+    min-width: 100%;
+  }
+
+  .forecast-status {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .panel-actions {
+    flex-direction: column;
+  }
+
+  .save-btn, .edit-btn, .cancel-btn {
+    width: 100%;
+  }
+
+  .header-controls {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+}

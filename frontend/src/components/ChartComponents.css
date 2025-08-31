@@ -1,0 +1,634 @@
+/* Shared Chart Component Styles */
+
+.chart-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.chart-subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+}
+
+.chart-select {
+  padding: 6px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: white;
+  font-size: 0.85rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.chart-select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.control-button {
+  padding: 6px 12px;
+  border: 1px solid #dee2e6;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.control-button:hover {
+  background: #f8f9fa;
+  border-color: #007bff;
+}
+
+.control-button.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.chart-content {
+  flex: 1;
+  min-height: 300px;
+  margin-bottom: 20px;
+}
+
+.chart-loading, .chart-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  font-size: 1rem;
+  color: #666;
+}
+
+.chart-error {
+  color: #dc3545;
+  background: #f8d7da;
+  border-radius: 6px;
+  border: 1px solid #f5c6cb;
+}
+
+/* Chart Summary Styles */
+.chart-summary {
+  border-top: 2px solid #e9ecef;
+  padding-top: 15px;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.summary-stat {
+  text-align: center;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.summary-stat label {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.summary-stat .stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+.summary-stat .stat-value.called {
+  color: #28a745;
+}
+
+.summary-stat .stat-value.uncalled {
+  color: #ffc107;
+}
+
+.summary-stat .stat-value.positive {
+  color: #28a745;
+}
+
+.summary-stat .stat-value.negative {
+  color: #dc3545;
+}
+
+/* Custom Tooltip Styles */
+.custom-tooltip {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-size: 0.9rem;
+}
+
+.tooltip-title {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.tooltip-value {
+  margin: 4px 0;
+  color: #666;
+}
+
+/* Asset Allocation Specific Styles */
+.allocation-breakdown h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.color-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.breakdown-details {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.asset-class-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.breakdown-metrics {
+  display: flex;
+  gap: 15px;
+}
+
+.breakdown-metrics .metric {
+  font-size: 0.8rem;
+  color: #666;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+/* Vintage Year Chart Styles */
+.vintage-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.vintage-item {
+  text-align: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.vintage-year {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #007bff;
+  margin-bottom: 6px;
+}
+
+.vintage-amount {
+  font-size: 0.9rem;
+  color: #333;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.vintage-count {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Timeline and J-Curve Chart Styles */
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.date-range-info {
+  font-size: 0.85rem;
+  color: #666;
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* Performance Indicators */
+.performance-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.performance-indicator.positive {
+  color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.performance-indicator.negative {
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.performance-indicator.neutral {
+  color: #6c757d;
+  background: rgba(108, 117, 125, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .chart-controls {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .summary-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .breakdown-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .breakdown-metrics {
+    gap: 10px;
+  }
+  
+  .chart-legend {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* Ownership Visualization Specific Styles */
+.ownership-summary {
+  margin-top: 30px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 20px;
+}
+
+.ownership-summary h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.summary-table {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto auto;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.summary-header {
+  display: contents;
+  font-weight: 600;
+  color: #666;
+}
+
+.summary-header > span {
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.summary-row {
+  display: contents;
+}
+
+.summary-row > span {
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #f1f1f1;
+  display: flex;
+  align-items: center;
+}
+
+.summary-row:hover > span {
+  background: #f8f9fa;
+}
+
+.entity-name {
+  font-weight: 500;
+  color: #333;
+  gap: 8px !important;
+}
+
+.color-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.entity-type {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.investment-count {
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.commitment, .current-value {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.share {
+  text-align: right;
+  font-weight: 600;
+  color: #007bff;
+}
+
+/* Mobile responsiveness for ownership table */
+@media (max-width: 768px) {
+  .summary-table {
+    font-size: 0.8rem;
+  }
+  
+  .summary-header > span,
+  .summary-row > span {
+    padding: 8px 6px;
+  }
+}
+
+/* Liability Visualizer Styles */
+.liability-visualizer {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.liability-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.liability-header h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.total-commitment {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #007bff;
+  font-family: 'Courier New', monospace;
+}
+
+.liability-bar-container {
+  margin-bottom: 20px;
+}
+
+.liability-bar {
+  display: flex;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 2px solid #dee2e6;
+  margin-bottom: 15px;
+}
+
+.called-portion,
+.uncalled-portion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.called-portion {
+  background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.uncalled-portion {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+}
+
+.called-portion:hover,
+.uncalled-portion:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+  z-index: 1;
+}
+
+.portion-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.liability-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.liability-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.liability-label.left {
+  justify-content: flex-start;
+}
+
+.liability-label.right {
+  justify-content: flex-end;
+}
+
+.label-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.label-indicator.called {
+  background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.label-indicator.uncalled {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+}
+
+.liability-insight {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  border-radius: 4px;
+}
+
+.liability-insight p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #1565c0;
+  font-style: italic;
+}
+
+/* Responsive design for liability visualizer */
+@media (max-width: 768px) {
+  .liability-visualizer {
+    padding: 15px;
+  }
+  
+  .total-commitment {
+    font-size: 1.4rem;
+  }
+  
+  .liability-bar {
+    height: 50px;
+  }
+  
+  .portion-label {
+    font-size: 0.8rem;
+  }
+  
+  .liability-labels {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .liability-label {
+    font-size: 0.85rem;
+  }
+  
+  .liability-insight {
+    padding: 12px;
+  }
+  
+  .liability-insight p {
+    font-size: 0.85rem;
+  }
+}

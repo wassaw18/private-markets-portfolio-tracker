@@ -1,0 +1,267 @@
+.family-member-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.family-member-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.family-member-card.inactive {
+  opacity: 0.7;
+  border-color: #ffc107;
+  background-color: #fffbf0;
+}
+
+.family-member-card.primary-contact {
+  border-left: 4px solid #28a745;
+}
+
+/* Header */
+.member-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 16px 0;
+}
+
+.member-icon-and-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.relationship-icon {
+  font-size: 1.5rem;
+  margin-top: 2px;
+}
+
+.member-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+.relationship-type {
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 2px;
+  display: block;
+}
+
+.inactive-badge {
+  background-color: #ffc107;
+  color: #212529;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.primary-badge {
+  background-color: #28a745;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.member-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.edit-button,
+.delete-button {
+  background: none;
+  border: 1px solid transparent;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.edit-button:hover {
+  background-color: #e7f3ff;
+  border-color: #007bff;
+}
+
+.delete-button:hover {
+  background-color: #ffeaea;
+  border-color: #dc3545;
+}
+
+/* Body */
+.member-card-body {
+  padding: 16px;
+}
+
+/* Personal Info */
+.personal-info {
+  margin-bottom: 12px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+  min-width: 80px;
+}
+
+.info-value {
+  color: #333;
+  text-align: right;
+  flex: 1;
+}
+
+.age {
+  color: #666;
+  font-style: italic;
+}
+
+/* Contact Info */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.contact-item.address {
+  align-items: flex-start;
+}
+
+.contact-icon {
+  font-size: 0.9rem;
+  width: 16px;
+  text-align: center;
+}
+
+.contact-link {
+  color: #007bff;
+  text-decoration: none;
+  flex: 1;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
+
+.contact-text {
+  color: #333;
+  flex: 1;
+  line-height: 1.3;
+}
+
+/* Notes */
+.member-notes {
+  background-color: #f8f9fa;
+  border-left: 3px solid #6c757d;
+  padding: 8px 10px;
+  margin-top: 12px;
+  border-radius: 0 4px 4px 0;
+}
+
+.notes-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.notes-content {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Footer */
+.member-card-footer {
+  background-color: #f8f9fa;
+  padding: 10px 16px;
+  font-size: 0.7rem;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #e9ecef;
+}
+
+.created-date,
+.updated-date {
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .member-card-header {
+    padding: 12px 12px 0;
+  }
+  
+  .member-card-body {
+    padding: 12px;
+  }
+  
+  .member-card-footer {
+    padding: 8px 12px;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .member-icon-and-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .relationship-icon {
+    align-self: flex-start;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .info-value {
+    text-align: left;
+  }
+  
+  .contact-item.address {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .contact-icon {
+    align-self: flex-start;
+  }
+}
