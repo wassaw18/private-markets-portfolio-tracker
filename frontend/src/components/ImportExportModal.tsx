@@ -132,13 +132,15 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, onClose, 
     fileInputRef.current?.click();
   };
 
-  const downloadTemplate = async (templateType: 'nav' | 'cashflow') => {
+  const downloadTemplate = async (templateType: 'nav' | 'cashflow' | 'investment') => {
     setIsDownloadingTemplate(true);
     
     try {
       const blob = templateType === 'nav' 
         ? await importExportAPI.downloadNAVTemplate()
-        : await importExportAPI.downloadCashFlowTemplate();
+        : templateType === 'cashflow'
+        ? await importExportAPI.downloadCashFlowTemplate()
+        : await importExportAPI.downloadInvestmentTemplate();
       
       // Create download link
       const url = window.URL.createObjectURL(blob);
@@ -146,7 +148,9 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, onClose, 
       link.href = url;
       link.download = templateType === 'nav' 
         ? 'NAV_Upload_Template.xlsx'
-        : 'CashFlow_Upload_Template.xlsx';
+        : templateType === 'cashflow'
+        ? 'CashFlow_Upload_Template.xlsx'
+        : 'Investment_Upload_Template.xlsx';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -210,6 +214,25 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, onClose, 
               
               <div className="template-grid">
                 <div className="template-card">
+                  <div className="template-icon">🏢</div>
+                  <h5>Investment Upload Template</h5>
+                  <p>Bulk upload investments with all 22+ institutional fields and validation.</p>
+                  <ul className="template-features">
+                    <li>Required fields clearly marked (*)</li>
+                    <li>Entity dropdown validation</li>
+                    <li>All institutional fields included</li>
+                    <li>Optional fields for later completion</li>
+                  </ul>
+                  <button 
+                    className="template-download-button"
+                    onClick={() => downloadTemplate('investment')}
+                    disabled={isDownloadingTemplate}
+                  >
+                    {isDownloadingTemplate ? 'Downloading...' : 'Download Investment Template'}
+                  </button>
+                </div>
+
+                <div className="template-card">
                   <div className="template-icon">📈</div>
                   <h5>NAV Upload Template</h5>
                   <p>Upload Net Asset Values with validation and dropdown selections.</p>
@@ -224,7 +247,8 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, onClose, 
                     onClick={() => downloadTemplate('nav')}
                     disabled={isDownloadingTemplate}
                   >
-                    {isDownloadingTemplate ? 'Downloading...' : 'Download NAV Template'}\n                  </button>
+                    {isDownloadingTemplate ? 'Downloading...' : 'Download NAV Template'}
+                  </button>
                 </div>
                 
                 <div className="template-card">
@@ -242,7 +266,8 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({ isOpen, onClose, 
                     onClick={() => downloadTemplate('cashflow')}
                     disabled={isDownloadingTemplate}
                   >
-                    {isDownloadingTemplate ? 'Downloading...' : 'Download Cash Flow Template'}\n                  </button>
+                    {isDownloadingTemplate ? 'Downloading...' : 'Download Cash Flow Template'}
+                  </button>
                 </div>
               </div>
               

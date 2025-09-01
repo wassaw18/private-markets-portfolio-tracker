@@ -3,7 +3,7 @@ import { Investment } from '../types/investment';
 import { investmentAPI, ImportResult, InvestmentFilters } from '../services/api';
 import AddInvestmentModal from '../components/AddInvestmentModal';
 import CreateEntityModal from '../components/CreateEntityModal';
-import InvestmentsTable from '../components/InvestmentsTable';
+import EnhancedInvestmentsTable from '../components/EnhancedInvestmentsTable';
 import PortfolioSummary from '../components/PortfolioSummary';
 import ImportExportModal from '../components/ImportExportModal';
 import FilterPanel from '../components/FilterPanel';
@@ -138,7 +138,7 @@ const Holdings: React.FC = () => {
 
       <div className="investments-section">
         <SectionErrorBoundary sectionName="Investments Table">
-          <InvestmentsTable 
+          <EnhancedInvestmentsTable 
             investments={investments}
             onDelete={handleDeleteInvestment}
             onUpdate={handleUpdateInvestment}

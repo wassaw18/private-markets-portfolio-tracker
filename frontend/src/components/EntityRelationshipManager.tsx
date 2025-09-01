@@ -28,6 +28,7 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   // Form state
   const [newRelationship, setNewRelationship] = useState<EntityRelationshipCreate>({
@@ -48,12 +49,14 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
   const loadRelationships = async () => {
     setLoading(true);
     try {
+      console.log('Loading relationships for entity:', entityId);
       const response = await api.get('/api/entity-relationships', {
         params: { 
           entity_id: entityId,
           include_inactive: false 
         }
       });
+      console.log('Relationships response:', response.data);
       setRelationships(response.data);
     } catch (err: any) {
       setError('Failed to load relationships');
@@ -93,8 +96,15 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
       setShowCreateForm(false);
       resetForm();
       setError(null);
+      setSuccessMessage('Relationship created successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create relationship');
+      console.error('Full error creating relationship:', err);
+      console.error('Error response:', err.response);
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to create relationship';
+      setError(`Error creating relationship: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -186,6 +196,13 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
         <div className="error-message">
           {error}
           <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="success-message">
+          {successMessage}
+          <button onClick={() => setSuccessMessage(null)}>×</button>
         </div>
       )}
 

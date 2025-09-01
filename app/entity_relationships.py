@@ -76,16 +76,21 @@ class EntityRelationshipService:
     ) -> List[EntityRelationshipWithEntities]:
         """Get entity relationships with filtering options"""
         
+        # Use aliases for proper joins
+        from sqlalchemy.orm import aliased
+        FromEntity = aliased(Entity, name='from_entity')
+        ToEntity = aliased(Entity, name='to_entity')
+        
         query = db.query(
             EntityRelationship,
-            Entity.name.label('from_entity_name'),
-            Entity.entity_type.label('from_entity_type'),
-            Entity.name.label('to_entity_name'),
-            Entity.entity_type.label('to_entity_type')
+            FromEntity.name.label('from_entity_name'),
+            FromEntity.entity_type.label('from_entity_type'),
+            ToEntity.name.label('to_entity_name'),
+            ToEntity.entity_type.label('to_entity_type')
         ).join(
-            Entity, Entity.id == EntityRelationship.from_entity_id, aliased=True
+            FromEntity, FromEntity.id == EntityRelationship.from_entity_id
         ).join(
-            Entity, Entity.id == EntityRelationship.to_entity_id, aliased=True
+            ToEntity, ToEntity.id == EntityRelationship.to_entity_id
         )
         
         # Filter by entity (either from or to)

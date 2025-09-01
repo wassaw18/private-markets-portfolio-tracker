@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Investment, InvestmentUpdate, AssetClass, InvestmentStructure } from '../types/investment';
+import { Investment, InvestmentUpdate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating } from '../types/investment';
 import { investmentAPI } from '../services/api';
+import { validateInvestment } from '../utils/validation';
 import EntitySelector from './EntitySelector';
 import './EditInvestmentModal.css';
 
@@ -10,7 +11,18 @@ interface Props {
   onCancel: () => void;
 }
 
+type TabType = 'basic' | 'financial' | 'operational' | 'legal';
+
+interface TabValidation {
+  basic: boolean;
+  financial: boolean;
+  operational: boolean;
+  legal: boolean;
+}
+
 const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel }) => {
+  const [activeTab, setActiveTab] = useState<TabType>('basic');
+  
   const [formData, setFormData] = useState<InvestmentUpdate>({
     name: investment.name,
     asset_class: investment.asset_class,
@@ -21,20 +33,107 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
     commitment_amount: investment.commitment_amount,
     called_amount: investment.called_amount,
     fees: investment.fees,
+    commitment_date: investment.commitment_date,
+    liquidity_profile: investment.liquidity_profile,
+    currency: investment.currency,
+    management_fee: investment.management_fee,
+    performance_fee: investment.performance_fee,
+    hurdle_rate: investment.hurdle_rate,
+    preferred_return: investment.preferred_return,
+    contact_person: investment.contact_person,
+    email: investment.email,
+    phone: investment.phone,
+    address: investment.address,
+    fund_size: investment.fund_size,
+    target_return: investment.target_return,
+    investment_period: investment.investment_period,
+    fund_life: investment.fund_life,
+    reporting_frequency: investment.reporting_frequency,
+    key_terms: investment.key_terms,
+    esg_focus: investment.esg_focus,
+    geography: investment.geography,
+    sector_focus: investment.sector_focus,
+    risk_rating: investment.risk_rating,
+    due_diligence_notes: investment.due_diligence_notes,
+    side_letter_terms: investment.side_letter_terms,
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
+  const [tabValidation, setTabValidation] = useState<TabValidation>({
+    basic: true,
+    financial: true,
+    operational: true,
+    legal: true,
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'vintage_year' || name === 'commitment_amount' || 
-               name === 'called_amount' || name === 'fees' 
-        ? parseFloat(value) || 0
-        : value
-    }));
+  // Real-time validation effect
+  useEffect(() => {
+    validateCurrentTab();
+    validateAllTabs();
+  }, [formData, activeTab]);
+
+  const validateCurrentTab = () => {
+    const errors: string[] = [];
+    
+    if (activeTab === 'basic') {
+      if (!formData.name?.trim()) errors.push('Investment name is required');
+      if (!formData.entity_id) errors.push('Entity selection is required');
+      if (!formData.strategy?.trim()) errors.push('Strategy is required');
+      if (formData.vintage_year && (formData.vintage_year < 1900 || formData.vintage_year > 2100)) errors.push('Invalid vintage year');
+    } else if (activeTab === 'financial') {
+      if (!formData.commitment_date) errors.push('Commitment date is required');
+      if (!formData.commitment_amount || formData.commitment_amount <= 0) errors.push('Commitment amount must be greater than 0');
+      if (formData.management_fee && (formData.management_fee < 0 || formData.management_fee > 1)) {
+        errors.push('Management fee must be between 0% and 100%');
+      }
+      if (formData.performance_fee && (formData.performance_fee < 0 || formData.performance_fee > 1)) {
+        errors.push('Performance fee must be between 0% and 100%');
+      }
+    }
+    
+    setValidationErrors(errors);
+  };
+
+  const validateAllTabs = () => {
+    const validation: TabValidation = {
+      basic: !!(formData.name?.trim() && formData.entity_id && formData.strategy?.trim() && 
+               formData.vintage_year && formData.vintage_year >= 1900 && formData.vintage_year <= 2100),
+      financial: !!(formData.commitment_date && formData.commitment_amount && formData.commitment_amount > 0 &&
+                   (!formData.management_fee || (formData.management_fee >= 0 && formData.management_fee <= 1)) &&
+                   (!formData.performance_fee || (formData.performance_fee >= 0 && formData.performance_fee <= 1))),
+      operational: true, // Optional fields only
+      legal: true, // Optional fields only
+    };
+    
+    setTabValidation(validation);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    
+    setFormData(prev => {
+      let processedValue: any = value;
+      
+      // Handle different field types
+      if (type === 'number') {
+        processedValue = value === '' ? undefined : parseFloat(value);
+      } else if (['management_fee', 'performance_fee', 'hurdle_rate', 'preferred_return', 'target_return'].includes(name)) {
+        // Convert percentage fields
+        processedValue = value === '' ? undefined : parseFloat(value) / 100;
+      } else if (['vintage_year', 'investment_period', 'fund_life'].includes(name)) {
+        processedValue = value === '' ? undefined : parseInt(value);
+      } else if (type === 'checkbox') {
+        processedValue = (e.target as HTMLInputElement).checked;
+      }
+      
+      return {
+        ...prev,
+        [name]: processedValue
+      };
+    });
   };
 
   const handleEntityChange = (entityId: number | null) => {
@@ -46,6 +145,13 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate all required fields
+    if (!tabValidation.basic || !tabValidation.financial) {
+      setError('Please complete all required fields in Basic Information and Financial Terms tabs.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -60,6 +166,32 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
     }
   };
 
+  const nextTab = () => {
+    const tabs: TabType[] = ['basic', 'financial', 'operational', 'legal'];
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+  };
+
+  const prevTab = () => {
+    const tabs: TabType[] = ['basic', 'financial', 'operational', 'legal'];
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
+    }
+  };
+
+  const getTabIcon = (tab: TabType): string => {
+    if (tabValidation[tab]) return '✓';
+    if (tab === activeTab) return '○';
+    return '○';
+  };
+
+  const formatPercentageValue = (value?: number): string => {
+    return value ? (value * 100).toString() : '';
+  };
+
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onCancel();
@@ -67,142 +199,544 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
   };
 
   return (
-    <div className="modal-backdrop" onClick={handleBackdropClick}>
-      <div className="modal-content">
+    <div className="modal-overlay" onClick={handleBackdropClick}>
+      <div className="modal-content add-investment-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Edit Investment</h3>
-          <button className="close-button" onClick={onCancel}>×</button>
+          <h2>Edit Investment: {investment.name}</h2>
+          <button type="button" className="modal-close" onClick={onCancel}>×</button>
+        </div>
+
+        <div className="tab-navigation">
+          <button
+            type="button"
+            className={`tab-button ${activeTab === 'basic' ? 'active' : ''} ${tabValidation.basic ? 'valid' : ''}`}
+            onClick={() => setActiveTab('basic')}
+          >
+            <span className="tab-icon">{getTabIcon('basic')}</span>
+            Basic Information
+          </button>
+          <button
+            type="button"
+            className={`tab-button ${activeTab === 'financial' ? 'active' : ''} ${tabValidation.financial ? 'valid' : ''}`}
+            onClick={() => setActiveTab('financial')}
+          >
+            <span className="tab-icon">{getTabIcon('financial')}</span>
+            Financial Terms
+          </button>
+          <button
+            type="button"
+            className={`tab-button ${activeTab === 'operational' ? 'active' : ''} ${tabValidation.operational ? 'valid' : ''}`}
+            onClick={() => setActiveTab('operational')}
+          >
+            <span className="tab-icon">{getTabIcon('operational')}</span>
+            Operational Details
+          </button>
+          <button
+            type="button"
+            className={`tab-button ${activeTab === 'legal' ? 'active' : ''} ${tabValidation.legal ? 'valid' : ''}`}
+            onClick={() => setActiveTab('legal')}
+          >
+            <span className="tab-icon">{getTabIcon('legal')}</span>
+            Legal & Risk
+          </button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
+        {validationErrors.length > 0 && (
+          <div className="validation-errors">
+            <ul>
+              {validationErrors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="edit-name">Investment Name</label>
-              <input
-                type="text"
-                id="edit-name"
-                name="name"
-                value={formData.name || ''}
-                onChange={handleChange}
-                placeholder="e.g. Fund ABC I"
-              />
-            </div>
+          <div className="tab-content">
+            {activeTab === 'basic' && (
+              <div className="tab-panel">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="edit-name">Investment Name *</label>
+                    <input
+                      type="text"
+                      id="edit-name"
+                      name="name"
+                      value={formData.name || ''}
+                      onChange={handleChange}
+                      required
+                      placeholder="e.g. Fund ABC I"
+                    />
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-asset_class">Asset Class</label>
-              <select
-                id="edit-asset_class"
-                name="asset_class"
-                value={formData.asset_class || ''}
-                onChange={handleChange}
-              >
-                {Object.values(AssetClass).map(ac => (
-                  <option key={ac} value={ac}>{ac}</option>
-                ))}
-              </select>
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-asset_class">Asset Class *</label>
+                    <select
+                      id="edit-asset_class"
+                      name="asset_class"
+                      value={formData.asset_class || ''}
+                      onChange={handleChange}
+                      required
+                    >
+                      {Object.values(AssetClass).map(ac => (
+                        <option key={ac} value={ac}>{ac}</option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-investment_structure">Investment Structure</label>
-              <select
-                id="edit-investment_structure"
-                name="investment_structure"
-                value={formData.investment_structure || ''}
-                onChange={handleChange}
-              >
-                {Object.values(InvestmentStructure).map(is => (
-                  <option key={is} value={is}>{is}</option>
-                ))}
-              </select>
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-investment_structure">Investment Structure *</label>
+                    <select
+                      id="edit-investment_structure"
+                      name="investment_structure"
+                      value={formData.investment_structure || ''}
+                      onChange={handleChange}
+                      required
+                    >
+                      {Object.values(InvestmentStructure).map(is => (
+                        <option key={is} value={is}>{is}</option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-entity">Entity</label>
-              <EntitySelector
-                value={formData.entity_id || null}
-                onChange={handleEntityChange}
-                required
-                className="entity-input"
-              />
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-entity">Entity *</label>
+                    <EntitySelector
+                      value={formData.entity_id || null}
+                      onChange={handleEntityChange}
+                      required
+                      className="entity-input"
+                    />
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-strategy">Strategy</label>
-              <input
-                type="text"
-                id="edit-strategy"
-                name="strategy"
-                value={formData.strategy || ''}
-                onChange={handleChange}
-                placeholder="e.g. Growth Buyout"
-              />
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-strategy">Strategy *</label>
+                    <input
+                      type="text"
+                      id="edit-strategy"
+                      name="strategy"
+                      value={formData.strategy || ''}
+                      onChange={handleChange}
+                      required
+                      placeholder="e.g. Growth Buyout"
+                    />
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-vintage_year">Vintage Year</label>
-              <input
-                type="number"
-                id="edit-vintage_year"
-                name="vintage_year"
-                value={formData.vintage_year || ''}
-                onChange={handleChange}
-                min="1900"
-                max="2100"
-              />
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-vintage_year">Vintage Year *</label>
+                    <input
+                      type="number"
+                      id="edit-vintage_year"
+                      name="vintage_year"
+                      value={formData.vintage_year || ''}
+                      onChange={handleChange}
+                      required
+                      min="1900"
+                      max="2100"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
-            <div className="form-group">
-              <label htmlFor="edit-commitment_amount">Commitment Amount ($)</label>
-              <input
-                type="number"
-                id="edit-commitment_amount"
-                name="commitment_amount"
-                value={formData.commitment_amount || ''}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-              />
-            </div>
+            {activeTab === 'financial' && (
+              <div className="tab-panel">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="edit-commitment_amount">Commitment Amount ($) *</label>
+                    <input
+                      type="number"
+                      id="edit-commitment_amount"
+                      name="commitment_amount"
+                      value={formData.commitment_amount || ''}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-called_amount">Called Amount ($)</label>
-              <input
-                type="number"
-                id="edit-called_amount"
-                name="called_amount"
-                value={formData.called_amount || ''}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-              />
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-commitment_date">Commitment Date *</label>
+                    <input
+                      type="date"
+                      id="edit-commitment_date"
+                      name="commitment_date"
+                      value={formData.commitment_date || ''}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
 
-            <div className="form-group">
-              <label htmlFor="edit-fees">Fees ($)</label>
-              <input
-                type="number"
-                id="edit-fees"
-                name="fees"
-                value={formData.fees || ''}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-              />
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-called_amount">Called Amount ($)</label>
+                    <input
+                      type="number"
+                      id="edit-called_amount"
+                      name="called_amount"
+                      value={formData.called_amount || ''}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-liquidity_profile">Liquidity Profile</label>
+                    <select
+                      id="edit-liquidity_profile"
+                      name="liquidity_profile"
+                      value={formData.liquidity_profile || ''}
+                      onChange={handleChange}
+                    >
+                      {Object.values(LiquidityProfile).map(lp => (
+                        <option key={lp} value={lp}>{lp}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-currency">Currency</label>
+                    <select
+                      id="edit-currency"
+                      name="currency"
+                      value={formData.currency || 'USD'}
+                      onChange={handleChange}
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="JPY">JPY</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-management_fee">Management Fee (%)</label>
+                    <input
+                      type="number"
+                      id="edit-management_fee"
+                      name="management_fee"
+                      value={formatPercentageValue(formData.management_fee)}
+                      onChange={handleChange}
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      placeholder="e.g. 2.0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-performance_fee">Performance Fee (%)</label>
+                    <input
+                      type="number"
+                      id="edit-performance_fee"
+                      name="performance_fee"
+                      value={formatPercentageValue(formData.performance_fee)}
+                      onChange={handleChange}
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      placeholder="e.g. 20.0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-hurdle_rate">Hurdle Rate (%)</label>
+                    <input
+                      type="number"
+                      id="edit-hurdle_rate"
+                      name="hurdle_rate"
+                      value={formatPercentageValue(formData.hurdle_rate)}
+                      onChange={handleChange}
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      placeholder="e.g. 8.0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-preferred_return">Preferred Return (%)</label>
+                    <input
+                      type="number"
+                      id="edit-preferred_return"
+                      name="preferred_return"
+                      value={formatPercentageValue(formData.preferred_return)}
+                      onChange={handleChange}
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      placeholder="e.g. 8.0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-fees">Other Fees ($)</label>
+                    <input
+                      type="number"
+                      id="edit-fees"
+                      name="fees"
+                      value={formData.fees || ''}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'operational' && (
+              <div className="tab-panel">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="edit-contact_person">Contact Person</label>
+                    <input
+                      type="text"
+                      id="edit-contact_person"
+                      name="contact_person"
+                      value={formData.contact_person || ''}
+                      onChange={handleChange}
+                      placeholder="Primary contact name"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-email">Email</label>
+                    <input
+                      type="email"
+                      id="edit-email"
+                      name="email"
+                      value={formData.email || ''}
+                      onChange={handleChange}
+                      placeholder="contact@fund.com"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-phone">Phone</label>
+                    <input
+                      type="tel"
+                      id="edit-phone"
+                      name="phone"
+                      value={formData.phone || ''}
+                      onChange={handleChange}
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-address">Address</label>
+                    <input
+                      type="text"
+                      id="edit-address"
+                      name="address"
+                      value={formData.address || ''}
+                      onChange={handleChange}
+                      placeholder="Office address"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-fund_size">Fund Size ($)</label>
+                    <input
+                      type="number"
+                      id="edit-fund_size"
+                      name="fund_size"
+                      value={formData.fund_size || ''}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="Total fund size"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-target_return">Target Return (%)</label>
+                    <input
+                      type="number"
+                      id="edit-target_return"
+                      name="target_return"
+                      value={formatPercentageValue(formData.target_return)}
+                      onChange={handleChange}
+                      min="0"
+                      max="1000"
+                      step="0.01"
+                      placeholder="e.g. 15.0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-investment_period">Investment Period (years)</label>
+                    <input
+                      type="number"
+                      id="edit-investment_period"
+                      name="investment_period"
+                      value={formData.investment_period || ''}
+                      onChange={handleChange}
+                      min="0"
+                      max="20"
+                      placeholder="e.g. 5"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-fund_life">Fund Life (years)</label>
+                    <input
+                      type="number"
+                      id="edit-fund_life"
+                      name="fund_life"
+                      value={formData.fund_life || ''}
+                      onChange={handleChange}
+                      min="0"
+                      max="50"
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-reporting_frequency">Reporting Frequency</label>
+                    <select
+                      id="edit-reporting_frequency"
+                      name="reporting_frequency"
+                      value={formData.reporting_frequency || ''}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select frequency</option>
+                      {Object.values(ReportingFrequency).map(rf => (
+                        <option key={rf} value={rf}>{rf}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group full-width">
+                  <label htmlFor="edit-key_terms">Key Terms</label>
+                  <textarea
+                    id="edit-key_terms"
+                    name="key_terms"
+                    value={formData.key_terms || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Important terms and conditions"
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'legal' && (
+              <div className="tab-panel">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="edit-geography">Geography</label>
+                    <input
+                      type="text"
+                      id="edit-geography"
+                      name="geography"
+                      value={formData.geography || ''}
+                      onChange={handleChange}
+                      placeholder="e.g. North America, Europe"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-sector_focus">Sector Focus</label>
+                    <input
+                      type="text"
+                      id="edit-sector_focus"
+                      name="sector_focus"
+                      value={formData.sector_focus || ''}
+                      onChange={handleChange}
+                      placeholder="e.g. Technology, Healthcare"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-risk_rating">Risk Rating</label>
+                    <select
+                      id="edit-risk_rating"
+                      name="risk_rating"
+                      value={formData.risk_rating || ''}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select risk rating</option>
+                      {Object.values(RiskRating).map(rr => (
+                        <option key={rr} value={rr}>{rr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-esg_focus">ESG Focus</label>
+                    <input
+                      type="text"
+                      id="edit-esg_focus"
+                      name="esg_focus"
+                      value={formData.esg_focus || ''}
+                      onChange={handleChange}
+                      placeholder="Environmental, Social, Governance focus"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group full-width">
+                  <label htmlFor="edit-due_diligence_notes">Due Diligence Notes</label>
+                  <textarea
+                    id="edit-due_diligence_notes"
+                    name="due_diligence_notes"
+                    value={formData.due_diligence_notes || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Key findings from due diligence process"
+                  />
+                </div>
+
+                <div className="form-group full-width">
+                  <label htmlFor="edit-side_letter_terms">Side Letter Terms</label>
+                  <textarea
+                    id="edit-side_letter_terms"
+                    name="side_letter_terms"
+                    value={formData.side_letter_terms || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Special terms negotiated via side letter"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="form-actions">
-            <button type="button" onClick={onCancel} className="cancel-button">
-              Cancel
-            </button>
-            <button type="submit" disabled={loading} className="submit-button">
-              {loading ? 'Updating...' : 'Update Investment'}
-            </button>
+          <div className="form-navigation">
+            <div className="nav-buttons">
+              {activeTab !== 'basic' && (
+                <button type="button" onClick={prevTab} className="nav-button">
+                  ← Previous
+                </button>
+              )}
+              
+              {activeTab !== 'legal' && (
+                <button type="button" onClick={nextTab} className="nav-button">
+                  Next →
+                </button>
+              )}
+            </div>
+
+            <div className="form-actions">
+              <button type="button" onClick={onCancel} className="cancel-button">
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={loading || !tabValidation.basic || !tabValidation.financial} 
+                className="submit-button"
+              >
+                {loading ? 'Updating...' : 'Update Investment'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -70,10 +70,49 @@ class ExcelTemplateService:
         # Get investment names for dropdown validation
         investments = crud.get_investments(db, skip=0, limit=1000)
         investment_names = [inv.name for inv in investments]
+        print(f"NAV Template: Found {len(investment_names)} investments: {investment_names}")
         
         self._create_nav_data_sheet(data_sheet, investment_names, styles)
         self._create_nav_instructions_sheet(instructions_sheet, styles)
         self._create_validation_data_sheet(validation_sheet, investment_names, styles)
+        
+        # Set active sheet to data entry
+        workbook.active = data_sheet
+        
+        # Save to BytesIO
+        excel_buffer = BytesIO()
+        workbook.save(excel_buffer)
+        excel_buffer.seek(0)
+        return excel_buffer
+
+    def generate_investment_template(self, db: Session) -> BytesIO:
+        """Generate professional Investment bulk upload template"""
+        workbook = Workbook()
+        styles = self._create_professional_style(workbook)
+        
+        # Remove default sheet and create sheets
+        workbook.remove(workbook.active)
+        data_sheet = workbook.create_sheet("Investment Data")
+        instructions_sheet = workbook.create_sheet("Instructions")
+        validation_sheet = workbook.create_sheet("Validation Data")
+        
+        # Get entities for dropdown validation
+        entities = crud.get_entities(db, skip=0, limit=1000)
+        entity_names = [f"{entity.name} ({entity.entity_type})" for entity in entities]
+        entity_ids = [entity.id for entity in entities]
+        print(f"Investment Template: Found {len(entity_names)} entities: {entity_names}")
+        
+        # Define dropdowns for validation
+        asset_classes = ["PRIVATE_EQUITY", "PRIVATE_CREDIT", "REAL_ESTATE", "INFRASTRUCTURE", "HEDGE_FUNDS", "VENTURE_CAPITAL"]
+        investment_structures = ["LIMITED_PARTNERSHIP", "FUND_OF_FUNDS", "DIRECT_INVESTMENT", "CO_INVESTMENT", "SEPARATE_ACCOUNT"]
+        liquidity_profiles = ["ILLIQUID", "SEMI_LIQUID", "LIQUID"]
+        reporting_frequencies = ["MONTHLY", "QUARTERLY", "SEMI_ANNUALLY", "ANNUALLY"]
+        risk_ratings = ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"]
+        currencies = ["USD", "EUR", "GBP", "JPY"]
+        
+        self._create_investment_data_sheet(data_sheet, entity_names, styles)
+        self._create_investment_instructions_sheet(instructions_sheet, styles)
+        self._create_investment_validation_data_sheet(validation_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, currencies, styles)
         
         # Set active sheet to data entry
         workbook.active = data_sheet
@@ -121,6 +160,7 @@ class ExcelTemplateService:
         
         # Add data validation for Investment Name (dropdown)
         if investment_names:
+            print(f"Creating dropdown validation for {len(investment_names)} investments")
             investment_validation = DataValidation(
                 type="list",
                 formula1=f"'Validation Data'!$A$2:$A${len(investment_names)+1}",
@@ -130,6 +170,8 @@ class ExcelTemplateService:
             investment_validation.errorTitle = "Invalid Investment"
             sheet.add_data_validation(investment_validation)
             investment_validation.add(f"A3:A1000")
+        else:
+            print("WARNING: No investments found - dropdown will be empty")
         
         # Add date validation
         date_validation = DataValidation(
@@ -225,6 +267,7 @@ class ExcelTemplateService:
         # Get investment names for dropdown validation
         investments = crud.get_investments(db, skip=0, limit=1000)
         investment_names = [inv.name for inv in investments]
+        print(f"Cash Flow Template: Found {len(investment_names)} investments: {investment_names}")
         
         # Cash flow types - using the enhanced categories
         cashflow_types = [
@@ -287,6 +330,7 @@ class ExcelTemplateService:
         
         # Investment name validation
         if investment_names:
+            print(f"Cash Flow: Creating investment dropdown with {len(investment_names)} options")
             investment_validation = DataValidation(
                 type="list",
                 formula1=f"'Validation Data'!$A$2:$A${len(investment_names)+1}",
@@ -294,6 +338,8 @@ class ExcelTemplateService:
             )
             sheet.add_data_validation(investment_validation)
             investment_validation.add("A3:A1000")
+        else:
+            print("WARNING: Cash Flow - No investments found for dropdown")
         
         # Date validation
         date_validation = DataValidation(
@@ -306,6 +352,7 @@ class ExcelTemplateService:
         date_validation.add("B3:B1000")
         
         # Cash flow type validation
+        print(f"Cash Flow: Creating cash flow type dropdown with {len(cashflow_types)} options: {cashflow_types}")
         cashflow_validation = DataValidation(
             type="list",
             formula1=f"'Validation Data'!$B$2:$B${len(cashflow_types)+1}",
@@ -417,12 +464,15 @@ class ExcelTemplateService:
 
     def _create_cashflow_validation_data_sheet(self, sheet, investment_names: List[str], cashflow_types: List[str], styles: Dict):
         """Create validation data for Cash Flow template"""
+        print(f"Creating validation sheet with {len(investment_names)} investments and {len(cashflow_types)} types")
+        
         # Investment names in column A
         sheet.cell(row=1, column=1, value="Investment Names")
         sheet.cell(row=1, column=1).font = self.fonts['subheader']
         
         for idx, name in enumerate(investment_names, 2):
             sheet.cell(row=idx, column=1, value=name)
+            print(f"Added investment to validation: {name}")
         
         # Cash flow types in column B
         sheet.cell(row=1, column=2, value="Cash Flow Types")
@@ -430,30 +480,242 @@ class ExcelTemplateService:
         
         for idx, cf_type in enumerate(cashflow_types, 2):
             sheet.cell(row=idx, column=2, value=cf_type)
+            print(f"Added cash flow type to validation: {cf_type}")
         
         sheet.column_dimensions['A'].width = 30
         sheet.column_dimensions['B'].width = 20
 
-class BulkUploadResult:
-    """Result of bulk upload operation"""
-    def __init__(self):
-        self.success_count = 0
-        self.error_count = 0
-        self.warning_count = 0
-        self.errors = []
-        self.warnings = []
-        self.message = ""
+    def _create_investment_data_sheet(self, sheet, entity_names: List[str], styles: Dict):
+        """Create the Investment data entry sheet with validation"""
+        # Headers - Required fields marked with *
+        headers = [
+            "Investment Name*", "Asset Class*", "Investment Structure*", "Entity*", "Strategy*", 
+            "Vintage Year*", "Commitment Amount*", "Commitment Date*", "Called Amount", "Currency",
+            "Management Fee (%)", "Performance Fee (%)", "Hurdle Rate (%)", "Preferred Return (%)",
+            "Contact Person", "Email", "Phone", "Address", "Fund Size", "Target Return (%)",
+            "Investment Period (years)", "Fund Life (years)", "Reporting Frequency", "Geography",
+            "Sector Focus", "Risk Rating", "ESG Focus", "Other Fees", "Key Terms", "Due Diligence Notes"
+        ]
         
-    def add_success(self):
-        self.success_count += 1
+        # Descriptions
+        descriptions = [
+            "Required", "Required", "Required", "Required", "Required",
+            "Required", "Required", "Required", "Optional", "Optional",
+            "Optional", "Optional", "Optional", "Optional",
+            "Optional", "Optional", "Optional", "Optional", "Optional", "Optional",
+            "Optional", "Optional", "Optional", "Optional",
+            "Optional", "Optional", "Optional", "Optional", "Optional", "Optional"
+        ]
         
-    def add_error(self, row: int, message: str):
-        self.error_count += 1
-        self.errors.append({"row": row, "message": message})
+        # Apply header styling
+        for col, (header, desc) in enumerate(zip(headers, descriptions), 1):
+            cell = sheet.cell(row=1, column=col)
+            cell.value = header
+            cell.font = self.fonts['header']
+            cell.fill = styles['header_fill']
+            cell.border = styles['thin_border']
+            cell.alignment = styles['center_alignment']
+            
+            # Add description in row 2
+            desc_cell = sheet.cell(row=2, column=col)
+            desc_cell.value = desc
+            desc_cell.font = self.fonts['instruction']
+            desc_cell.fill = styles['secondary_fill']
+            desc_cell.border = styles['thin_border']
+            desc_cell.alignment = styles['center_alignment']
         
-    def add_warning(self, row: int, message: str):
-        self.warning_count += 1
-        self.warnings.append({"row": row, "message": message})
+        # Set column widths
+        for col in range(1, len(headers) + 1):
+            sheet.column_dimensions[chr(64 + col)].width = 18
+        
+        # Wider columns for text fields
+        sheet.column_dimensions['A'].width = 25  # Investment Name
+        sheet.column_dimensions['D'].width = 25  # Entity
+        sheet.column_dimensions['E'].width = 20  # Strategy
+        
+        # Add sample data
+        sample_data = [
+            "Example Fund LP", "PRIVATE_EQUITY", "LIMITED_PARTNERSHIP", entity_names[0] if entity_names else "Create Entity First",
+            "Growth Buyout", "2024", "5000000", "2024-01-15", "1000000", "USD",
+            "2.0", "20.0", "8.0", "8.0",
+            "John Smith", "john@fund.com", "+1-555-123-4567", "123 Main St", "500000000", "15.0",
+            "5", "10", "QUARTERLY", "North America",
+            "Technology", "MEDIUM", "ESG Focus", "25000", "Key terms here", "DD notes here"
+        ]
+        
+        for col_idx, value in enumerate(sample_data, 1):
+            cell = sheet.cell(row=3, column=col_idx)
+            cell.value = value
+            cell.font = self.fonts['body']
+            cell.border = styles['thin_border']
+            cell.fill = PatternFill(start_color='FFF8DC', end_color='FFF8DC', fill_type="solid")
+
+    def _create_investment_instructions_sheet(self, sheet, styles: Dict):
+        """Create comprehensive instructions for Investment upload"""
+        instructions = [
+            ("Investment Bulk Upload Template Instructions", self.fonts['header']),
+            ("", None),
+            ("Overview:", self.fonts['subheader']),
+            ("This template allows you to upload multiple investments at once.", self.fonts['body']),
+            ("Required fields are marked with * and must be completed.", self.fonts['body']),
+            ("", None),
+            ("Required Fields (*) - Must be completed:", self.fonts['subheader']),
+            ("• Investment Name: Unique name for the investment", self.fonts['body']),
+            ("• Asset Class: Select from dropdown", self.fonts['body']),
+            ("• Investment Structure: Select from dropdown", self.fonts['body']),
+            ("• Entity: Select from existing entities", self.fonts['body']),
+            ("• Strategy: Investment strategy description", self.fonts['body']),
+            ("• Vintage Year: Year of investment (YYYY)", self.fonts['body']),
+            ("• Commitment Amount: Total committed capital", self.fonts['body']),
+            ("• Commitment Date: Date in YYYY-MM-DD format", self.fonts['body']),
+            ("", None),
+            ("Optional Fields - Can be updated later:", self.fonts['subheader']),
+            ("• Financial: Management fees, performance fees, hurdle rates", self.fonts['body']),
+            ("• Contact: Person, email, phone, address information", self.fonts['body']),
+            ("• Operational: Fund size, target return, investment periods", self.fonts['body']),
+            ("• Legal: Geography, sector focus, risk rating, ESG focus", self.fonts['body']),
+            ("• Administrative: Other fees, key terms, due diligence notes", self.fonts['body']),
+            ("", None),
+            ("Data Format Guidelines:", self.fonts['subheader']),
+            ("• Dates: Use YYYY-MM-DD format (e.g., 2024-12-31)", self.fonts['body']),
+            ("• Percentages: Enter as numbers (e.g., 2.5 for 2.5%)", self.fonts['body']),
+            ("• Amounts: Enter numeric values without commas", self.fonts['body']),
+            ("• Years: Enter as whole numbers", self.fonts['body']),
+            ("• Text Fields: Keep descriptions concise", self.fonts['body']),
+            ("", None),
+            ("Steps to Use:", self.fonts['subheader']),
+            ("1. Switch to the 'Investment Data' tab", self.fonts['body']),
+            ("2. Fill in required fields (marked with *) for each investment", self.fonts['body']),
+            ("3. Use dropdowns for standardized fields", self.fonts['body']),
+            ("4. Optional fields can be left blank and updated later", self.fonts['body']),
+            ("5. Save the file and upload through the web interface", self.fonts['body']),
+            ("", None),
+            ("Important Notes:", self.fonts['subheader']),
+            ("• Entity must exist before creating investments", self.fonts['body']),
+            ("• Investment names must be unique", self.fonts['body']),
+            ("• Called Amount cannot exceed Commitment Amount", self.fonts['body']),
+            ("• Maximum 1000 investments per upload", self.fonts['body']),
+        ]
+        
+        for row, (text, font) in enumerate(instructions, 1):
+            cell = sheet.cell(row=row, column=1)
+            cell.value = text
+            if font:
+                cell.font = font
+            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+        
+        sheet.column_dimensions['A'].width = 80
+
+    def _create_investment_validation_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], currencies: List[str], styles: Dict):
+        """Create validation data for Investment template dropdowns"""
+        
+        # Column headers
+        headers = ["Entities", "Asset Classes", "Investment Structures", "Liquidity Profiles", "Reporting Frequencies", "Risk Ratings", "Currencies"]
+        data_lists = [entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, currencies]
+        
+        # Add headers
+        for col, header in enumerate(headers, 1):
+            cell = sheet.cell(row=1, column=col)
+            cell.value = header
+            cell.font = self.fonts['subheader']
+        
+        # Add data for each column
+        for col, data_list in enumerate(data_lists, 1):
+            for idx, item in enumerate(data_list, 2):
+                sheet.cell(row=idx, column=col, value=item)
+        
+        # Set column widths
+        for col in range(1, len(headers) + 1):
+            sheet.column_dimensions[chr(64 + col)].width = 25
+
+    def _create_nav_data_sheet(self, sheet, investment_names: List[str], styles: Dict):
+        """Create the NAV data entry sheet with validation"""
+        # Headers
+        headers = [
+            "Investment Name", "NAV Date", "NAV Value", "Notes"
+        ]
+        
+        # Header descriptions
+        descriptions = [
+            "Select from dropdown", "Format: YYYY-MM-DD", "Numeric value > 0", "Optional comments"
+        ]
+        
+        # Apply header styling
+        for col, (header, desc) in enumerate(zip(headers, descriptions), 1):
+            cell = sheet.cell(row=1, column=col)
+            cell.value = header
+            cell.font = self.fonts['header']
+            cell.fill = styles['header_fill']
+            cell.border = styles['thin_border']
+            cell.alignment = styles['center_alignment']
+            
+            # Add description in row 2
+            desc_cell = sheet.cell(row=2, column=col)
+            desc_cell.value = desc
+            desc_cell.font = self.fonts['instruction']
+            desc_cell.fill = styles['secondary_fill']
+            desc_cell.border = styles['thin_border']
+            desc_cell.alignment = styles['center_alignment']
+        
+        # Set column widths
+        sheet.column_dimensions['A'].width = 25  # Investment Name
+        sheet.column_dimensions['B'].width = 15  # NAV Date
+        sheet.column_dimensions['C'].width = 15  # NAV Value
+        sheet.column_dimensions['D'].width = 30  # Notes
+        
+        # Add data validation for Investment Name (dropdown)
+        if investment_names:
+            print(f"Creating dropdown validation for {len(investment_names)} investments")
+            investment_validation = DataValidation(
+                type="list",
+                formula1=f"'Validation Data'!$A$2:$A${len(investment_names)+1}",
+                showDropDown=True
+            )
+            investment_validation.error = "Please select a valid investment name"
+            investment_validation.errorTitle = "Invalid Investment"
+            sheet.add_data_validation(investment_validation)
+            investment_validation.add(f"A3:A1000")
+        else:
+            print("WARNING: No investments found - dropdown will be empty")
+        
+        # Add date validation
+        date_validation = DataValidation(
+            type="date",
+            operator="greaterThan",
+            formula1="1900-01-01",
+            showDropDown=False
+        )
+        date_validation.error = "Please enter a valid date (YYYY-MM-DD)"
+        date_validation.errorTitle = "Invalid Date"
+        sheet.add_data_validation(date_validation)
+        date_validation.add("B3:B1000")
+        
+        # Add numeric validation for NAV Value
+        value_validation = DataValidation(
+            type="decimal",
+            operator="greaterThan",
+            formula1=0,
+            showDropDown=False
+        )
+        value_validation.error = "NAV Value must be greater than 0"
+        value_validation.errorTitle = "Invalid NAV Value"
+        sheet.add_data_validation(value_validation)
+        value_validation.add("C3:C1000")
+        
+        # Add sample data
+        sample_data = [
+            ["Example Fund LP", "2024-12-31", 1000000, "Q4 2024 valuation"],
+            ["", "", "", ""],  # Empty row for user input
+        ]
+        
+        for row_idx, row_data in enumerate(sample_data, 3):
+            for col_idx, value in enumerate(row_data, 1):
+                cell = sheet.cell(row=row_idx, column=col_idx)
+                cell.value = value
+                cell.font = self.fonts['body']
+                cell.border = styles['thin_border']
+                if row_idx == 3:  # Sample row - make it stand out
+                    cell.fill = PatternFill(start_color='FFF8DC', end_color='FFF8DC', fill_type="solid")
 
 class BulkUploadProcessor:
     """Process bulk uploads from Excel templates"""
