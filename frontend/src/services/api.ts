@@ -411,6 +411,14 @@ export const importExportAPI = {
     });
     return response.data;
   },
+
+  // Download Investment template
+  downloadInvestmentTemplate: async (): Promise<Blob> => {
+    const response = await api.get('/api/templates/investment-template', {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
   // Download Cash Flow template
   downloadCashFlowTemplate: async (): Promise<Blob> => {
     const response = await api.get('/api/templates/cashflow-template', {

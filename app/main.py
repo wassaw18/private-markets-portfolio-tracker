@@ -485,6 +485,20 @@ def download_cashflow_template(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating Cash Flow template: {str(e)}")
 
+@app.get("/api/templates/investment-template")
+def download_investment_template(db: Session = Depends(get_db)):
+    """Download Investment bulk upload template"""
+    try:
+        excel_buffer = excel_template_service.generate_investment_template(db)
+        
+        return StreamingResponse(
+            excel_buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=Investment_Upload_Template.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating Investment template: {str(e)}")
+
 # Bulk Upload Endpoints
 @app.post("/api/bulk-upload/navs")
 async def bulk_upload_navs(file: UploadFile = File(...), db: Session = Depends(get_db)):

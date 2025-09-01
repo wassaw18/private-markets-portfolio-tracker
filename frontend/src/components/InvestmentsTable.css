@@ -79,14 +79,15 @@
 }
 
 .details-button, .edit-button, .delete-button {
-  padding: 6px 12px;
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  margin: 0 2px;
-  transition: background-color 0.2s;
+  margin: 0 3px;
+  transition: all 0.2s;
+  min-width: 70px;
 }
 
 .details-button {
