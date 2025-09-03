@@ -299,9 +299,9 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
             </th>
             <th>Contact Person</th>
             <th>Email</th>
-            <th>Phone</th>
-            <th>Fund Size</th>
-            <th>Target Return</th>
+            <th>Portal Link</th>
+            <th>Target Raise</th>
+            <th>Target IRR</th>
             <th>Investment Period</th>
             <th>Fund Life</th>
             <th>Reporting Freq</th>
@@ -314,9 +314,9 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td className="investment-name">{investment.name}</td>
               <td>{investment.contact_person || '-'}</td>
               <td>{investment.email || '-'}</td>
-              <td>{investment.phone || '-'}</td>
-              <td className="currency">{investment.fund_size ? formatCurrency(investment.fund_size) : '-'}</td>
-              <td>{investment.target_return ? formatPercentage(investment.target_return) : '-'}</td>
+              <td>{investment.portal_link || '-'}</td>
+              <td className="currency">{investment.target_raise ? formatCurrency(investment.target_raise) : '-'}</td>
+              <td>{investment.target_irr ? formatPercentage(investment.target_irr) : '-'}</td>
               <td>{investment.investment_period ? `${investment.investment_period}y` : '-'}</td>
               <td>{investment.fund_life ? `${investment.fund_life}y` : '-'}</td>
               <td>{investment.reporting_frequency || '-'}</td>
@@ -340,12 +340,12 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
             <th className="sortable" onClick={() => handleSort('name')}>
               Name <SortIcon field="name" />
             </th>
-            <th>Geography</th>
-            <th>Sector Focus</th>
+            <th>Geography Focus</th>
+            <th>Fund Domicile</th>
             <th>Risk Rating</th>
-            <th>ESG Focus</th>
-            <th>Due Diligence</th>
-            <th>Side Letter Terms</th>
+            <th>Tax Classification</th>
+            <th>Due Diligence Date</th>
+            <th>IC Approval Date</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -353,8 +353,8 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
           {paginatedInvestments.map((investment) => (
             <tr key={investment.id}>
               <td className="investment-name">{investment.name}</td>
-              <td>{investment.geography || '-'}</td>
-              <td>{investment.sector_focus || '-'}</td>
+              <td>{investment.geography_focus || '-'}</td>
+              <td>{investment.fund_domicile || '-'}</td>
               <td>
                 {investment.risk_rating && (
                   <span className={`risk-badge risk-${investment.risk_rating.toLowerCase()}`}>
@@ -362,17 +362,9 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                   </span>
                 )}
               </td>
-              <td>{investment.esg_focus || '-'}</td>
-              <td className="notes-cell" title={investment.due_diligence_notes}>
-                {investment.due_diligence_notes ? 
-                  `${investment.due_diligence_notes.substring(0, 50)}${investment.due_diligence_notes.length > 50 ? '...' : ''}` 
-                  : '-'}
-              </td>
-              <td className="notes-cell" title={investment.side_letter_terms}>
-                {investment.side_letter_terms ? 
-                  `${investment.side_letter_terms.substring(0, 50)}${investment.side_letter_terms.length > 50 ? '...' : ''}` 
-                  : '-'}
-              </td>
+              <td>{investment.tax_classification || '-'}</td>
+              <td>{investment.due_diligence_date || '-'}</td>
+              <td>{investment.ic_approval_date || '-'}</td>
               <td className="actions">
                 <button onClick={() => handleViewDetails(investment.id)} className="details-button">Details</button>
                 <button onClick={() => handleEdit(investment)} className="edit-button">Edit</button>
@@ -393,7 +385,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
             <th className="sortable" onClick={() => handleSort('name')}>
               Name <SortIcon field="name" />
             </th>
-            <th>Target Return</th>
+            <th>Target IRR</th>
             <th>Actual IRR</th>
             <th>Performance</th>
             <th>TVPI</th>
@@ -406,35 +398,30 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         </thead>
         <tbody>
           {paginatedInvestments.map((investment) => {
-            const performanceClass = getPerformanceClass(investment.irr, investment.target_return);
+            const performanceClass = '';
             
             return (
               <tr key={investment.id}>
                 <td className="investment-name">{investment.name}</td>
-                <td>{investment.target_return ? formatPercentage(investment.target_return) : '-'}</td>
-                <td className={`performance-metric ${performanceClass}`}>
-                  {investment.irr !== undefined ? formatPercentage(investment.irr) : 'N/A'}
+                <td>{investment.target_irr ? formatPercentage(investment.target_irr) : '-'}</td>
+                <td className="performance-metric">
+                  N/A
                 </td>
                 <td className="performance-indicator">
-                  {investment.irr !== undefined && investment.target_return ? (
-                    <div className={`performance-badge ${performanceClass}`}>
-                      {investment.irr >= investment.target_return ? '📈' : '📉'}
-                      {(((investment.irr / investment.target_return) - 1) * 100).toFixed(1)}%
-                    </div>
-                  ) : '-'}
+                  -
                 </td>
                 <td className="performance-metric">
-                  {investment.tvpi !== undefined ? `${investment.tvpi.toFixed(2)}x` : 'N/A'}
+                  N/A
                 </td>
                 <td className="performance-metric">
-                  {investment.dpi !== undefined ? `${investment.dpi.toFixed(2)}x` : 'N/A'}
+                  N/A
                 </td>
                 <td className="currency">
-                  {investment.current_nav ? formatCurrency(investment.current_nav) : 'N/A'}
+                  N/A
                 </td>
                 <td className="currency">{formatCurrency(investment.called_amount)}</td>
                 <td className="currency">
-                  {investment.total_distributions ? formatCurrency(investment.total_distributions) : '$0'}
+                  $0
                 </td>
                 <td className="actions">
                   <button onClick={() => handleViewDetails(investment.id)} className="details-button">Details</button>
@@ -468,8 +455,24 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
 
   if (investments.length === 0) {
     return (
-      <div className="empty-state">
-        <p>No investments found. Add your first investment to get started.</p>
+      <div className="enhanced-investments-table-section">
+        <div className="table-header">
+          <div className="table-title">
+            <h3>Current Investments (0)</h3>
+            {onToggleImportExport && (
+              <button 
+                className="import-export-toggle"
+                onClick={onToggleImportExport}
+                title="Import/Export"
+              >
+                📊 Import/Export
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="empty-state">
+          <p>No investments found. Add your first investment manually or use the Import/Export button to bulk upload.</p>
+        </div>
       </div>
     );
   }

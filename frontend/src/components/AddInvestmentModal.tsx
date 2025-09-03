@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { InvestmentCreate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating } from '../types/investment';
+import { InvestmentCreate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating, TaxClassification, ActivityClassification } from '../types/investment';
 import { investmentAPI } from '../services/api';
 import { validateInvestment } from '../utils/validation';
 import { getTodayDateString } from '../utils/formatters';
@@ -639,14 +639,32 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
 
                     <div className="form-group">
                       <label htmlFor="tax_classification">Tax Classification</label>
-                      <input
-                        type="text"
+                      <select
                         id="tax_classification"
                         name="tax_classification"
                         value={formData.tax_classification || ''}
                         onChange={handleChange}
-                        placeholder="e.g. Partnership, Corporation"
-                      />
+                      >
+                        <option value="">Select tax classification</option>
+                        {Object.values(TaxClassification).map(tc => (
+                          <option key={tc} value={tc}>{tc}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="activity_classification">Activity Classification</label>
+                      <select
+                        id="activity_classification"
+                        name="activity_classification"
+                        value={formData.activity_classification || ''}
+                        onChange={handleChange}
+                      >
+                        <option value="">Select activity type</option>
+                        {Object.values(ActivityClassification).map(ac => (
+                          <option key={ac} value={ac}>{ac}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="form-group">

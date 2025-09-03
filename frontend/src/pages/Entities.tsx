@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import EntityManagement from '../components/EntityManagement';
 import EntityRelationshipManager from '../components/EntityRelationshipManager';
+import EntityRelationshipVisualization from '../components/EntityRelationshipVisualization';
 import './Entities.css';
 
 const Entities: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'entities' | 'relationships'>('entities');
+  const [activeTab, setActiveTab] = useState<'entities' | 'relationships' | 'visualization'>('entities');
 
   return (
     <div className="entities-container">
@@ -23,6 +24,12 @@ const Entities: React.FC = () => {
           >
             Relationships
           </button>
+          <button
+            className={`tab-button ${activeTab === 'visualization' ? 'active' : ''}`}
+            onClick={() => setActiveTab('visualization')}
+          >
+            Visualization
+          </button>
         </div>
       </div>
 
@@ -36,6 +43,12 @@ const Entities: React.FC = () => {
         {activeTab === 'relationships' && (
           <div className="relationships-tab">
             <EntityRelationshipManager />
+          </div>
+        )}
+        
+        {activeTab === 'visualization' && (
+          <div className="visualization-tab">
+            <EntityRelationshipVisualization />
           </div>
         )}
       </div>

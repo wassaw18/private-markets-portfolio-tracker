@@ -230,6 +230,8 @@
   margin: 0 3px;
   transition: all 0.2s;
   min-width: 70px;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .details-button {
@@ -444,9 +446,11 @@
   }
   
   .details-button, .edit-button, .delete-button {
-    padding: 4px 8px;
-    font-size: 0.7rem;
-    min-width: 50px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    min-width: 60px;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   .table-title {

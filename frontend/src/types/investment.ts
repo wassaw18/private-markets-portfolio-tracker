@@ -1,18 +1,24 @@
 export enum AssetClass {
+  PUBLIC_EQUITY = "Public Equity",
+  PUBLIC_FIXED_INCOME = "Public Fixed Income",
   PRIVATE_EQUITY = "Private Equity",
-  PRIVATE_CREDIT = "Private Credit", 
+  VENTURE_CAPITAL = "Venture Capital",
+  PRIVATE_CREDIT = "Private Credit",
   REAL_ESTATE = "Real Estate",
-  INFRASTRUCTURE = "Infrastructure",
-  HEDGE_FUNDS = "Hedge Funds",
-  VENTURE_CAPITAL = "Venture Capital"
+  REAL_ASSETS = "Real Assets",
+  CASH_AND_EQUIVALENTS = "Cash & Cash Equivalents"
 }
 
 export enum InvestmentStructure {
   LIMITED_PARTNERSHIP = "Limited Partnership",
-  FUND_OF_FUNDS = "Fund of Funds",
   DIRECT_INVESTMENT = "Direct Investment",
   CO_INVESTMENT = "Co-Investment",
-  SEPARATE_ACCOUNT = "Separate Account"
+  FUND_OF_FUNDS = "Fund of Funds",
+  SEPARATE_ACCOUNT = "Separate Account",
+  HEDGE_FUND = "Hedge Fund",
+  PUBLIC_MARKETS = "Public Markets",
+  BANK_ACCOUNT = "Bank Account",
+  LOAN = "Loan"
 }
 
 export enum LiquidityProfile {
@@ -32,6 +38,21 @@ export enum RiskRating {
   LOW = "Low",
   MEDIUM = "Medium",
   HIGH = "High"
+}
+
+export enum TaxClassification {
+  FORM_1099 = "1099",
+  K1_PARTNERSHIP = "K-1",
+  SCHEDULE_C = "Schedule C",
+  W2_EMPLOYMENT = "W-2",
+  FORM_1041 = "1041",
+  FORM_1120S = "1120S"
+}
+
+export enum ActivityClassification {
+  ACTIVE = "Active",
+  PASSIVE = "Passive",
+  PORTFOLIO = "Portfolio"
 }
 
 export enum CashFlowType {
@@ -117,7 +138,8 @@ export interface Investment {
   
   // Legal & Risk
   fund_domicile?: string;
-  tax_classification?: string;
+  tax_classification?: TaxClassification;
+  activity_classification?: ActivityClassification;
   due_diligence_date?: string;
   ic_approval_date?: string;
   risk_rating?: RiskRating;
@@ -170,7 +192,8 @@ export interface InvestmentCreate {
   
   // Legal & Risk
   fund_domicile?: string;
-  tax_classification?: string;
+  tax_classification?: TaxClassification;
+  activity_classification?: ActivityClassification;
   due_diligence_date?: string;
   ic_approval_date?: string;
   risk_rating?: RiskRating;
@@ -212,11 +235,23 @@ export interface InvestmentUpdate {
   
   // Legal & Risk updates
   fund_domicile?: string;
-  tax_classification?: string;
+  tax_classification?: TaxClassification;
+  activity_classification?: ActivityClassification;
   due_diligence_date?: string;
   ic_approval_date?: string;
   risk_rating?: RiskRating;
   benchmark_index?: string;
+  
+  // Pacing Model Parameters updates
+  target_irr?: number;
+  target_moic?: number;
+  fund_life?: number;
+  investment_period?: number;
+  bow_factor?: number;
+  call_schedule?: 'Front Loaded' | 'Steady' | 'Back Loaded';
+  distribution_timing?: 'Early' | 'Backend' | 'Steady';
+  forecast_enabled?: boolean;
+  last_forecast_date?: string;
 }
 
 export interface PerformanceMetrics {

@@ -20,6 +20,40 @@ from app.models import CashFlowType
 
 logger = logging.getLogger(__name__)
 
+class BulkUploadResult:
+    """Result class for bulk upload operations"""
+    
+    def __init__(self, filename: str = ""):
+        self.filename = filename
+        self.success_count = 0
+        self.error_count = 0
+        self.warning_count = 0
+        self.errors = []
+        self.warnings = []
+        self.message = ""
+        self.has_more_errors = False
+        self.has_more_warnings = False
+    
+    def add_success(self):
+        """Add a successful record"""
+        self.success_count += 1
+    
+    def add_error(self, row: int, message: str):
+        """Add an error"""
+        self.error_count += 1
+        self.errors.append({"row": row, "message": message})
+        # Limit displayed errors to prevent overwhelming UI
+        if len(self.errors) > 50:
+            self.has_more_errors = True
+    
+    def add_warning(self, row: int, message: str):
+        """Add a warning"""
+        self.warning_count += 1
+        self.warnings.append({"row": row, "message": message})
+        # Limit displayed warnings to prevent overwhelming UI
+        if len(self.warnings) > 20:
+            self.has_more_warnings = True
+
 class ExcelTemplateService:
     """Service for generating professional Excel templates and processing uploads"""
     
@@ -103,8 +137,8 @@ class ExcelTemplateService:
         print(f"Investment Template: Found {len(entity_names)} entities: {entity_names}")
         
         # Define dropdowns for validation
-        asset_classes = ["PRIVATE_EQUITY", "PRIVATE_CREDIT", "REAL_ESTATE", "INFRASTRUCTURE", "HEDGE_FUNDS", "VENTURE_CAPITAL"]
-        investment_structures = ["LIMITED_PARTNERSHIP", "FUND_OF_FUNDS", "DIRECT_INVESTMENT", "CO_INVESTMENT", "SEPARATE_ACCOUNT"]
+        asset_classes = ["PUBLIC_EQUITY", "PUBLIC_FIXED_INCOME", "PRIVATE_EQUITY", "VENTURE_CAPITAL", "PRIVATE_CREDIT", "REAL_ESTATE", "REAL_ASSETS", "CASH_AND_EQUIVALENTS"]
+        investment_structures = ["LIMITED_PARTNERSHIP", "DIRECT_INVESTMENT", "CO_INVESTMENT", "FUND_OF_FUNDS", "SEPARATE_ACCOUNT", "HEDGE_FUND", "PUBLIC_MARKETS", "BANK_ACCOUNT", "LOAN"]
         liquidity_profiles = ["ILLIQUID", "SEMI_LIQUID", "LIQUID"]
         reporting_frequencies = ["MONTHLY", "QUARTERLY", "SEMI_ANNUALLY", "ANNUALLY"]
         risk_ratings = ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"]

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Investment, InvestmentUpdate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating } from '../types/investment';
+import { Investment, InvestmentUpdate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating, TaxClassification, ActivityClassification } from '../types/investment';
 import { investmentAPI } from '../services/api';
 import { validateInvestment } from '../utils/validation';
 import EntitySelector from './EntitySelector';
@@ -39,23 +39,18 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
     management_fee: investment.management_fee,
     performance_fee: investment.performance_fee,
     hurdle_rate: investment.hurdle_rate,
-    preferred_return: investment.preferred_return,
     contact_person: investment.contact_person,
     email: investment.email,
-    phone: investment.phone,
-    address: investment.address,
-    fund_size: investment.fund_size,
-    target_return: investment.target_return,
+    target_raise: investment.target_raise,
+    target_irr: investment.target_irr,
     investment_period: investment.investment_period,
     fund_life: investment.fund_life,
     reporting_frequency: investment.reporting_frequency,
-    key_terms: investment.key_terms,
-    esg_focus: investment.esg_focus,
-    geography: investment.geography,
-    sector_focus: investment.sector_focus,
+    geography_focus: investment.geography_focus,
     risk_rating: investment.risk_rating,
-    due_diligence_notes: investment.due_diligence_notes,
-    side_letter_terms: investment.side_letter_terms,
+    tax_classification: investment.tax_classification,
+    activity_classification: investment.activity_classification,
+    due_diligence_date: investment.due_diligence_date,
   });
 
   const [loading, setLoading] = useState(false);
@@ -120,7 +115,7 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
       // Handle different field types
       if (type === 'number') {
         processedValue = value === '' ? undefined : parseFloat(value);
-      } else if (['management_fee', 'performance_fee', 'hurdle_rate', 'preferred_return', 'target_return'].includes(name)) {
+      } else if (['management_fee', 'performance_fee', 'hurdle_rate', 'target_irr'].includes(name)) {
         // Convert percentage fields
         processedValue = value === '' ? undefined : parseFloat(value) / 100;
       } else if (['vintage_year', 'investment_period', 'fund_life'].includes(name)) {
@@ -459,17 +454,16 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="edit-preferred_return">Preferred Return (%)</label>
+                    <label htmlFor="edit-target_raise">Target Raise ($)</label>
                     <input
                       type="number"
-                      id="edit-preferred_return"
-                      name="preferred_return"
-                      value={formatPercentageValue(formData.preferred_return)}
+                      id="edit-target_raise"
+                      name="target_raise"
+                      value={formData.target_raise || ''}
                       onChange={handleChange}
                       min="0"
-                      max="100"
-                      step="0.01"
-                      placeholder="e.g. 8.0"
+                      step="1000000"
+                      placeholder="100000000"
                     />
                   </div>
 
@@ -518,50 +512,47 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="edit-phone">Phone</label>
+                    <label htmlFor="edit-portal_link">Portal Link</label>
                     <input
-                      type="tel"
-                      id="edit-phone"
-                      name="phone"
-                      value={formData.phone || ''}
+                      type="url"
+                      id="edit-portal_link"
+                      name="portal_link"
+                      value={formData.portal_link || ''}
                       onChange={handleChange}
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="https://portal.example.com"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="edit-address">Address</label>
+                    <label htmlFor="edit-fund_administrator">Fund Administrator</label>
                     <input
                       type="text"
-                      id="edit-address"
-                      name="address"
-                      value={formData.address || ''}
+                      id="edit-fund_administrator"
+                      name="fund_administrator"
+                      value={formData.fund_administrator || ''}
                       onChange={handleChange}
-                      placeholder="Office address"
+                      placeholder="Fund administrator name"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="edit-fund_size">Fund Size ($)</label>
+                    <label htmlFor="edit-expected_maturity_date">Expected Maturity Date</label>
                     <input
-                      type="number"
-                      id="edit-fund_size"
-                      name="fund_size"
-                      value={formData.fund_size || ''}
+                      type="date"
+                      id="edit-expected_maturity_date"
+                      name="expected_maturity_date"
+                      value={formData.expected_maturity_date || ''}
                       onChange={handleChange}
-                      min="0"
-                      step="0.01"
-                      placeholder="Total fund size"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="edit-target_return">Target Return (%)</label>
+                    <label htmlFor="edit-target_irr">Target IRR (%)</label>
                     <input
                       type="number"
-                      id="edit-target_return"
-                      name="target_return"
-                      value={formatPercentageValue(formData.target_return)}
+                      id="edit-target_irr"
+                      name="target_irr"
+                      value={formatPercentageValue(formData.target_irr)}
                       onChange={handleChange}
                       min="0"
                       max="1000"
@@ -615,14 +606,14 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                 </div>
 
                 <div className="form-group full-width">
-                  <label htmlFor="edit-key_terms">Key Terms</label>
-                  <textarea
-                    id="edit-key_terms"
-                    name="key_terms"
-                    value={formData.key_terms || ''}
+                  <label htmlFor="edit-distribution_target">Distribution Target</label>
+                  <input
+                    type="text"
+                    id="edit-distribution_target"
+                    name="distribution_target"
+                    value={formData.distribution_target || ''}
                     onChange={handleChange}
-                    rows={3}
-                    placeholder="Important terms and conditions"
+                    placeholder="Distribution timing target"
                   />
                 </div>
               </div>
@@ -632,26 +623,26 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
               <div className="tab-panel">
                 <div className="form-grid">
                   <div className="form-group">
-                    <label htmlFor="edit-geography">Geography</label>
+                    <label htmlFor="edit-geography_focus">Geography Focus</label>
                     <input
                       type="text"
-                      id="edit-geography"
-                      name="geography"
-                      value={formData.geography || ''}
+                      id="edit-geography_focus"
+                      name="geography_focus"
+                      value={formData.geography_focus || ''}
                       onChange={handleChange}
                       placeholder="e.g. North America, Europe"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="edit-sector_focus">Sector Focus</label>
+                    <label htmlFor="edit-fund_domicile">Fund Domicile</label>
                     <input
                       type="text"
-                      id="edit-sector_focus"
-                      name="sector_focus"
-                      value={formData.sector_focus || ''}
+                      id="edit-fund_domicile"
+                      name="fund_domicile"
+                      value={formData.fund_domicile || ''}
                       onChange={handleChange}
-                      placeholder="e.g. Technology, Healthcare"
+                      placeholder="e.g. Delaware, Cayman Islands"
                     />
                   </div>
 
@@ -671,39 +662,55 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="edit-esg_focus">ESG Focus</label>
-                    <input
-                      type="text"
-                      id="edit-esg_focus"
-                      name="esg_focus"
-                      value={formData.esg_focus || ''}
+                    <label htmlFor="edit-tax_classification">Tax Classification</label>
+                    <select
+                      id="edit-tax_classification"
+                      name="tax_classification"
+                      value={formData.tax_classification || ''}
                       onChange={handleChange}
-                      placeholder="Environmental, Social, Governance focus"
-                    />
+                    >
+                      <option value="">Select tax classification</option>
+                      {Object.values(TaxClassification).map(tc => (
+                        <option key={tc} value={tc}>{tc}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-activity_classification">Activity Classification</label>
+                    <select
+                      id="edit-activity_classification"
+                      name="activity_classification"
+                      value={formData.activity_classification || ''}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select activity type</option>
+                      {Object.values(ActivityClassification).map(ac => (
+                        <option key={ac} value={ac}>{ac}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 <div className="form-group full-width">
-                  <label htmlFor="edit-due_diligence_notes">Due Diligence Notes</label>
-                  <textarea
-                    id="edit-due_diligence_notes"
-                    name="due_diligence_notes"
-                    value={formData.due_diligence_notes || ''}
+                  <label htmlFor="edit-due_diligence_date">Due Diligence Date</label>
+                  <input
+                    type="date"
+                    id="edit-due_diligence_date"
+                    name="due_diligence_date"
+                    value={formData.due_diligence_date || ''}
                     onChange={handleChange}
-                    rows={3}
-                    placeholder="Key findings from due diligence process"
                   />
                 </div>
 
                 <div className="form-group full-width">
-                  <label htmlFor="edit-side_letter_terms">Side Letter Terms</label>
-                  <textarea
-                    id="edit-side_letter_terms"
-                    name="side_letter_terms"
-                    value={formData.side_letter_terms || ''}
+                  <label htmlFor="edit-ic_approval_date">IC Approval Date</label>
+                  <input
+                    type="date"
+                    id="edit-ic_approval_date"
+                    name="ic_approval_date"
+                    value={formData.ic_approval_date || ''}
                     onChange={handleChange}
-                    rows={3}
-                    placeholder="Special terms negotiated via side letter"
                   />
                 </div>
               </div>
