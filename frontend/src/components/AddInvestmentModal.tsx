@@ -734,6 +734,7 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
                     onClick={nextTab}
                     className="nav-button"
                     disabled={!canProceedToNext(activeTab)}
+                    style={{ visibility: 'visible' }}
                   >
                     Next →
                   </button>

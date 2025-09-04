@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DocumentCategory, DocumentStatus, DocumentUploadForm } from '../types/document';
 import { documentAPI, entityAPI, investmentAPI } from '../services/api';
 import { validateDocument, ValidationResult } from '../utils/validation';
+import { useAuth } from '../contexts/AuthContext';
 import EntitySelector from './EntitySelector';
 import './DocumentUploadModal.css';
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
+  const { authState } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<DocumentUploadForm>({
     file: null,
@@ -23,13 +25,19 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
     investment_id: null,
     entity_id: null,
     is_confidential: false,
-    uploaded_by: '',
+    uploaded_by: authState.user?.username || '',
     tags: ''
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (authState.user?.username) {
+      setFormData(prev => ({ ...prev, uploaded_by: authState.user.username }));
+    }
+  }, [authState.user]);
   const [dragActive, setDragActive] = useState(false);
 
   const validateForm = (): ValidationResult => {
@@ -302,8 +310,9 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
                   id="uploaded_by"
                   name="uploaded_by"
                   value={formData.uploaded_by}
-                  onChange={handleInputChange}
-                  placeholder="Your name or identifier"
+                  readOnly
+                  disabled
+                  placeholder="Auto-populated from login"
                 />
               </div>
             </div>

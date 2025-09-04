@@ -38,7 +38,7 @@ const EntityRelationshipVisualization: React.FC = () => {
       setLoading(true);
       const [entitiesData, relationshipsData] = await Promise.all([
         api.get('/api/entities?limit=1000'),
-        api.get('/api/relationships')
+        api.get('/api/entity-relationships')
       ]);
       
       setEntities(entitiesData.data);

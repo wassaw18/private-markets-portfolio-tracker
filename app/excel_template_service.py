@@ -103,7 +103,7 @@ class ExcelTemplateService:
         
         # Get investment names for dropdown validation
         investments = crud.get_investments(db, skip=0, limit=1000)
-        investment_names = [inv.name for inv in investments]
+        investment_names = [inv.name for inv in investments if inv.name]
         print(f"NAV Template: Found {len(investment_names)} investments: {investment_names}")
         
         self._create_nav_data_sheet(data_sheet, investment_names, styles)
@@ -132,7 +132,7 @@ class ExcelTemplateService:
         
         # Get entities for dropdown validation
         entities = crud.get_entities(db, skip=0, limit=1000)
-        entity_names = [f"{entity.name} ({entity.entity_type})" for entity in entities]
+        entity_names = [f"{entity.name} ({entity.entity_type.value if entity.entity_type else 'Unknown'})" for entity in entities]
         entity_ids = [entity.id for entity in entities]
         print(f"Investment Template: Found {len(entity_names)} entities: {entity_names}")
         
@@ -300,7 +300,7 @@ class ExcelTemplateService:
         
         # Get investment names for dropdown validation
         investments = crud.get_investments(db, skip=0, limit=1000)
-        investment_names = [inv.name for inv in investments]
+        investment_names = [inv.name for inv in investments if inv.name]
         print(f"Cash Flow Template: Found {len(investment_names)} investments: {investment_names}")
         
         # Cash flow types - using the enhanced categories
@@ -491,8 +491,12 @@ class ExcelTemplateService:
         sheet.cell(row=1, column=1, value="Investment Names")
         sheet.cell(row=1, column=1).font = self.fonts['subheader']
         
-        for idx, name in enumerate(investment_names, 2):
-            sheet.cell(row=idx, column=1, value=name)
+        if investment_names:
+            for idx, name in enumerate(investment_names, 2):
+                sheet.cell(row=idx, column=1, value=name)
+        else:
+            # Add placeholder if no investments exist
+            sheet.cell(row=2, column=1, value="No investments found - Create investments first")
         
         sheet.column_dimensions['A'].width = 30
 

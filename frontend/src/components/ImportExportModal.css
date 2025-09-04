@@ -17,9 +17,11 @@
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
+  max-width: 1200px;
+  max-height: 95vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: modalAppear 0.3s ease-out;
 }
 
@@ -120,7 +122,8 @@
 .modal-content {
   padding: 32px;
   overflow-y: auto;
-  max-height: calc(90vh - 180px);
+  flex: 1;
+  max-height: none;
 }
 
 /* Templates Section */
