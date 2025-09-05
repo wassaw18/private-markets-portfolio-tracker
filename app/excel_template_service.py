@@ -144,7 +144,7 @@ class ExcelTemplateService:
         risk_ratings = ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"]
         currencies = ["USD", "EUR", "GBP", "JPY"]
         
-        self._create_investment_data_sheet(data_sheet, entity_names, styles)
+        self._create_investment_data_sheet(data_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, currencies, styles)
         self._create_investment_instructions_sheet(instructions_sheet, styles)
         self._create_investment_validation_data_sheet(validation_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, currencies, styles)
         
@@ -523,7 +523,7 @@ class ExcelTemplateService:
         sheet.column_dimensions['A'].width = 30
         sheet.column_dimensions['B'].width = 20
 
-    def _create_investment_data_sheet(self, sheet, entity_names: List[str], styles: Dict):
+    def _create_investment_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], currencies: List[str], styles: Dict):
         """Create bulletproof Investment data entry sheet with dual headers"""
         # User-friendly headers (Row 1)
         user_headers = [
