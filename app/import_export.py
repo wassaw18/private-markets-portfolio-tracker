@@ -213,7 +213,9 @@ def import_investments_from_file(file_content: bytes, filename: str, db: Session
         if filename.endswith('.csv'):
             df = pd.read_csv(BytesIO(file_content))
         elif filename.endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(BytesIO(file_content))
+            # For Excel files, read from 'Investment Data' sheet 
+            # Skip user headers (row 1) and examples (row 3), use db field names (row 2) as headers
+            df = pd.read_excel(BytesIO(file_content), sheet_name='Investment Data', skiprows=[0, 2], header=0)
         else:
             result.add_error(0, "Unsupported file format. Please use CSV or Excel files.")
             return result

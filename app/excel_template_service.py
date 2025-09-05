@@ -631,7 +631,7 @@ class ExcelTemplateService:
         """Add dropdown validation to all enum columns with proper error handling"""
         
         try:
-            # Column mappings (1-indexed) - based on NEW db_field_names order
+            # Column mappings (1-indexed) - CORRECTED to match actual header positions
             dropdowns = {
                 2: asset_classes,                    # Asset Class (column 2)
                 3: investment_structures,            # Investment Structure (column 3)
@@ -639,9 +639,9 @@ class ExcelTemplateService:
                 16: currencies,                      # Currency (column 16)
                 17: liquidity_profiles,              # Liquidity Profile (column 17)
                 19: reporting_frequencies,           # Reporting Frequency (column 19)
-                24: tax_classifications,             # Tax Classification (column 24)
-                25: activity_classifications,        # Activity Classification (column 25)
-                28: risk_ratings                     # Risk Rating (column 28)
+                25: tax_classifications,             # Tax Classification (column 25)
+                26: activity_classifications,        # Activity Classification (column 26)
+                29: risk_ratings                     # Risk Rating (column 29)
             }
             
             # Add validation for each dropdown column
