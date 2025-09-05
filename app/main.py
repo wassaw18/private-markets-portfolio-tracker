@@ -422,8 +422,12 @@ def get_dashboard_summary_stats(db: Session = Depends(get_db)):
 
 # Import/Export endpoints
 @app.post("/api/investments/import")
-async def import_investments(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """Import investments from CSV or Excel file"""
+async def import_investments(
+    file: UploadFile = File(...), 
+    force_upload: bool = False,
+    db: Session = Depends(get_db)
+):
+    """Import investments from CSV or Excel file with optional force upload mode"""
     if not file.filename.endswith(('.csv', '.xlsx', '.xls')):
         raise HTTPException(400, "Only CSV and Excel files are supported")
     
@@ -431,7 +435,7 @@ async def import_investments(file: UploadFile = File(...), db: Session = Depends
     content = await file.read()
     
     # Process import
-    result = import_investments_from_file(content, file.filename, db)
+    result = import_investments_from_file(content, file.filename, db, force_upload)
     
     return {
         "filename": file.filename,

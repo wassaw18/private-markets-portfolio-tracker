@@ -29,15 +29,19 @@ class ImportResult:
     def add_warning(self, row: int, message: str):
         self.warnings.append({"row": row, "message": message})
 
-def validate_and_convert_row(row: Dict[str, Any], row_num: int) -> Tuple[schemas.InvestmentCreate, List[str]]:
+def validate_and_convert_row(row: Dict[str, Any], row_num: int, force_upload: bool = False) -> Tuple[schemas.InvestmentCreate, List[str]]:
     """Validate and convert a row to InvestmentCreate schema"""
     errors = []
     
     try:
-        # Map common column variations
+        # Map common column variations with force upload defaults
         name = row.get('name') or row.get('Name') or row.get('Investment Name')
         if not name:
-            errors.append("Missing required field: name")
+            if force_upload:
+                name = f"Investment_{row_num}"
+                errors.append(f"Missing name - using default: {name}")
+            else:
+                errors.append("Missing required field: name")
             
         asset_class = row.get('asset_class') or row.get('Asset Class') or row.get('asset_class')
         if asset_class:
@@ -45,22 +49,31 @@ def validate_and_convert_row(row: Dict[str, Any], row_num: int) -> Tuple[schemas
             asset_class_mapping = {
                 'pe': AssetClass.PRIVATE_EQUITY,
                 'private equity': AssetClass.PRIVATE_EQUITY,
+                'private_equity': AssetClass.PRIVATE_EQUITY,
                 'pc': AssetClass.PRIVATE_CREDIT,
                 'private credit': AssetClass.PRIVATE_CREDIT,
+                'private_credit': AssetClass.PRIVATE_CREDIT,
                 're': AssetClass.REAL_ESTATE,
                 'real estate': AssetClass.REAL_ESTATE,
+                'real_estate': AssetClass.REAL_ESTATE,
                 'infrastructure': AssetClass.INFRASTRUCTURE,
+                'real_assets': AssetClass.REAL_ASSETS,
                 'infra': AssetClass.INFRASTRUCTURE,
                 'hedge': AssetClass.HEDGE_FUNDS,
                 'hedge funds': AssetClass.HEDGE_FUNDS,
                 'vc': AssetClass.VENTURE_CAPITAL,
                 'venture capital': AssetClass.VENTURE_CAPITAL,
+                'venture_capital': AssetClass.VENTURE_CAPITAL,
             }
             asset_class_lower = str(asset_class).lower().strip()
             asset_class = asset_class_mapping.get(asset_class_lower)
             
         if not asset_class:
-            errors.append("Invalid or missing asset_class")
+            if force_upload:
+                asset_class = AssetClass.PRIVATE_EQUITY  # Default to PE
+                errors.append("Invalid/missing asset_class - using default: PRIVATE_EQUITY")
+            else:
+                errors.append("Invalid or missing asset_class")
             
         investment_structure = row.get('investment_structure') or row.get('Structure') or 'Limited Partnership'
         structure_mapping = {
@@ -76,23 +89,39 @@ def validate_and_convert_row(row: Dict[str, Any], row_num: int) -> Tuple[schemas
         
         owner = row.get('owner') or row.get('Owner') or row.get('LP')
         if not owner:
-            errors.append("Missing required field: owner")
+            if force_upload:
+                owner = "Unknown Owner"
+                errors.append("Missing owner - using default: Unknown Owner")
+            else:
+                errors.append("Missing required field: owner")
             
         strategy = row.get('strategy') or row.get('Strategy') or row.get('Investment Strategy')
         if not strategy:
-            errors.append("Missing required field: strategy")
+            if force_upload:
+                strategy = "General Investment Strategy"
+                errors.append("Missing strategy - using default: General Investment Strategy")
+            else:
+                errors.append("Missing required field: strategy")
             
         vintage_year = row.get('vintage_year') or row.get('Vintage Year') or row.get('Vintage')
         try:
             vintage_year = int(vintage_year) if vintage_year else None
         except (ValueError, TypeError):
-            errors.append("Invalid vintage_year: must be integer")
+            if force_upload:
+                vintage_year = 2024
+                errors.append("Invalid vintage_year - using default: 2024")
+            else:
+                errors.append("Invalid vintage_year: must be integer")
             
         commitment_amount = row.get('commitment_amount') or row.get('Commitment') or row.get('Commitment Amount')
         try:
             commitment_amount = float(commitment_amount) if commitment_amount else None
         except (ValueError, TypeError):
-            errors.append("Invalid commitment_amount: must be number")
+            if force_upload:
+                commitment_amount = 1000000.0  # Default 1M
+                errors.append("Invalid commitment_amount - using default: 1,000,000")
+            else:
+                errors.append("Invalid commitment_amount: must be number")
             
         called_amount = row.get('called_amount') or row.get('Called Amount') or 0.0
         try:
@@ -105,18 +134,60 @@ def validate_and_convert_row(row: Dict[str, Any], row_num: int) -> Tuple[schemas
             fees = float(fees) if fees else 0.0
         except (ValueError, TypeError):
             fees = 0.0
+            
+        # Handle entity_id (required by schema but not in current validation)
+        entity_id = row.get('entity_id') or row.get('Entity ID')
+        if not entity_id:
+            if force_upload:
+                entity_id = 1  # Default to first entity - will need to be handled in frontend
+                errors.append("Missing entity_id - using default: 1 (update manually)")
+            else:
+                errors.append("Missing required field: entity_id")
+        else:
+            try:
+                entity_id = int(entity_id)
+            except (ValueError, TypeError):
+                if force_upload:
+                    entity_id = 1
+                    errors.append("Invalid entity_id - using default: 1 (update manually)")
+                else:
+                    errors.append("Invalid entity_id: must be integer")
+                    
+        # Handle commitment_date (required by schema)
+        from datetime import date, datetime
+        commitment_date = row.get('commitment_date') or row.get('Commitment Date')
+        if not commitment_date:
+            if force_upload:
+                commitment_date = date.today()
+                errors.append(f"Missing commitment_date - using today: {commitment_date}")
+            else:
+                errors.append("Missing required field: commitment_date")
+        else:
+            try:
+                if isinstance(commitment_date, str):
+                    commitment_date = datetime.strptime(commitment_date, "%Y-%m-%d").date()
+                elif isinstance(commitment_date, datetime):
+                    commitment_date = commitment_date.date()
+            except (ValueError, TypeError):
+                if force_upload:
+                    commitment_date = date.today()
+                    errors.append(f"Invalid commitment_date - using today: {commitment_date}")
+                else:
+                    errors.append("Invalid commitment_date: use YYYY-MM-DD format")
         
-        if errors:
+        if errors and not force_upload:
             return None, errors
             
         investment = schemas.InvestmentCreate(
             name=str(name).strip(),
             asset_class=asset_class,
             investment_structure=investment_structure,
+            entity_id=entity_id,
             owner=str(owner).strip(),
             strategy=str(strategy).strip(),
             vintage_year=vintage_year,
             commitment_amount=commitment_amount,
+            commitment_date=commitment_date,
             called_amount=called_amount,
             fees=fees
         )
@@ -126,7 +197,7 @@ def validate_and_convert_row(row: Dict[str, Any], row_num: int) -> Tuple[schemas
     except Exception as e:
         return None, [f"Unexpected error processing row: {str(e)}"]
 
-def import_investments_from_file(file_content: bytes, filename: str, db: Session) -> ImportResult:
+def import_investments_from_file(file_content: bytes, filename: str, db: Session, force_upload: bool = False) -> ImportResult:
     """Import investments from CSV or Excel file"""
     result = ImportResult()
     
@@ -150,7 +221,7 @@ def import_investments_from_file(file_content: bytes, filename: str, db: Session
             if row.isna().all():
                 continue
                 
-            investment, errors = validate_and_convert_row(row.to_dict(), row_num)
+            investment, errors = validate_and_convert_row(row.to_dict(), row_num, force_upload)
             
             if errors:
                 for error in errors:

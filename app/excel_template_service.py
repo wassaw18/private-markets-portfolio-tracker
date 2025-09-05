@@ -524,10 +524,10 @@ class ExcelTemplateService:
         sheet.column_dimensions['B'].width = 20
 
     def _create_investment_data_sheet(self, sheet, entity_names: List[str], styles: Dict):
-        """Create the Investment data entry sheet with validation"""
-        # Headers - Required fields marked with *
-        headers = [
-            "Investment Name*", "Asset Class*", "Investment Structure*", "Entity*", "Strategy*", 
+        """Create bulletproof Investment data entry sheet with dual headers"""
+        # User-friendly headers (Row 1)
+        user_headers = [
+            "Investment Name*", "Asset Class*", "Investment Structure*", "Entity ID*", "Owner/Entity*", "Strategy*", 
             "Vintage Year*", "Commitment Amount*", "Commitment Date*", "Called Amount", "Currency",
             "Management Fee (%)", "Performance Fee (%)", "Hurdle Rate (%)", "Preferred Return (%)",
             "Contact Person", "Email", "Phone", "Address", "Fund Size", "Target Return (%)",
@@ -535,35 +535,62 @@ class ExcelTemplateService:
             "Sector Focus", "Risk Rating", "ESG Focus", "Other Fees", "Key Terms", "Due Diligence Notes"
         ]
         
-        # Descriptions
-        descriptions = [
-            "Required", "Required", "Required", "Required", "Required",
-            "Required", "Required", "Required", "Optional", "Optional",
-            "Optional", "Optional", "Optional", "Optional",
-            "Optional", "Optional", "Optional", "Optional", "Optional", "Optional",
-            "Optional", "Optional", "Optional", "Optional",
-            "Optional", "Optional", "Optional", "Optional", "Optional", "Optional"
+        # Database field names (Row 2) - EXACT field names for import validation
+        db_field_names = [
+            "name", "asset_class", "investment_structure", "entity_id", "owner", "strategy",
+            "vintage_year", "commitment_amount", "commitment_date", "called_amount", "currency",
+            "management_fee", "performance_fee", "hurdle_rate", "preferred_return",
+            "contact_person", "email", "phone", "address", "fund_size", "target_return",
+            "investment_period_years", "fund_term_years", "reporting_frequency", "geography_focus",
+            "sector", "risk_rating", "esg_focus", "fees", "key_terms", "due_diligence_notes"
         ]
         
-        # Apply header styling
-        for col, (header, desc) in enumerate(zip(headers, descriptions), 1):
-            cell = sheet.cell(row=1, column=col)
-            cell.value = header
-            cell.font = self.fonts['header']
-            cell.fill = styles['header_fill']
-            cell.border = styles['thin_border']
-            cell.alignment = styles['center_alignment']
+        # Field requirements and examples (Row 3)
+        field_examples = [
+            "e.g., Acme Fund III", "PRIVATE_EQUITY, VENTURE_CAPITAL, etc.", "LIMITED_PARTNERSHIP, etc.", "1, 2, 3 (from Entities)", "Entity name from system", "e.g., Growth Capital",
+            "e.g., 2022", "e.g., 5000000", "YYYY-MM-DD format", "e.g., 2500000", "USD, EUR, etc.",
+            "0.02 (for 2%)", "0.20 (for 20%)", "0.08 (for 8%)", "0.08 (for 8%)",
+            "Contact name", "email@domain.com", "Phone number", "Full address", "e.g., 250000000", "0.15 (for 15%)",
+            "e.g., 5", "e.g., 10", "QUARTERLY, ANNUALLY", "North America, Europe",
+            "Technology, Healthcare", "LOW, MEDIUM, HIGH", "Focus area", "Additional fees", "Key terms", "DD notes"
+        ]
+        
+        # Apply triple-header styling
+        for col, (user_header, db_field, example) in enumerate(zip(user_headers, db_field_names, field_examples), 1):
+            # Row 1: User-friendly headers (bold required fields)
+            user_cell = sheet.cell(row=1, column=col)
+            user_cell.value = user_header
             
-            # Add description in row 2
-            desc_cell = sheet.cell(row=2, column=col)
-            desc_cell.value = desc
-            desc_cell.font = self.fonts['instruction']
-            desc_cell.fill = styles['secondary_fill']
-            desc_cell.border = styles['thin_border']
-            desc_cell.alignment = styles['center_alignment']
+            # Bold required fields (marked with *)
+            if '*' in user_header:
+                required_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
+                user_cell.font = required_font
+                user_cell.fill = PatternFill(start_color="D32F2F", end_color="D32F2F", fill_type="solid")  # Red for required
+            else:
+                user_cell.font = self.fonts['header']
+                user_cell.fill = styles['header_fill']
+                
+            user_cell.border = styles['thin_border']
+            user_cell.alignment = styles['center_alignment']
+            
+            # Row 2: Database field names (for reference)
+            db_cell = sheet.cell(row=2, column=col)
+            db_cell.value = f"[{db_field}]"
+            db_cell.font = self.fonts['instruction']
+            db_cell.fill = PatternFill(start_color="FFFFCC", end_color="FFFFCC", fill_type="solid")  # Light yellow
+            db_cell.border = styles['thin_border']
+            db_cell.alignment = styles['center_alignment']
+            
+            # Row 3: Examples and requirements
+            example_cell = sheet.cell(row=3, column=col)
+            example_cell.value = example
+            example_cell.font = self.fonts['instruction']
+            example_cell.fill = styles['secondary_fill']
+            example_cell.border = styles['thin_border']
+            example_cell.alignment = styles['center_alignment']
         
         # Set column widths
-        for col in range(1, len(headers) + 1):
+        for col in range(1, len(user_headers) + 1):
             sheet.column_dimensions[chr(64 + col)].width = 18
         
         # Wider columns for text fields
@@ -573,7 +600,7 @@ class ExcelTemplateService:
         
         # Add sample data
         sample_data = [
-            "Example Fund LP", "PRIVATE_EQUITY", "LIMITED_PARTNERSHIP", entity_names[0] if entity_names else "Create Entity First",
+            "Example Fund LP", "PRIVATE_EQUITY", "LIMITED_PARTNERSHIP", "1", entity_names[0] if entity_names else "Create Entity First",
             "Growth Buyout", "2024", "5000000", "2024-01-15", "1000000", "USD",
             "2.0", "20.0", "8.0", "8.0",
             "John Smith", "john@fund.com", "+1-555-123-4567", "123 Main St", "500000000", "15.0",
@@ -581,25 +608,79 @@ class ExcelTemplateService:
             "Technology", "MEDIUM", "ESG Focus", "25000", "Key terms here", "DD notes here"
         ]
         
-        for col_idx, value in enumerate(sample_data, 1):
-            cell = sheet.cell(row=3, column=col_idx)
-            cell.value = value
-            cell.font = self.fonts['body']
-            cell.border = styles['thin_border']
-            cell.fill = PatternFill(start_color='FFF8DC', end_color='FFF8DC', fill_type="solid")
+        # Create 100 blank data rows (rows 4-103) for bulk entry
+        for row_num in range(4, 104):  # 100 rows of data
+            for col_num in range(1, len(user_headers) + 1):
+                cell = sheet.cell(row=row_num, column=col_num)
+                cell.border = styles['thin_border']
+                if row_num == 4:  # First row gets sample data
+                    if col_num <= len(sample_data):
+                        cell.value = sample_data[col_num - 1]
+                        cell.fill = PatternFill(start_color='FFF8DC', end_color='FFF8DC', fill_type="solid")
+                cell.font = self.fonts['body']
+        
+        # Add Excel data validation dropdowns for enum fields
+        self._add_investment_dropdowns(sheet, entity_names, asset_classes, investment_structures, 
+                                     liquidity_profiles, reporting_frequencies, risk_ratings, currencies)
+
+    def _add_investment_dropdowns(self, sheet, entity_names, asset_classes, investment_structures,
+                                liquidity_profiles, reporting_frequencies, risk_ratings, currencies):
+        """Add dropdown validation to all enum columns"""
+        
+        # Column mappings (1-indexed)
+        dropdowns = {
+            2: asset_classes,                    # Asset Class
+            3: investment_structures,            # Investment Structure  
+            4: [str(i) for i in range(1, 101)], # Entity ID (1-100)
+            10: currencies,                      # Currency
+            23: reporting_frequencies,           # Reporting Frequency  
+            26: risk_ratings                     # Risk Rating
+        }
+        
+        # Add validation for each dropdown column
+        for col_idx, options in dropdowns.items():
+            if options:  # Only add dropdown if options exist
+                # Create validation
+                dv = DataValidation(type="list", formula1=f'"{",".join(options)}"')
+                dv.error = f'Please select from the dropdown list'
+                dv.errorTitle = 'Invalid Entry'
+                dv.prompt = f'Select from: {", ".join(options[:5])}{"..." if len(options) > 5 else ""}'
+                dv.promptTitle = 'Select Value'
+                
+                # Apply to all data rows (4-103)
+                col_letter = chr(64 + col_idx)  # Convert to letter (A, B, C...)
+                dv.add(f'{col_letter}4:{col_letter}103')
+                sheet.add_data_validation(dv)
+        
+        # Special handling for Entity Names (if available)
+        if entity_names:
+            entity_dv = DataValidation(type="list", formula1=f'"{",".join(entity_names)}"')
+            entity_dv.error = 'Please select an existing entity or create one first'
+            entity_dv.errorTitle = 'Entity Not Found'
+            entity_dv.prompt = f'Available entities: {", ".join(entity_names[:3])}{"..." if len(entity_names) > 3 else ""}'
+            entity_dv.promptTitle = 'Select Entity'
+            entity_dv.add('E4:E103')  # Owner/Entity column
+            sheet.add_data_validation(entity_dv)
 
     def _create_investment_instructions_sheet(self, sheet, styles: Dict):
         """Create comprehensive instructions for Investment upload"""
         instructions = [
             ("Investment Bulk Upload Template Instructions", self.fonts['header']),
             ("", None),
+            ("🚀 NEW FEATURES:", self.fonts['subheader']),
+            ("• Excel dropdowns for all enum fields - eliminates data entry errors!", self.fonts['body']),
+            ("• 100 blank rows ready for bulk data entry", self.fonts['body']),
+            ("• Triple header system: User names, database fields, examples", self.fonts['body']),
+            ("• Force upload mode available - creates investments with defaults for missing data", self.fonts['body']),
+            ("", None),
             ("Overview:", self.fonts['subheader']),
             ("This template allows you to upload multiple investments at once.", self.fonts['body']),
-            ("Required fields are marked with * and must be completed.", self.fonts['body']),
+            ("Required fields are marked with * and highlighted in RED.", self.fonts['body']),
+            ("Optional fields use standard blue headers.", self.fonts['body']),
             ("", None),
             ("Required Fields (*) - Must be completed:", self.fonts['subheader']),
             ("• Investment Name: Unique name for the investment", self.fonts['body']),
-            ("• Asset Class: Select from dropdown", self.fonts['body']),
+            ("• Asset Class: SELECT FROM DROPDOWN (prevents errors)", self.fonts['body']),
             ("• Investment Structure: Select from dropdown", self.fonts['body']),
             ("• Entity: Select from existing entities", self.fonts['body']),
             ("• Strategy: Investment strategy description", self.fonts['body']),

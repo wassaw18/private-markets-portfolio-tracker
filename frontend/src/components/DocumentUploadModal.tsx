@@ -35,7 +35,7 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
 
   useEffect(() => {
     if (authState.user?.username) {
-      setFormData(prev => ({ ...prev, uploaded_by: authState.user.username }));
+      setFormData(prev => ({ ...prev, uploaded_by: authState.user!.username }));
     }
   }, [authState.user]);
   const [dragActive, setDragActive] = useState(false);
