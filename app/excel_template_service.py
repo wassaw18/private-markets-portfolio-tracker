@@ -593,7 +593,8 @@ class ExcelTemplateService:
         
         # Set column widths
         for col in range(1, len(user_headers) + 1):
-            sheet.column_dimensions[chr(64 + col)].width = 18
+            col_letter = self._get_excel_column_letter(col)
+            sheet.column_dimensions[col_letter].width = 18
         
         # Wider columns for text fields
         sheet.column_dimensions['A'].width = 25  # Investment Name
@@ -790,7 +791,8 @@ class ExcelTemplateService:
         
         # Set column widths
         for col in range(1, len(headers) + 1):
-            sheet.column_dimensions[chr(64 + col)].width = 25
+            col_letter = self._get_excel_column_letter(col)
+            sheet.column_dimensions[col_letter].width = 25
 
     def _create_nav_data_sheet(self, sheet, investment_names: List[str], styles: Dict):
         """Create the NAV data entry sheet with validation"""
