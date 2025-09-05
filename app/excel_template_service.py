@@ -627,14 +627,14 @@ class ExcelTemplateService:
                                 liquidity_profiles, reporting_frequencies, risk_ratings, currencies):
         """Add dropdown validation to all enum columns"""
         
-        # Column mappings (1-indexed)
+        # Column mappings (1-indexed) - based on db_field_names order
         dropdowns = {
-            2: asset_classes,                    # Asset Class
-            3: investment_structures,            # Investment Structure  
-            4: [str(i) for i in range(1, 101)], # Entity ID (1-100)
-            10: currencies,                      # Currency
-            23: reporting_frequencies,           # Reporting Frequency  
-            26: risk_ratings                     # Risk Rating
+            2: asset_classes,                    # Asset Class (column 2)
+            3: investment_structures,            # Investment Structure (column 3)
+            4: [str(i) for i in range(1, 101)], # Entity ID (column 4) 
+            11: currencies,                      # Currency (column 11)
+            24: reporting_frequencies,           # Reporting Frequency (column 24)
+            27: risk_ratings                     # Risk Rating (column 27)
         }
         
         # Add validation for each dropdown column
@@ -659,7 +659,7 @@ class ExcelTemplateService:
             entity_dv.errorTitle = 'Entity Not Found'
             entity_dv.prompt = f'Available entities: {", ".join(entity_names[:3])}{"..." if len(entity_names) > 3 else ""}'
             entity_dv.promptTitle = 'Select Entity'
-            entity_dv.add('E4:E103')  # Owner/Entity column
+            entity_dv.add('E4:E103')  # Owner column (column 5)
             sheet.add_data_validation(entity_dv)
 
     def _create_investment_instructions_sheet(self, sheet, styles: Dict):
