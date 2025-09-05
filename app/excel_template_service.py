@@ -137,7 +137,7 @@ class ExcelTemplateService:
         print(f"Investment Template: Found {len(entity_names)} entities: {entity_names}")
         
         # Define dropdowns for validation
-        asset_classes = ["PUBLIC_EQUITY", "PUBLIC_FIXED_INCOME", "PRIVATE_EQUITY", "VENTURE_CAPITAL", "PRIVATE_CREDIT", "REAL_ESTATE", "REAL_ASSETS", "CASH_AND_EQUIVALENTS"]
+        asset_classes = ["PRIVATE_EQUITY", "VENTURE_CAPITAL", "PRIVATE_CREDIT", "REAL_ESTATE", "REAL_ASSETS", "INFRASTRUCTURE", "HEDGE_FUNDS", "PUBLIC_EQUITY"]
         investment_structures = ["LIMITED_PARTNERSHIP", "DIRECT_INVESTMENT", "CO_INVESTMENT", "FUND_OF_FUNDS", "SEPARATE_ACCOUNT", "HEDGE_FUND", "PUBLIC_MARKETS", "BANK_ACCOUNT", "LOAN"]
         liquidity_profiles = ["ILLIQUID", "SEMI_LIQUID", "LIQUID"]
         reporting_frequencies = ["MONTHLY", "QUARTERLY", "SEMI_ANNUALLY", "ANNUALLY"]
@@ -625,42 +625,82 @@ class ExcelTemplateService:
 
     def _add_investment_dropdowns(self, sheet, entity_names, asset_classes, investment_structures,
                                 liquidity_profiles, reporting_frequencies, risk_ratings, currencies):
-        """Add dropdown validation to all enum columns"""
+        """Add dropdown validation to all enum columns with proper error handling"""
         
-        # Column mappings (1-indexed) - based on db_field_names order
-        dropdowns = {
-            2: asset_classes,                    # Asset Class (column 2)
-            3: investment_structures,            # Investment Structure (column 3)
-            4: [str(i) for i in range(1, 101)], # Entity ID (column 4) 
-            11: currencies,                      # Currency (column 11)
-            24: reporting_frequencies,           # Reporting Frequency (column 24)
-            27: risk_ratings                     # Risk Rating (column 27)
-        }
-        
-        # Add validation for each dropdown column
-        for col_idx, options in dropdowns.items():
-            if options:  # Only add dropdown if options exist
-                # Create validation
-                dv = DataValidation(type="list", formula1=f'"{",".join(options)}"')
-                dv.error = f'Please select from the dropdown list'
-                dv.errorTitle = 'Invalid Entry'
-                dv.prompt = f'Select from: {", ".join(options[:5])}{"..." if len(options) > 5 else ""}'
-                dv.promptTitle = 'Select Value'
-                
-                # Apply to all data rows (4-103)
-                col_letter = chr(64 + col_idx)  # Convert to letter (A, B, C...)
-                dv.add(f'{col_letter}4:{col_letter}103')
-                sheet.add_data_validation(dv)
-        
-        # Special handling for Entity Names (if available)
-        if entity_names:
-            entity_dv = DataValidation(type="list", formula1=f'"{",".join(entity_names)}"')
-            entity_dv.error = 'Please select an existing entity or create one first'
-            entity_dv.errorTitle = 'Entity Not Found'
-            entity_dv.prompt = f'Available entities: {", ".join(entity_names[:3])}{"..." if len(entity_names) > 3 else ""}'
-            entity_dv.promptTitle = 'Select Entity'
-            entity_dv.add('E4:E103')  # Owner column (column 5)
-            sheet.add_data_validation(entity_dv)
+        try:
+            # Column mappings (1-indexed) - based on db_field_names order
+            dropdowns = {
+                2: asset_classes,                    # Asset Class (column 2)
+                3: investment_structures,            # Investment Structure (column 3)
+                4: [str(i) for i in range(1, 21)],  # Entity ID (1-20, reduced for formula length)
+                11: currencies,                      # Currency (column 11)
+                24: reporting_frequencies,           # Reporting Frequency (column 24)
+                26: risk_ratings                     # Risk Rating (column 26, not 27)
+            }
+            
+            # Add validation for each dropdown column
+            for col_idx, options in dropdowns.items():
+                if options and len(options) > 0:  # Only add dropdown if options exist
+                    try:
+                        # Limit formula length to prevent Excel errors
+                        formula_options = options[:10] if len(options) > 10 else options
+                        formula_str = ",".join(formula_options)
+                        
+                        # Ensure formula doesn't exceed Excel limits (255 chars)
+                        if len(formula_str) > 200:
+                            formula_options = options[:5]  # Further reduce if still too long
+                            formula_str = ",".join(formula_options)
+                        
+                        # Create validation with proper error handling
+                        dv = DataValidation(type="list", formula1=f'"{formula_str}"')
+                        dv.error = 'Please select from the dropdown list'
+                        dv.errorTitle = 'Invalid Entry'
+                        dv.prompt = f'Select from: {", ".join(formula_options[:3])}{"..." if len(formula_options) > 3 else ""}'
+                        dv.promptTitle = 'Select Value'
+                        
+                        # Apply to all data rows (4-103) with proper column letter calculation
+                        col_letter = self._get_excel_column_letter(col_idx)
+                        dv.add(f'{col_letter}4:{col_letter}103')
+                        sheet.add_data_validation(dv)
+                        
+                    except Exception as e:
+                        print(f"Warning: Failed to add dropdown for column {col_idx}: {str(e)}")
+                        continue
+            
+            # Special handling for Entity Names (if available) with length limits
+            if entity_names and len(entity_names) > 0:
+                try:
+                    # Limit entity names to prevent formula overflow
+                    limited_entities = entity_names[:15] if len(entity_names) > 15 else entity_names
+                    
+                    # Clean entity names to remove problematic characters
+                    clean_entities = [name.replace('"', "'").replace(',', ';') for name in limited_entities]
+                    
+                    entity_formula = ",".join(clean_entities)
+                    if len(entity_formula) <= 200:  # Only add if formula is reasonable length
+                        entity_dv = DataValidation(type="list", formula1=f'"{entity_formula}"')
+                        entity_dv.error = 'Please select an existing entity or create one first'
+                        entity_dv.errorTitle = 'Entity Not Found'
+                        entity_dv.prompt = f'Available entities: {", ".join(clean_entities[:3])}{"..." if len(clean_entities) > 3 else ""}'
+                        entity_dv.promptTitle = 'Select Entity'
+                        entity_dv.add('E4:E103')  # Owner column (column 5)
+                        sheet.add_data_validation(entity_dv)
+                        
+                except Exception as e:
+                    print(f"Warning: Failed to add entity dropdown: {str(e)}")
+                    
+        except Exception as e:
+            print(f"Warning: Error in dropdown creation: {str(e)}")
+            # Continue without dropdowns rather than failing completely
+
+    def _get_excel_column_letter(self, col_num):
+        """Convert column number to Excel column letter (1=A, 26=Z, 27=AA, etc.)"""
+        result = ""
+        while col_num > 0:
+            col_num -= 1
+            result = chr(col_num % 26 + ord('A')) + result
+            col_num //= 26
+        return result
 
     def _create_investment_instructions_sheet(self, sheet, styles: Dict):
         """Create comprehensive instructions for Investment upload"""
