@@ -7,19 +7,25 @@ from datetime import datetime
 Base = declarative_base()
 
 class AssetClass(str, enum.Enum):
+    PUBLIC_EQUITY = "Public Equity"
+    PUBLIC_FIXED_INCOME = "Public Fixed Income"
     PRIVATE_EQUITY = "Private Equity"
+    VENTURE_CAPITAL = "Venture Capital"
     PRIVATE_CREDIT = "Private Credit"
     REAL_ESTATE = "Real Estate"
-    INFRASTRUCTURE = "Infrastructure"
-    HEDGE_FUNDS = "Hedge Funds"
-    VENTURE_CAPITAL = "Venture Capital"
+    REAL_ASSETS = "Real Assets"
+    CASH_AND_EQUIVALENTS = "Cash & Cash Equivalents"
 
 class InvestmentStructure(str, enum.Enum):
     LIMITED_PARTNERSHIP = "Limited Partnership"
-    FUND_OF_FUNDS = "Fund of Funds"
     DIRECT_INVESTMENT = "Direct Investment"
     CO_INVESTMENT = "Co-Investment"
+    FUND_OF_FUNDS = "Fund of Funds"
     SEPARATE_ACCOUNT = "Separate Account"
+    HEDGE_FUND = "Hedge Fund"
+    PUBLIC_MARKETS = "Public Markets"
+    BANK_ACCOUNT = "Bank Account"
+    LOAN = "Loan"
 
 class CashFlowType(str, enum.Enum):
     # Capital calls and contributions
@@ -167,6 +173,19 @@ class RiskRating(str, enum.Enum):
     MEDIUM = "Medium"
     HIGH = "High"
 
+class TaxClassification(str, enum.Enum):
+    FORM_1099 = "1099"
+    K1_PARTNERSHIP = "K-1"
+    SCHEDULE_C = "Schedule C"
+    W2_EMPLOYMENT = "W-2"
+    FORM_1041 = "1041"
+    FORM_1120S = "1120S"
+
+class ActivityClassification(str, enum.Enum):
+    ACTIVE = "Active"
+    PASSIVE = "Passive"
+    PORTFOLIO = "Portfolio"
+
 class Entity(Base):
     """
     Represents legal entities that can own investments (Individuals, Trusts, LLCs, etc.)
@@ -308,7 +327,8 @@ class Investment(Base):
     
     # Legal & Risk
     fund_domicile = Column(String, nullable=True)
-    tax_classification = Column(String, nullable=True)
+    tax_classification = Column(Enum(TaxClassification), nullable=True)
+    activity_classification = Column(Enum(ActivityClassification), nullable=True)
     due_diligence_date = Column(Date, nullable=True)
     ic_approval_date = Column(Date, nullable=True)  # Investment Committee approval
     risk_rating = Column(Enum(RiskRating), nullable=True)

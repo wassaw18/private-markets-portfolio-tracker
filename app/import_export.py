@@ -45,25 +45,32 @@ def validate_and_convert_row(row: Dict[str, Any], row_num: int, force_upload: bo
             
         asset_class = row.get('asset_class') or row.get('Asset Class') or row.get('asset_class')
         if asset_class:
-            # Try to match to enum values
+            # Try to match to enum values - updated to match frontend enum
             asset_class_mapping = {
+                'public_equity': AssetClass.PUBLIC_EQUITY,
+                'public equity': AssetClass.PUBLIC_EQUITY,
                 'pe': AssetClass.PRIVATE_EQUITY,
-                'private equity': AssetClass.PRIVATE_EQUITY,
                 'private_equity': AssetClass.PRIVATE_EQUITY,
-                'pc': AssetClass.PRIVATE_CREDIT,
-                'private credit': AssetClass.PRIVATE_CREDIT,
-                'private_credit': AssetClass.PRIVATE_CREDIT,
-                're': AssetClass.REAL_ESTATE,
-                'real estate': AssetClass.REAL_ESTATE,
-                'real_estate': AssetClass.REAL_ESTATE,
-                'infrastructure': AssetClass.INFRASTRUCTURE,
-                'real_assets': AssetClass.REAL_ASSETS,
-                'infra': AssetClass.INFRASTRUCTURE,
-                'hedge': AssetClass.HEDGE_FUNDS,
-                'hedge funds': AssetClass.HEDGE_FUNDS,
+                'private equity': AssetClass.PRIVATE_EQUITY,
                 'vc': AssetClass.VENTURE_CAPITAL,
-                'venture capital': AssetClass.VENTURE_CAPITAL,
                 'venture_capital': AssetClass.VENTURE_CAPITAL,
+                'venture capital': AssetClass.VENTURE_CAPITAL,
+                'pc': AssetClass.PRIVATE_CREDIT,
+                'private_credit': AssetClass.PRIVATE_CREDIT,
+                'private credit': AssetClass.PRIVATE_CREDIT,
+                're': AssetClass.REAL_ESTATE,
+                'real_estate': AssetClass.REAL_ESTATE,
+                'real estate': AssetClass.REAL_ESTATE,
+                'real_assets': AssetClass.REAL_ASSETS,
+                'real assets': AssetClass.REAL_ASSETS,
+                'public_fixed_income': AssetClass.PUBLIC_FIXED_INCOME,
+                'public fixed income': AssetClass.PUBLIC_FIXED_INCOME,
+                'fixed income': AssetClass.PUBLIC_FIXED_INCOME,
+                'bonds': AssetClass.PUBLIC_FIXED_INCOME,
+                'cash_and_equivalents': AssetClass.CASH_AND_EQUIVALENTS,
+                'cash & cash equivalents': AssetClass.CASH_AND_EQUIVALENTS,
+                'cash': AssetClass.CASH_AND_EQUIVALENTS,
+                'money market': AssetClass.CASH_AND_EQUIVALENTS,
             }
             asset_class_lower = str(asset_class).lower().strip()
             asset_class = asset_class_mapping.get(asset_class_lower)

@@ -136,17 +136,19 @@ class ExcelTemplateService:
         entity_ids = [entity.id for entity in entities]
         print(f"Investment Template: Found {len(entity_names)} entities: {entity_names}")
         
-        # Define dropdowns for validation
-        asset_classes = ["PRIVATE_EQUITY", "VENTURE_CAPITAL", "PRIVATE_CREDIT", "REAL_ESTATE", "REAL_ASSETS", "INFRASTRUCTURE", "HEDGE_FUNDS", "PUBLIC_EQUITY"]
+        # All dropdown values matching frontend enums exactly
+        asset_classes = ["PUBLIC_EQUITY", "PUBLIC_FIXED_INCOME", "PRIVATE_EQUITY", "VENTURE_CAPITAL", "PRIVATE_CREDIT", "REAL_ESTATE", "REAL_ASSETS", "CASH_AND_EQUIVALENTS"]
         investment_structures = ["LIMITED_PARTNERSHIP", "DIRECT_INVESTMENT", "CO_INVESTMENT", "FUND_OF_FUNDS", "SEPARATE_ACCOUNT", "HEDGE_FUND", "PUBLIC_MARKETS", "BANK_ACCOUNT", "LOAN"]
         liquidity_profiles = ["ILLIQUID", "SEMI_LIQUID", "LIQUID"]
         reporting_frequencies = ["MONTHLY", "QUARTERLY", "SEMI_ANNUALLY", "ANNUALLY"]
-        risk_ratings = ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"]
+        risk_ratings = ["LOW", "MEDIUM", "HIGH"]
+        tax_classifications = ["1099", "K-1", "Schedule C", "W-2", "1041", "1120S"]
+        activity_classifications = ["ACTIVE", "PASSIVE", "PORTFOLIO"]
         currencies = ["USD", "EUR", "GBP", "JPY"]
         
-        self._create_investment_data_sheet(data_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, currencies, styles)
+        self._create_investment_data_sheet(data_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
         self._create_investment_instructions_sheet(instructions_sheet, styles)
-        self._create_investment_validation_data_sheet(validation_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, currencies, styles)
+        self._create_investment_validation_data_sheet(validation_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
         
         # Set active sheet to data entry
         workbook.active = data_sheet
@@ -523,36 +525,36 @@ class ExcelTemplateService:
         sheet.column_dimensions['A'].width = 30
         sheet.column_dimensions['B'].width = 20
 
-    def _create_investment_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], currencies: List[str], styles: Dict):
+    def _create_investment_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], tax_classifications: List[str], activity_classifications: List[str], currencies: List[str], styles: Dict):
         """Create bulletproof Investment data entry sheet with dual headers"""
-        # User-friendly headers (Row 1)
+        # User-friendly headers (Row 1) - EXACTLY matching frontend fields
         user_headers = [
-            "Investment Name*", "Asset Class*", "Investment Structure*", "Entity ID*", "Owner/Entity*", "Strategy*", 
-            "Vintage Year*", "Commitment Amount*", "Commitment Date*", "Called Amount", "Currency",
-            "Management Fee (%)", "Performance Fee (%)", "Hurdle Rate (%)", "Preferred Return (%)",
-            "Contact Person", "Email", "Phone", "Address", "Fund Size", "Target Return (%)",
-            "Investment Period (years)", "Fund Life (years)", "Reporting Frequency", "Geography",
-            "Sector Focus", "Risk Rating", "ESG Focus", "Other Fees", "Key Terms", "Due Diligence Notes"
+            "Investment Name*", "Asset Class*", "Investment Structure*", "Entity ID*", "Manager", "Strategy*", 
+            "Vintage Year*", "Target Raise", "Geography Focus", "Commitment Amount*", "Commitment Date*", 
+            "Management Fee (%)", "Performance Fee (%)", "Hurdle Rate (%)", "Distribution Target", "Currency",
+            "Liquidity Profile*", "Expected Maturity Date", "Reporting Frequency", "Contact Person", "Email",
+            "Portal Link", "Fund Administrator", "Fund Domicile", "Tax Classification", "Activity Classification",
+            "Due Diligence Date", "IC Approval Date", "Risk Rating", "Benchmark Index", "Called Amount", "Fees"
         ]
         
-        # Database field names (Row 2) - EXACT field names for import validation
+        # Database field names (Row 2) - EXACT field names matching frontend interface
         db_field_names = [
-            "name", "asset_class", "investment_structure", "entity_id", "owner", "strategy",
-            "vintage_year", "commitment_amount", "commitment_date", "called_amount", "currency",
-            "management_fee", "performance_fee", "hurdle_rate", "preferred_return",
-            "contact_person", "email", "phone", "address", "fund_size", "target_return",
-            "investment_period_years", "fund_term_years", "reporting_frequency", "geography_focus",
-            "sector", "risk_rating", "esg_focus", "fees", "key_terms", "due_diligence_notes"
+            "name", "asset_class", "investment_structure", "entity_id", "manager", "strategy",
+            "vintage_year", "target_raise", "geography_focus", "commitment_amount", "commitment_date",
+            "management_fee", "performance_fee", "hurdle_rate", "distribution_target", "currency",
+            "liquidity_profile", "expected_maturity_date", "reporting_frequency", "contact_person", "email",
+            "portal_link", "fund_administrator", "fund_domicile", "tax_classification", "activity_classification",
+            "due_diligence_date", "ic_approval_date", "risk_rating", "benchmark_index", "called_amount", "fees"
         ]
         
-        # Field requirements and examples (Row 3)
+        # Field requirements and examples (Row 3) - matching frontend exactly
         field_examples = [
-            "e.g., Acme Fund III", "PRIVATE_EQUITY, VENTURE_CAPITAL, etc.", "LIMITED_PARTNERSHIP, etc.", "1, 2, 3 (from Entities)", "Entity name from system", "e.g., Growth Capital",
-            "e.g., 2022", "e.g., 5000000", "YYYY-MM-DD format", "e.g., 2500000", "USD, EUR, etc.",
-            "0.02 (for 2%)", "0.20 (for 20%)", "0.08 (for 8%)", "0.08 (for 8%)",
-            "Contact name", "email@domain.com", "Phone number", "Full address", "e.g., 250000000", "0.15 (for 15%)",
-            "e.g., 5", "e.g., 10", "QUARTERLY, ANNUALLY", "North America, Europe",
-            "Technology, Healthcare", "LOW, MEDIUM, HIGH", "Focus area", "Additional fees", "Key terms", "DD notes"
+            "e.g., Acme Fund III", "Select from dropdown", "Select from dropdown", "1, 2, 3 (Entity ID)", "e.g., ABC Capital", "e.g., Growth Buyout",
+            "e.g., 2024", "e.g., 500000000", "North America, Europe", "e.g., 5000000", "YYYY-MM-DD format",
+            "2.5 (for 2.5%)", "20.0 (for 20%)", "8.0 (for 8%)", "Distribution description", "USD, EUR, etc.",
+            "Select from dropdown", "YYYY-MM-DD", "Select from dropdown", "Contact name", "email@domain.com",
+            "https://portal.fund.com", "e.g., SS&C GlobeOp", "e.g., Delaware", "Select from dropdown", "Select from dropdown",
+            "YYYY-MM-DD", "YYYY-MM-DD", "Select from dropdown", "e.g., S&P 500", "e.g., 2500000", "e.g., 50000"
         ]
         
         # Apply triple-header styling
@@ -598,14 +600,14 @@ class ExcelTemplateService:
         sheet.column_dimensions['D'].width = 25  # Entity
         sheet.column_dimensions['E'].width = 20  # Strategy
         
-        # Add sample data
+        # Add sample data - matching NEW field order exactly
         sample_data = [
-            "Example Fund LP", "PRIVATE_EQUITY", "LIMITED_PARTNERSHIP", "1", entity_names[0] if entity_names else "Create Entity First",
-            "Growth Buyout", "2024", "5000000", "2024-01-15", "1000000", "USD",
-            "2.0", "20.0", "8.0", "8.0",
-            "John Smith", "john@fund.com", "+1-555-123-4567", "123 Main St", "500000000", "15.0",
-            "5", "10", "QUARTERLY", "North America",
-            "Technology", "MEDIUM", "ESG Focus", "25000", "Key terms here", "DD notes here"
+            "Example Fund LP", "PRIVATE_EQUITY", "LIMITED_PARTNERSHIP", "1", "ABC Capital Partners", "Growth Buyout",
+            "2024", "500000000", "North America", "5000000", "2024-01-15",
+            "2.5", "20.0", "8.0", "Quarterly distributions", "USD",
+            "ILLIQUID", "2034-01-15", "QUARTERLY", "John Smith", "john@fund.com",
+            "https://portal.fund.com", "SS&C GlobeOp", "Delaware", "K-1", "PASSIVE", 
+            "2023-12-01", "2024-01-15", "MEDIUM", "S&P 500", "2500000", "50000"
         ]
         
         # Create 100 blank data rows (rows 4-103) for bulk entry
@@ -621,21 +623,24 @@ class ExcelTemplateService:
         
         # Add Excel data validation dropdowns for enum fields
         self._add_investment_dropdowns(sheet, entity_names, asset_classes, investment_structures, 
-                                     liquidity_profiles, reporting_frequencies, risk_ratings, currencies)
+                                     liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies)
 
     def _add_investment_dropdowns(self, sheet, entity_names, asset_classes, investment_structures,
-                                liquidity_profiles, reporting_frequencies, risk_ratings, currencies):
+                                liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies):
         """Add dropdown validation to all enum columns with proper error handling"""
         
         try:
-            # Column mappings (1-indexed) - based on db_field_names order
+            # Column mappings (1-indexed) - based on NEW db_field_names order
             dropdowns = {
                 2: asset_classes,                    # Asset Class (column 2)
                 3: investment_structures,            # Investment Structure (column 3)
                 4: [str(i) for i in range(1, 21)],  # Entity ID (1-20, reduced for formula length)
-                11: currencies,                      # Currency (column 11)
-                24: reporting_frequencies,           # Reporting Frequency (column 24)
-                26: risk_ratings                     # Risk Rating (column 26, not 27)
+                16: currencies,                      # Currency (column 16)
+                17: liquidity_profiles,              # Liquidity Profile (column 17)
+                19: reporting_frequencies,           # Reporting Frequency (column 19)
+                24: tax_classifications,             # Tax Classification (column 24)
+                25: activity_classifications,        # Activity Classification (column 25)
+                28: risk_ratings                     # Risk Rating (column 28)
             }
             
             # Add validation for each dropdown column
@@ -765,12 +770,12 @@ class ExcelTemplateService:
         
         sheet.column_dimensions['A'].width = 80
 
-    def _create_investment_validation_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], currencies: List[str], styles: Dict):
+    def _create_investment_validation_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], tax_classifications: List[str], activity_classifications: List[str], currencies: List[str], styles: Dict):
         """Create validation data for Investment template dropdowns"""
         
-        # Column headers
-        headers = ["Entities", "Asset Classes", "Investment Structures", "Liquidity Profiles", "Reporting Frequencies", "Risk Ratings", "Currencies"]
-        data_lists = [entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, currencies]
+        # Column headers - include all dropdown fields
+        headers = ["Entities", "Asset Classes", "Investment Structures", "Liquidity Profiles", "Reporting Frequencies", "Risk Ratings", "Tax Classifications", "Activity Classifications", "Currencies"]
+        data_lists = [entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies]
         
         # Add headers
         for col, header in enumerate(headers, 1):
