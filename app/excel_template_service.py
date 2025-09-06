@@ -527,34 +527,34 @@ class ExcelTemplateService:
 
     def _create_investment_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], tax_classifications: List[str], activity_classifications: List[str], currencies: List[str], styles: Dict):
         """Create bulletproof Investment data entry sheet with dual headers"""
-        # User-friendly headers (Row 1) - EXACTLY matching frontend fields
+        # User-friendly headers (Row 1) - EXACTLY matching frontend modal inputs only
         user_headers = [
-            "Investment Name*", "Asset Class*", "Investment Structure*", "Entity ID*", "Manager", "Strategy*", 
+            "Investment Name*", "Asset Class*", "Investment Structure*", "Manager", "Strategy*", 
             "Vintage Year*", "Target Raise", "Geography Focus", "Commitment Amount*", "Commitment Date*", 
             "Management Fee (%)", "Performance Fee (%)", "Hurdle Rate (%)", "Distribution Target", "Currency",
             "Liquidity Profile*", "Expected Maturity Date", "Reporting Frequency", "Contact Person", "Email",
             "Portal Link", "Fund Administrator", "Fund Domicile", "Tax Classification", "Activity Classification",
-            "Due Diligence Date", "IC Approval Date", "Risk Rating", "Benchmark Index", "Called Amount", "Fees"
+            "Due Diligence Date", "IC Approval Date", "Risk Rating", "Benchmark Index"
         ]
         
-        # Database field names (Row 2) - EXACT field names matching frontend interface
+        # Database field names (Row 2) - EXACT field names matching frontend modal inputs only
         db_field_names = [
-            "name", "asset_class", "investment_structure", "entity_id", "manager", "strategy",
+            "name", "asset_class", "investment_structure", "manager", "strategy",
             "vintage_year", "target_raise", "geography_focus", "commitment_amount", "commitment_date",
             "management_fee", "performance_fee", "hurdle_rate", "distribution_target", "currency",
             "liquidity_profile", "expected_maturity_date", "reporting_frequency", "contact_person", "email",
             "portal_link", "fund_administrator", "fund_domicile", "tax_classification", "activity_classification",
-            "due_diligence_date", "ic_approval_date", "risk_rating", "benchmark_index", "called_amount", "fees"
+            "due_diligence_date", "ic_approval_date", "risk_rating", "benchmark_index"
         ]
         
-        # Field requirements and examples (Row 3) - matching frontend exactly
+        # Field requirements and examples (Row 3) - matching frontend modal inputs exactly
         field_examples = [
-            "e.g., Acme Fund III", "Select from dropdown", "Select from dropdown", "1, 2, 3 (Entity ID)", "e.g., ABC Capital", "e.g., Growth Buyout",
+            "e.g., Acme Fund III", "Select from dropdown", "Select from dropdown", "e.g., ABC Capital", "e.g., Growth Buyout",
             "e.g., 2024", "e.g., 500000000", "North America, Europe", "e.g., 5000000", "YYYY-MM-DD format",
             "2.5 (for 2.5%)", "20.0 (for 20%)", "8.0 (for 8%)", "Distribution description", "USD, EUR, etc.",
             "Select from dropdown", "YYYY-MM-DD", "Select from dropdown", "Contact name", "email@domain.com",
             "https://portal.fund.com", "e.g., SS&C GlobeOp", "e.g., Delaware", "Select from dropdown", "Select from dropdown",
-            "YYYY-MM-DD", "YYYY-MM-DD", "Select from dropdown", "e.g., S&P 500", "e.g., 2500000", "e.g., 50000"
+            "YYYY-MM-DD", "YYYY-MM-DD", "Select from dropdown", "e.g., S&P 500"
         ]
         
         # Apply triple-header styling
@@ -601,14 +601,14 @@ class ExcelTemplateService:
         sheet.column_dimensions['D'].width = 25  # Entity
         sheet.column_dimensions['E'].width = 20  # Strategy
         
-        # Add sample data - matching NEW field order exactly
+        # Add sample data - matching corrected field order exactly (removed called_amount, entity_id, fees)
         sample_data = [
-            "Example Fund LP", "PRIVATE_EQUITY", "LIMITED_PARTNERSHIP", "1", "ABC Capital Partners", "Growth Buyout",
+            "Example Fund LP", "PRIVATE_EQUITY", "LIMITED_PARTNERSHIP", "ABC Capital Partners", "Growth Buyout",
             "2024", "500000000", "North America", "5000000", "2024-01-15",
             "2.5", "20.0", "8.0", "Quarterly distributions", "USD",
             "ILLIQUID", "2034-01-15", "QUARTERLY", "John Smith", "john@fund.com",
             "https://portal.fund.com", "SS&C GlobeOp", "Delaware", "K-1", "PASSIVE", 
-            "2023-12-01", "2024-01-15", "MEDIUM", "S&P 500", "2500000", "50000"
+            "2023-12-01", "2024-01-15", "MEDIUM", "S&P 500"
         ]
         
         # Create 100 blank data rows (rows 4-103) for bulk entry
@@ -631,17 +631,16 @@ class ExcelTemplateService:
         """Add dropdown validation to all enum columns with proper error handling"""
         
         try:
-            # Column mappings (1-indexed) - CORRECTED to match actual header positions
+            # Column mappings (1-indexed) - UPDATED after removing entity_id, called_amount, fees columns
             dropdowns = {
                 2: asset_classes,                    # Asset Class (column 2)
                 3: investment_structures,            # Investment Structure (column 3)
-                4: [str(i) for i in range(1, 21)],  # Entity ID (1-20, reduced for formula length)
-                16: currencies,                      # Currency (column 16)
-                17: liquidity_profiles,              # Liquidity Profile (column 17)
-                19: reporting_frequencies,           # Reporting Frequency (column 19)
-                25: tax_classifications,             # Tax Classification (column 25)
-                26: activity_classifications,        # Activity Classification (column 26)
-                29: risk_ratings                     # Risk Rating (column 29)
+                15: currencies,                      # Currency (column 15)
+                16: liquidity_profiles,              # Liquidity Profile (column 16)
+                18: reporting_frequencies,           # Reporting Frequency (column 18)
+                24: tax_classifications,             # Tax Classification (column 24)
+                25: activity_classifications,        # Activity Classification (column 25)
+                28: risk_ratings                     # Risk Rating (column 28)
             }
             
             # Add validation for each dropdown column

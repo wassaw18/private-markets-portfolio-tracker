@@ -145,23 +145,13 @@ def validate_and_convert_row(row: Dict[str, Any], row_num: int, force_upload: bo
         }
         investment_structure = structure_mapping.get(str(structure_str).strip() if structure_str else '', InvestmentStructure.LIMITED_PARTNERSHIP)
         
-        # Entity ID* (Required)
-        entity_id = get_field_value('entity_id', 'Entity ID')
-        if not entity_id:
-            if force_upload:
-                entity_id = 1
-                errors.append("Missing entity_id - using default: 1 (update manually)")
-            else:
-                errors.append("Missing required field: entity_id")
-        else:
-            try:
-                entity_id = int(entity_id)
-            except (ValueError, TypeError):
-                if force_upload:
-                    entity_id = 1
-                    errors.append("Invalid entity_id - using default: 1")
-                else:
-                    errors.append("Invalid entity_id: must be integer")
+        # Entity ID* (Required by backend but not in Excel template - use default)
+        # Note: Excel template doesn't include entity_id field since frontend uses EntitySelector dropdown
+        # Future enhancement: Allow entity selection by name in Excel and map to ID during import
+        entity_id = 1  # Default to first entity
+        if force_upload:
+            errors.append("Entity ID defaulted to 1 - please assign correct entity after import")
+        # Note: We don't add this as an error for normal upload since it's not expected in Excel
         
         # Manager (Optional)
         manager = get_field_value('manager', 'Manager') or None
