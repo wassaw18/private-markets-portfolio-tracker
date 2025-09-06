@@ -575,9 +575,9 @@ class ExcelTemplateService:
             user_cell.border = styles['thin_border']
             user_cell.alignment = styles['center_alignment']
             
-            # Row 2: Database field names (for reference)
+            # Row 2: Database field names (clean field names without brackets for import compatibility)
             db_cell = sheet.cell(row=2, column=col)
-            db_cell.value = f"[{db_field}]"
+            db_cell.value = db_field
             db_cell.font = self.fonts['instruction']
             db_cell.fill = PatternFill(start_color="FFFFCC", end_color="FFFFCC", fill_type="solid")  # Light yellow
             db_cell.border = styles['thin_border']
