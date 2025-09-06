@@ -16,7 +16,7 @@ from datetime import datetime, date
 import logging
 
 from app import models, schemas, crud
-from app.models import CashFlowType
+from app.models import CashFlowType, EntityType
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +149,33 @@ class ExcelTemplateService:
         self._create_investment_data_sheet(data_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
         self._create_investment_instructions_sheet(instructions_sheet, styles)
         self._create_investment_validation_data_sheet(validation_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
+        
+        # Set active sheet to data entry
+        workbook.active = data_sheet
+        
+        # Save to BytesIO
+        excel_buffer = BytesIO()
+        workbook.save(excel_buffer)
+        excel_buffer.seek(0)
+        return excel_buffer
+
+    def generate_entity_template(self, db: Session) -> BytesIO:
+        """Generate professional Entity bulk upload template"""
+        workbook = Workbook()
+        styles = self._create_professional_style(workbook)
+        
+        # Remove default sheet and create sheets
+        workbook.remove(workbook.active)
+        data_sheet = workbook.create_sheet("Entity Data")
+        instructions_sheet = workbook.create_sheet("Instructions")
+        validation_sheet = workbook.create_sheet("Validation Data")
+        
+        # Entity type dropdown options
+        entity_types = ["INDIVIDUAL", "TRUST", "LLC", "PARTNERSHIP", "CORPORATION", "FOUNDATION", "OTHER"]
+        
+        self._create_entity_data_sheet(data_sheet, entity_types, styles)
+        self._create_entity_instructions_sheet(instructions_sheet, styles)
+        self._create_entity_validation_data_sheet(validation_sheet, entity_types, styles)
         
         # Set active sheet to data entry
         workbook.active = data_sheet
@@ -882,6 +909,209 @@ class ExcelTemplateService:
                 if row_idx == 3:  # Sample row - make it stand out
                     cell.fill = PatternFill(start_color='FFF8DC', end_color='FFF8DC', fill_type="solid")
 
+    def _create_entity_data_sheet(self, sheet, entity_types: List[str], styles: Dict):
+        """Create the Entity data entry sheet with conditional field requirements"""
+        # User-friendly headers (Row 1)
+        user_headers = [
+            "Entity Name*", "Entity Type*", "Tax ID*", "Legal Address", 
+            "Formation Date", "Notes"
+        ]
+        
+        # Database field names (Row 2) 
+        db_field_names = [
+            "name", "entity_type", "tax_id", "legal_address",
+            "formation_date", "notes"
+        ]
+        
+        # Field requirements and examples (Row 3)
+        field_examples = [
+            "e.g., Smith Family Trust", "Select from dropdown", "SSN/EIN/TIN", "Full legal address",
+            "For legal entities: YYYY-MM-DD", "Optional comments"
+        ]
+        
+        # Apply triple-header styling (reusing investment pattern)
+        for col, (user_header, db_field, example) in enumerate(zip(user_headers, db_field_names, field_examples), 1):
+            # Row 1: User-friendly headers (bold required fields)
+            user_cell = sheet.cell(row=1, column=col)
+            user_cell.value = user_header
+            
+            # Bold required fields (marked with *)
+            if '*' in user_header:
+                required_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
+                user_cell.font = required_font
+                user_cell.fill = PatternFill(start_color="D32F2F", end_color="D32F2F", fill_type="solid")  # Red for required
+            else:
+                user_cell.font = self.fonts['header']
+                user_cell.fill = styles['header_fill']
+                
+            user_cell.border = styles['thin_border']
+            user_cell.alignment = styles['center_alignment']
+            
+            # Row 2: Database field names
+            db_cell = sheet.cell(row=2, column=col)
+            db_cell.value = db_field
+            db_cell.font = self.fonts['instruction']
+            db_cell.fill = PatternFill(start_color="FFFFCC", end_color="FFFFCC", fill_type="solid")  # Light yellow
+            db_cell.border = styles['thin_border']
+            db_cell.alignment = styles['center_alignment']
+            
+            # Row 3: Examples and requirements
+            example_cell = sheet.cell(row=3, column=col)
+            example_cell.value = example
+            example_cell.font = self.fonts['instruction']
+            example_cell.fill = styles['secondary_fill']
+            example_cell.border = styles['thin_border']
+            example_cell.alignment = styles['center_alignment']
+        
+        # Set column widths
+        sheet.column_dimensions['A'].width = 30  # Entity Name
+        sheet.column_dimensions['B'].width = 20  # Entity Type
+        sheet.column_dimensions['C'].width = 20  # Tax ID
+        sheet.column_dimensions['D'].width = 35  # Legal Address
+        sheet.column_dimensions['E'].width = 18  # Formation Date
+        sheet.column_dimensions['F'].width = 30  # Notes
+        
+        # Add sample data with different entity types
+        sample_data_rows = [
+            ["Smith Family Trust", "TRUST", "12-3456789", "123 Main St, New York, NY 10001", "2020-01-15", "Primary family trust"],
+            ["John Smith", "INDIVIDUAL", "123-45-6789", "456 Oak Ave, Los Angeles, CA 90210", "", "Individual investor"],
+            ["Acme Holdings LLC", "LLC", "98-7654321", "789 Business Blvd, Chicago, IL 60601", "2019-05-10", "Investment holding company"],
+        ]
+        
+        # Create sample rows and 50 blank data rows for bulk entry
+        for row_num in range(4, 54):  # 50 rows of data
+            for col_num in range(1, len(user_headers) + 1):
+                cell = sheet.cell(row=row_num, column=col_num)
+                cell.border = styles['thin_border']
+                
+                # Add sample data to first 3 rows
+                if row_num <= 6:  # Rows 4, 5, 6 get sample data
+                    sample_index = row_num - 4
+                    if sample_index < len(sample_data_rows) and col_num <= len(sample_data_rows[sample_index]):
+                        cell.value = sample_data_rows[sample_index][col_num - 1]
+                        cell.fill = PatternFill(start_color='FFF8DC', end_color='FFF8DC', fill_type="solid")
+                        
+                cell.font = self.fonts['body']
+        
+        # Add Excel data validation for Entity Type dropdown
+        self._add_entity_dropdowns(sheet, entity_types)
+
+    def _add_entity_dropdowns(self, sheet, entity_types: List[str]):
+        """Add dropdown validation for entity type column"""
+        try:
+            # Entity Type validation (column 2)
+            if entity_types and len(entity_types) > 0:
+                formula_str = ",".join(entity_types)
+                
+                if len(formula_str) <= 255:  # Excel formula length limit
+                    dv = DataValidation(type="list", formula1=f'"{formula_str}"')
+                    dv.error = 'Please select from the dropdown list'
+                    dv.errorTitle = 'Invalid Entity Type'
+                    dv.prompt = f'Select entity type: {", ".join(entity_types[:3])}{"..." if len(entity_types) > 3 else ""}'
+                    dv.promptTitle = 'Select Entity Type'
+                    
+                    # Apply to all data rows (4-53)
+                    dv.add('B4:B53')
+                    sheet.add_data_validation(dv)
+                    
+        except Exception as e:
+            print(f"Warning: Failed to add entity type dropdown: {str(e)}")
+
+    def _create_entity_instructions_sheet(self, sheet, styles: Dict):
+        """Create comprehensive instructions for Entity upload with conditional requirements"""
+        instructions = [
+            ("Entity Bulk Upload Template Instructions", self.fonts['header']),
+            ("", None),
+            ("🏢 ENTITY MANAGEMENT SYSTEM:", self.fonts['subheader']),
+            ("• Create multiple entities (Individuals, Trusts, LLCs, etc.) in bulk", self.fonts['body']),
+            ("• Smart conditional field requirements based on entity type", self.fonts['body']),
+            ("• Professional Excel dropdowns eliminate data entry errors", self.fonts['body']),
+            ("• 50 blank rows ready for efficient bulk data entry", self.fonts['body']),
+            ("", None),
+            ("Overview:", self.fonts['subheader']),
+            ("This template allows you to create multiple entities at once.", self.fonts['body']),
+            ("Required fields are marked with * and highlighted in RED.", self.fonts['body']),
+            ("Field requirements change based on entity type for optimal data quality.", self.fonts['body']),
+            ("", None),
+            ("Required Fields (*) - Must be completed for ALL entities:", self.fonts['subheader']),
+            ("• Entity Name: Unique name for the entity", self.fonts['body']),
+            ("• Entity Type: SELECT FROM DROPDOWN (prevents errors)", self.fonts['body']),
+            ("• Tax ID: SSN for individuals, EIN/TIN for legal entities", self.fonts['body']),
+            ("", None),
+            ("📋 CONDITIONAL FIELD REQUIREMENTS:", self.fonts['subheader']),
+            ("", None),
+            ("For INDIVIDUAL entities:", self.fonts['subheader']),
+            ("• Formation Date: OPTIONAL (leave blank)", self.fonts['body']),
+            ("• Tax ID: Social Security Number (XXX-XX-XXXX)", self.fonts['body']),
+            ("• Legal Address: Personal residence address", self.fonts['body']),
+            ("", None),
+            ("For LEGAL entities (Trust, LLC, Corporation, etc.):", self.fonts['subheader']),
+            ("• Formation Date: RECOMMENDED (YYYY-MM-DD format)", self.fonts['body']),
+            ("• Tax ID: Employer Identification Number (XX-XXXXXXX)", self.fonts['body']),
+            ("• Legal Address: Official business/trust address", self.fonts['body']),
+            ("", None),
+            ("Optional Fields - Can be updated later:", self.fonts['subheader']),
+            ("• Legal Address: Physical or mailing address", self.fonts['body']),
+            ("• Notes: Additional comments, special instructions, or relationships", self.fonts['body']),
+            ("", None),
+            ("Entity Type Descriptions:", self.fonts['subheader']),
+            ("• INDIVIDUAL: Natural person (family member, investor)", self.fonts['body']),
+            ("• TRUST: Revocable/irrevocable trusts, family trusts", self.fonts['body']),
+            ("• LLC: Limited Liability Companies", self.fonts['body']),
+            ("• PARTNERSHIP: General or Limited Partnerships", self.fonts['body']),
+            ("• CORPORATION: C-Corp, S-Corp entities", self.fonts['body']),
+            ("• FOUNDATION: Charitable foundations, family foundations", self.fonts['body']),
+            ("• OTHER: Other legal entity types", self.fonts['body']),
+            ("", None),
+            ("Data Format Guidelines:", self.fonts['subheader']),
+            ("• Entity Names: Keep unique and descriptive", self.fonts['body']),
+            ("• Tax IDs: Use proper formatting (XXX-XX-XXXX or XX-XXXXXXX)", self.fonts['body']),
+            ("• Formation Dates: Use YYYY-MM-DD format (e.g., 2024-12-31)", self.fonts['body']),
+            ("• Addresses: Include full address for better record keeping", self.fonts['body']),
+            ("", None),
+            ("Steps to Use:", self.fonts['subheader']),
+            ("1. Switch to the 'Entity Data' tab", self.fonts['body']),
+            ("2. Fill in required fields (marked with *) for each entity", self.fonts['body']),
+            ("3. Use dropdown for Entity Type (prevents errors)", self.fonts['body']),
+            ("4. Follow conditional requirements based on entity type", self.fonts['body']),
+            ("5. Optional fields can be left blank and updated later", self.fonts['body']),
+            ("6. Save the file and upload through the web interface", self.fonts['body']),
+            ("", None),
+            ("Important Notes:", self.fonts['subheader']),
+            ("• Entity names must be unique across the entire system", self.fonts['body']),
+            ("• Tax IDs should be unique (system will warn of duplicates)", self.fonts['body']),
+            ("• Formation dates are validated for reasonableness", self.fonts['body']),
+            ("• Maximum 50 entities per upload for optimal performance", self.fonts['body']),
+            ("", None),
+            ("After Upload:", self.fonts['subheader']),
+            ("• Entities will be immediately available for investment assignment", self.fonts['body']),
+            ("• You can add family members and relationships later", self.fonts['body']),
+            ("• Investment ownership can be assigned to any created entity", self.fonts['body']),
+            ("• Entity details can be updated individually after bulk creation", self.fonts['body']),
+        ]
+        
+        for row, (text, font) in enumerate(instructions, 1):
+            cell = sheet.cell(row=row, column=1)
+            cell.value = text
+            if font:
+                cell.font = font
+            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+        
+        sheet.column_dimensions['A'].width = 85
+
+    def _create_entity_validation_data_sheet(self, sheet, entity_types: List[str], styles: Dict):
+        """Create validation data for Entity template dropdowns"""
+        
+        # Entity types in column A
+        sheet.cell(row=1, column=1, value="Entity Types")
+        sheet.cell(row=1, column=1).font = self.fonts['subheader']
+        
+        for idx, entity_type in enumerate(entity_types, 2):
+            sheet.cell(row=idx, column=1, value=entity_type)
+        
+        # Set column widths
+        sheet.column_dimensions['A'].width = 25
+
 class BulkUploadProcessor:
     """Process bulk uploads from Excel templates"""
     
@@ -1081,6 +1311,174 @@ class BulkUploadProcessor:
             result.add_error(0, f"File processing error: {str(e)}")
             
         return result
+
+    @staticmethod
+    def process_entity_upload(file_content: bytes, filename: str, db: Session) -> BulkUploadResult:
+        """Process Entity bulk upload with conditional field validation"""
+        result = BulkUploadResult()
+        
+        try:
+            # Read Excel file - skip headers like investment processing pattern
+            df = pd.read_excel(BytesIO(file_content), sheet_name='Entity Data', skiprows=[0, 2], header=0)
+            
+            # Clean column names - remove brackets from field names like '[name]' -> 'name'
+            df.columns = [col.strip('[]') if isinstance(col, str) else col for col in df.columns]
+            logger.info(f"Processing {len(df)} entity records from {filename}")
+            logger.info(f"Columns found: {list(df.columns)}")
+            
+            # Remove empty rows
+            df = df.dropna(how='all')
+            
+            for index, row in df.iterrows():
+                row_num = index + 4  # Account for 3-row header structure + 0-based index
+                
+                # Skip completely empty rows
+                if pd.isna(row.get('name')) or str(row.get('name')).strip() == '':
+                    continue
+                
+                try:
+                    # Extract and validate entity data using conditional logic
+                    entity_data, validation_errors = BulkUploadProcessor._validate_entity_row(row.to_dict(), row_num)
+                    
+                    if validation_errors:
+                        for error in validation_errors:
+                            result.add_error(row_num, error)
+                        continue
+                    
+                    if not entity_data:
+                        continue
+                    
+                    # Create entity using crud
+                    entity_create = schemas.EntityCreate(**entity_data)
+                    new_entity = crud.create_entity(db, entity_create)
+                    result.add_success()
+                    logger.info(f"Created entity: {new_entity.name} (ID: {new_entity.id})")
+                    
+                except Exception as e:
+                    error_msg = str(e)
+                    if "UNIQUE constraint failed" in error_msg:
+                        if "entities.name" in error_msg:
+                            result.add_error(row_num, f"Entity name '{row.get('name')}' already exists. Please use a unique name.")
+                        elif "entities.tax_id" in error_msg:
+                            result.add_error(row_num, f"Tax ID '{row.get('tax_id')}' already exists. Please use a unique Tax ID.")
+                        else:
+                            result.add_error(row_num, f"Duplicate data detected: {error_msg}")
+                    else:
+                        result.add_error(row_num, f"Database error: {error_msg}")
+            
+            # Set result message
+            if result.error_count == 0:
+                result.message = f"Successfully created {result.success_count} entities"
+            else:
+                result.message = f"Created {result.success_count} entities with {result.error_count} errors"
+                
+        except Exception as e:
+            result.add_error(0, f"File processing error: {str(e)}")
+            logger.error(f"Entity upload processing error: {str(e)}")
+            
+        return result
+
+    @staticmethod
+    def _validate_entity_row(row_data: Dict[str, Any], row_num: int) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+        """Validate entity row with conditional field requirements"""
+        
+        def get_field_value(field_name: str):
+            """Helper to get field value safely"""
+            value = row_data.get(field_name)
+            if pd.isna(value) or (isinstance(value, str) and value.strip() == ''):
+                return None
+            return str(value).strip() if value is not None else None
+        
+        def parse_date(date_str: str, field_name: str):
+            """Helper to parse dates consistently"""
+            if not date_str:
+                return None
+            try:
+                if isinstance(date_str, str):
+                    return datetime.strptime(date_str.strip(), "%Y-%m-%d").date()
+                elif isinstance(date_str, datetime):
+                    return date_str.date()
+                elif isinstance(date_str, date):
+                    return date_str
+            except (ValueError, AttributeError):
+                logger.warning(f"Row {row_num}: Invalid {field_name} format: {date_str}")
+                return None
+            return None
+        
+        errors = []
+        
+        try:
+            # Required: Entity Name
+            name = get_field_value('name')
+            if not name:
+                errors.append("Missing required field: name")
+            
+            # Required: Entity Type
+            entity_type_str = get_field_value('entity_type')
+            if not entity_type_str:
+                errors.append("Missing required field: entity_type")
+            
+            # Map entity type string to enum
+            entity_type_mapping = {
+                'INDIVIDUAL': EntityType.INDIVIDUAL,
+                'TRUST': EntityType.TRUST,
+                'LLC': EntityType.LLC,
+                'PARTNERSHIP': EntityType.PARTNERSHIP,
+                'CORPORATION': EntityType.CORPORATION,
+                'FOUNDATION': EntityType.FOUNDATION,
+                'OTHER': EntityType.OTHER,
+            }
+            
+            entity_type = None
+            if entity_type_str:
+                entity_type = entity_type_mapping.get(entity_type_str.upper())
+                if not entity_type:
+                    errors.append(f"Invalid entity_type: {entity_type_str}")
+            
+            # Required: Tax ID
+            tax_id = get_field_value('tax_id')
+            if not tax_id:
+                errors.append("Missing required field: tax_id")
+            
+            # Optional: Legal Address
+            legal_address = get_field_value('legal_address')
+            
+            # Conditional: Formation Date
+            formation_date_str = get_field_value('formation_date')
+            formation_date = parse_date(formation_date_str, 'formation_date') if formation_date_str else None
+            
+            # For legal entities (non-individuals), recommend formation date
+            if entity_type != EntityType.INDIVIDUAL and not formation_date and formation_date_str:
+                logger.warning(f"Row {row_num}: Formation date recommended for {entity_type_str} entities")
+            
+            # Optional: Notes
+            notes = get_field_value('notes')
+            
+            # Return early if there are validation errors
+            if errors:
+                return None, errors
+            
+            # Build entity data dictionary
+            entity_data = {
+                'name': name,
+                'entity_type': entity_type,
+                'tax_id': tax_id,
+                'is_active': True  # Default to active
+            }
+            
+            # Add optional fields only if they have values
+            if legal_address:
+                entity_data['legal_address'] = legal_address
+            if formation_date:
+                entity_data['formation_date'] = formation_date
+            if notes:
+                entity_data['notes'] = notes
+            
+            return entity_data, []
+            
+        except Exception as e:
+            logger.error(f"Row {row_num}: Validation error: {str(e)}")
+            return None, [f"Validation error: {str(e)}"]
 
     @staticmethod
     def _update_investment_summaries(db: Session, investment_ids: List[int]):

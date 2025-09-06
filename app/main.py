@@ -503,6 +503,20 @@ def download_investment_template(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating Investment template: {str(e)}")
 
+@app.get("/api/templates/entity-template")
+def download_entity_template(db: Session = Depends(get_db)):
+    """Download Entity bulk upload template"""
+    try:
+        excel_buffer = excel_template_service.generate_entity_template(db)
+        
+        return StreamingResponse(
+            excel_buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=Entity_Upload_Template.xlsx"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating Entity template: {str(e)}")
+
 # Bulk Upload Endpoints
 @app.post("/api/bulk-upload/navs")
 async def bulk_upload_navs(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -559,6 +573,34 @@ async def bulk_upload_cashflows(file: UploadFile = File(...), db: Session = Depe
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cash Flow upload failed: {str(e)}")
+
+@app.post("/api/bulk-upload/entities")
+async def bulk_upload_entities(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Bulk upload Entity data from Excel template"""
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(400, "Only Excel files are supported for bulk Entity upload")
+    
+    try:
+        # Read file content
+        content = await file.read()
+        
+        # Process upload
+        result = BulkUploadProcessor.process_entity_upload(content, file.filename, db)
+        
+        return {
+            "filename": file.filename,
+            "success_count": result.success_count,
+            "error_count": result.error_count,
+            "warning_count": result.warning_count,
+            "errors": result.errors[:20],  # Limit errors in response
+            "warnings": result.warnings[:10],  # Limit warnings in response
+            "message": result.message,
+            "has_more_errors": len(result.errors) > 20,
+            "has_more_warnings": len(result.warnings) > 10
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Entity upload failed: {str(e)}")
 
 # Cash Flow Forecasting & Pacing Model Endpoints
 
