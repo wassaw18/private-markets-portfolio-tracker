@@ -1,0 +1,4 @@
+Entity Name*,Entity Type*,Tax ID*,Legal Address,Formation Date,Notes
+Adams Family Trust,TRUST,12-3456789,"123 Wealth Street, Greenwich, CT 06830",2015-03-15,"Discretionary trust for family investments"
+Adams Holdings LLC,LLC,98-7654321,"123 Wealth Street, Greenwich, CT 06830",2020-01-10,"Investment holding company for direct investments"
+Robert C. Adams,INDIVIDUAL,555-12-3456,"123 Wealth Street, Greenwich, CT 06830",,"Principal family member and investment decision maker"
