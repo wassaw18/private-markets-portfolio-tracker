@@ -7,6 +7,7 @@ import Calendar from './pages/Calendar';
 import Documents from './pages/Documents';
 import Entities from './pages/Entities';
 import LiquidityForecast from './pages/LiquidityForecast';
+import BulkUpload from './pages/BulkUpload';
 import PageErrorBoundary from './components/PageErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -55,6 +56,12 @@ const Navigation: React.FC = () => {
           className={`nav-link ${location.pathname === '/liquidity' ? 'active' : ''}`}
         >
           Liquidity Forecast
+        </Link>
+        <Link 
+          to="/bulk-upload" 
+          className={`nav-link ${location.pathname === '/bulk-upload' ? 'active' : ''}`}
+        >
+          Bulk Upload
         </Link>
       </div>
       
@@ -114,6 +121,11 @@ function AppContent() {
               <Route path="/liquidity" element={
                 <PageErrorBoundary pageName="Liquidity Forecast">
                   <LiquidityForecast />
+                </PageErrorBoundary>
+              } />
+              <Route path="/bulk-upload" element={
+                <PageErrorBoundary pageName="Bulk Upload">
+                  <BulkUpload />
                 </PageErrorBoundary>
               } />
               <Route path="/investment/:id" element={

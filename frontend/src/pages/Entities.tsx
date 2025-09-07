@@ -2,10 +2,17 @@ import React, { useState } from 'react';
 import EntityManagement from '../components/EntityManagement';
 import EntityRelationshipManager from '../components/EntityRelationshipManager';
 import EntityRelationshipVisualization from '../components/EntityRelationshipVisualization';
+import UploadWidget from '../components/UploadWidget';
 import './Entities.css';
 
 const Entities: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'entities' | 'relationships' | 'visualization'>('entities');
+
+  const handleEntityUploadComplete = () => {
+    // Refresh entity data when upload completes
+    // This will trigger a refresh in the EntityManagement component
+    window.location.reload(); // Simple approach - could be improved with context/state management
+  };
 
   return (
     <div className="entities-container">
@@ -36,6 +43,13 @@ const Entities: React.FC = () => {
       <div className="tab-content">
         {activeTab === 'entities' && (
           <div className="entities-tab">
+            <div className="entity-upload-section">
+              <UploadWidget 
+                type="entities" 
+                onUploadComplete={handleEntityUploadComplete}
+                size="medium"
+              />
+            </div>
             <EntityManagement />
           </div>
         )}

@@ -7,6 +7,7 @@ import EnhancedInvestmentsTable from '../components/EnhancedInvestmentsTable';
 import PortfolioSummary from '../components/PortfolioSummary';
 import ImportExportModal from '../components/ImportExportModal';
 import FilterPanel from '../components/FilterPanel';
+import UploadWidget from '../components/UploadWidget';
 import SectionErrorBoundary from '../components/SectionErrorBoundary';
 import ComponentErrorBoundary from '../components/ComponentErrorBoundary';
 import './Holdings.css';
@@ -86,6 +87,13 @@ const Holdings: React.FC = () => {
     // if the investments depend on entities (which they do for entity filtering)
   }, []);
 
+  const handleInvestmentUploadComplete = useCallback((result: ImportResult) => {
+    // Refresh investments list after successful upload
+    fetchInvestments(currentFilters);
+    setPortfolioUpdateTrigger(prev => prev + 1);
+    console.log(`Investment upload completed: ${result.success_count} successful, ${result.error_count} errors`);
+  }, [fetchInvestments, currentFilters]);
+
   if (loading) {
     return <div className="holdings-container"><div className="loading">Loading...</div></div>;
   }
@@ -116,6 +124,14 @@ const Holdings: React.FC = () => {
       <SectionErrorBoundary sectionName="Portfolio Summary">
         <PortfolioSummary onUpdate={portfolioUpdateTrigger} />
       </SectionErrorBoundary>
+
+      <div className="investment-upload-section">
+        <UploadWidget 
+          type="investments" 
+          onUploadComplete={handleInvestmentUploadComplete}
+          size="medium"
+        />
+      </div>
 
       <AddInvestmentModal 
         isOpen={showAddModal}

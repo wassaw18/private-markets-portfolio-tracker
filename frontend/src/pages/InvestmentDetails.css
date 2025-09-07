@@ -129,3 +129,24 @@
     gap: 10px;
   }
 }
+.data-upload-widgets {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.upload-widgets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Additional responsive rules for upload widgets */
+@media (max-width: 768px) {
+  .upload-widgets-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}

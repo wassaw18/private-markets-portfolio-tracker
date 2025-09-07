@@ -48,6 +48,14 @@
   font-size: 0.95rem;
 }
 
+.investment-upload-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
 .add-button.secondary:hover {
   background-color: #545b62;
 }

@@ -8,6 +8,8 @@ import PerformanceMetrics from '../components/PerformanceMetrics';
 import BenchmarkComparison from '../components/BenchmarkComparison';
 import PacingModelPanel from '../components/PacingModelPanel';
 import InvestmentForecastChart from '../components/InvestmentForecastChart';
+import UploadWidget from '../components/UploadWidget';
+import { ImportResult } from '../services/api';
 import './InvestmentDetails.css';
 
 const InvestmentDetails: React.FC = () => {
@@ -63,6 +65,13 @@ const InvestmentDetails: React.FC = () => {
     valuationAPI.getValuations(investmentId).then(setValuations);
     // Trigger performance metrics update
     setPerformanceUpdateTrigger(prev => prev + 1);
+  };
+
+  const handleDataUploadComplete = (result: ImportResult) => {
+    // Refresh all data after upload (NAVs or cash flows)
+    fetchInvestmentData();
+    setPerformanceUpdateTrigger(prev => prev + 1);
+    console.log(`Data upload completed: ${result.success_count} successful, ${result.error_count} errors`);
   };
 
   const formatCurrency = (amount: number) => {
@@ -151,6 +160,23 @@ const InvestmentDetails: React.FC = () => {
       <InvestmentForecastChart investmentId={investmentId} onUpdate={fetchInvestmentData} />
 
       <div className="details-sections">
+        <div className="data-upload-widgets">
+          <div className="upload-widgets-row">
+            <UploadWidget 
+              type="cashflows" 
+              onUploadComplete={handleDataUploadComplete}
+              size="small"
+              currentInvestmentId={investmentId}
+            />
+            <UploadWidget 
+              type="navs" 
+              onUploadComplete={handleDataUploadComplete}
+              size="small"
+              currentInvestmentId={investmentId}
+            />
+          </div>
+        </div>
+
         <CashFlowSection 
           investmentId={investmentId}
           cashFlows={cashFlows}
