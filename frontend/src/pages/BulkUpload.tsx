@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { investmentAPI, ImportResult } from '../services/api';
+import { importExportAPI, ImportResult } from '../services/api';
 import SectionErrorBoundary from '../components/SectionErrorBoundary';
 import './BulkUpload.css';
 
@@ -110,17 +110,17 @@ const BulkUpload: React.FC = () => {
 
       switch (sectionId) {
         case 'investments':
-          result = await investmentAPI.uploadInvestments(file);
+          result = await importExportAPI.importInvestments(file);
           break;
         case 'entities':
           // TODO: Implement entity upload when backend is ready
           throw new Error('Entity bulk upload not yet implemented on backend');
         case 'navs':
-          // TODO: Implement NAV upload when backend is ready  
-          throw new Error('NAV bulk upload not yet implemented on backend');
+          result = await importExportAPI.bulkUploadNAVs(file);
+          break;
         case 'cashflows':
-          // TODO: Implement cash flow upload when backend is ready
-          throw new Error('Cash flow bulk upload not yet implemented on backend');
+          result = await importExportAPI.bulkUploadCashFlows(file);
+          break;
         default:
           throw new Error(`Unknown upload type: ${sectionId}`);
       }
