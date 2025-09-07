@@ -29,10 +29,12 @@ A comprehensive, institutional-grade portfolio management system designed for fa
 - **Performance Insights** with rolling metrics and forecasting
 - **Document Integration** with cash flow attachments
 
-### **📄 Document Management**
+### **📄 Document Management & Bulk Upload**
 - **Secure Document Upload** with categorization and tagging
 - **Document Status Tracking** (Pending, Received, Processed)
-- **Excel Template System** for bulk data imports
+- **Professional Excel Template System** for bulk data imports
+- **Investment Bulk Upload** with 32-field validation and error handling
+- **Entity Bulk Upload** with conditional validation and 85% code reuse
 - **Document Search and Filtering** with confidentiality controls
 
 ### **🔒 Audit & Compliance**
@@ -71,8 +73,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run database migrations
-python migration_audit_fields.py
-python migration_liquidity_forecast.py
+python migrations/migration_audit_fields.py
+python migrations/migration_liquidity_forecast.py
+python migrations/migration_entity_management.py
 ```
 
 #### **3. Frontend Setup**
@@ -107,6 +110,9 @@ npm start
 
 ```
 private-markets-portfolio-tracker/
+├── README.md                     # This file
+├── requirements.txt             # Python dependencies
+├── portfolio.db                 # SQLite database
 ├── app/                          # FastAPI Backend
 │   ├── main.py                   # API endpoints and application setup
 │   ├── models.py                 # SQLAlchemy database models
@@ -117,7 +123,7 @@ private-markets-portfolio-tracker/
 │   ├── pacing_model.py           # Sophisticated cash flow forecasting
 │   ├── liquidity_forecast_service.py  # 12-month liquidity forecasting
 │   ├── entity_relationships.py   # Entity hierarchy management
-│   ├── excel_template_service.py # Excel template generation
+│   ├── excel_template_service.py # Excel template & bulk upload engine
 │   └── ...                       # Additional services
 ├── frontend/                     # React TypeScript Frontend
 │   ├── src/
@@ -129,10 +135,15 @@ private-markets-portfolio-tracker/
 │   │   └── utils/               # Utility functions
 │   ├── public/                  # Static assets
 │   └── package.json             # Node.js dependencies
-├── migration_*.py               # Database migration scripts
-├── requirements.txt             # Python dependencies
-├── .env.example                 # Environment configuration template
-└── README.md                    # This file
+├── docs/                        # Documentation
+│   ├── implementations/         # Feature implementation summaries
+│   ├── FAMILY_OFFICE_FEATURE_ROADMAP.md  # Strategic roadmap
+│   └── GITHUB_SECURITY_CHECKLIST.md      # Security guidelines
+├── migrations/                  # Database migration scripts
+├── tests/                       # Test files
+├── scripts/                     # Utility and validation scripts
+├── sample-data/                 # Sample data for testing
+└── deployment/                  # Deployment guides
 ```
 
 ## 🔧 **Architecture**
@@ -201,9 +212,10 @@ private-markets-portfolio-tracker/
 ### **Run Tests**
 ```bash
 # Backend tests
-python test_audit_system.py
-python test_performance.py
-python test_entity_management.py
+python tests/test_audit_system.py
+python tests/test_performance.py
+python tests/test_entity_management.py
+python tests/test_bulk_upload_fix.py
 
 # Frontend validation
 cd frontend
@@ -218,14 +230,16 @@ npm test
 ## 📚 **Documentation**
 
 ### **Implementation Guides**
-- `ENHANCED_AUDITING_IMPLEMENTATION_SUMMARY.md` - Complete audit system documentation
-- `LIQUIDITY_FORECAST_DASHBOARD_IMPLEMENTATION.md` - Liquidity forecasting features
-- `ENTITY_MANAGEMENT_IMPLEMENTATION.md` - Entity hierarchy system
-- `FAMILY_OFFICE_FEATURE_ROADMAP.md` - Future enhancement roadmap
+- `docs/implementations/ENHANCED_AUDITING_IMPLEMENTATION_SUMMARY.md` - Complete audit system documentation
+- `docs/implementations/LIQUIDITY_FORECAST_DASHBOARD_IMPLEMENTATION.md` - Liquidity forecasting features
+- `docs/implementations/ENTITY_MANAGEMENT_IMPLEMENTATION.md` - Entity hierarchy system
+- `docs/implementations/ENTITY_BULK_UPLOAD_IMPLEMENTATION.md` - Entity bulk upload system
+- `docs/implementations/BULK_UPLOAD_FIX_SUMMARY.md` - Investment bulk upload improvements
+- `docs/FAMILY_OFFICE_FEATURE_ROADMAP.md` - Future enhancement roadmap
 
 ### **Technical Documentation**
-- `PERFORMANCE_GRADE_METHODOLOGY.md` - Performance calculation methods
-- `EXCEL_TEMPLATES_IMPLEMENTATION.md` - Template system documentation
+- `docs/implementations/PERFORMANCE_GRADE_METHODOLOGY.md` - Performance calculation methods
+- `docs/implementations/EXCEL_TEMPLATES_IMPLEMENTATION.md` - Template system documentation
 - Database schema documentation in model files
 
 ## 🔮 **Roadmap**
@@ -235,6 +249,9 @@ npm test
 - ✅ 12-Month Liquidity Forecast Dashboard
 - ✅ Entity Relationship Management
 - ✅ Professional Investment Modal
+- ✅ Investment Bulk Upload with 32-field validation
+- ✅ Entity Bulk Upload with conditional validation
+- ✅ Professional Excel Template System
 
 ### **Next Priority**
 - [ ] **Automated Client Reporting** - Professional quarterly report generation
