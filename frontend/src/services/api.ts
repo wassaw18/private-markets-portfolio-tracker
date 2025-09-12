@@ -450,6 +450,19 @@ export const importExportAPI = {
     });
     return response.data;
   },
+  
+  // Bulk upload Entities
+  bulkUploadEntities: async (file: File): Promise<ImportResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/api/bulk-upload/entities', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };
 
 // Pacing Model and Cash Flow Forecasting types

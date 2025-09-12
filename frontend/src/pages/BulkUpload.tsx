@@ -113,7 +113,8 @@ const BulkUpload: React.FC = () => {
           result = await importExportAPI.importInvestments(file);
           break;
         case 'entities':
-          throw new Error('Entity bulk upload not yet implemented on backend');
+          result = await importExportAPI.bulkUploadEntities(file);
+          break;
         case 'navs':
           result = await importExportAPI.bulkUploadNAVs(file);
           break;

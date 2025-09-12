@@ -16,7 +16,6 @@ import './App.css';
 
 const Navigation: React.FC = () => {
   const location = useLocation();
-  const { authState, logout } = useAuth();
   
   return (
     <nav className="main-navigation">
@@ -64,20 +63,26 @@ const Navigation: React.FC = () => {
           Bulk Upload
         </Link>
       </div>
-      
-      <div className="nav-user">
-        <span className="user-info">
-          👤 {authState.user?.username}
-        </span>
-        <button 
-          onClick={logout}
-          className="logout-button"
-          title="Logout"
-        >
-          🚪 Logout
-        </button>
-      </div>
     </nav>
+  );
+};
+
+const UserControls: React.FC = () => {
+  const { authState, logout } = useAuth();
+  
+  return (
+    <div className="user-controls">
+      <span className="user-info">
+        👤 {authState.user?.username}
+      </span>
+      <button 
+        onClick={logout}
+        className="logout-button"
+        title="Logout"
+      >
+        🚪 Logout
+      </button>
+    </div>
   );
 };
 
@@ -87,6 +92,7 @@ function AppContent() {
       <div className="App">
         <header className="App-header">
           <h1>Private Markets Portfolio Tracker</h1>
+          <UserControls />
         </header>
         <main>
           <Navigation />

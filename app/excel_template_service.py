@@ -146,9 +146,9 @@ class ExcelTemplateService:
         activity_classifications = ["ACTIVE", "PASSIVE", "PORTFOLIO"]
         currencies = ["USD", "EUR", "GBP", "JPY"]
         
-        self._create_investment_data_sheet(data_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
+        self._create_investment_data_sheet(data_sheet, entity_names, entity_ids, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
         self._create_investment_instructions_sheet(instructions_sheet, styles)
-        self._create_investment_validation_data_sheet(validation_sheet, entity_names, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
+        self._create_investment_validation_data_sheet(validation_sheet, entity_names, entity_ids, asset_classes, investment_structures, liquidity_profiles, reporting_frequencies, risk_ratings, tax_classifications, activity_classifications, currencies, styles)
         
         # Set active sheet to data entry
         workbook.active = data_sheet
@@ -552,11 +552,11 @@ class ExcelTemplateService:
         sheet.column_dimensions['A'].width = 30
         sheet.column_dimensions['B'].width = 20
 
-    def _create_investment_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], tax_classifications: List[str], activity_classifications: List[str], currencies: List[str], styles: Dict):
+    def _create_investment_data_sheet(self, sheet, entity_names: List[str], entity_ids: List[int], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], tax_classifications: List[str], activity_classifications: List[str], currencies: List[str], styles: Dict):
         """Create bulletproof Investment data entry sheet with dual headers"""
-        # User-friendly headers (Row 1) - EXACTLY matching frontend modal inputs only
+        # User-friendly headers (Row 1) - EXACTLY matching frontend modal inputs plus Entity Owner
         user_headers = [
-            "Investment Name*", "Asset Class*", "Investment Structure*", "Manager", "Strategy*", 
+            "Entity Owner*", "Investment Name*", "Asset Class*", "Investment Structure*", "Manager", "Strategy*", 
             "Vintage Year*", "Target Raise", "Geography Focus", "Commitment Amount*", "Commitment Date*", 
             "Management Fee (%)", "Performance Fee (%)", "Hurdle Rate (%)", "Distribution Target", "Currency",
             "Liquidity Profile*", "Expected Maturity Date", "Reporting Frequency", "Contact Person", "Email",
@@ -564,9 +564,9 @@ class ExcelTemplateService:
             "Due Diligence Date", "IC Approval Date", "Risk Rating", "Benchmark Index"
         ]
         
-        # Database field names (Row 2) - EXACT field names matching frontend modal inputs only
+        # Database field names (Row 2) - EXACT field names including entity_id
         db_field_names = [
-            "name", "asset_class", "investment_structure", "manager", "strategy",
+            "entity_id", "name", "asset_class", "investment_structure", "manager", "strategy",
             "vintage_year", "target_raise", "geography_focus", "commitment_amount", "commitment_date",
             "management_fee", "performance_fee", "hurdle_rate", "distribution_target", "currency",
             "liquidity_profile", "expected_maturity_date", "reporting_frequency", "contact_person", "email",
@@ -574,9 +574,9 @@ class ExcelTemplateService:
             "due_diligence_date", "ic_approval_date", "risk_rating", "benchmark_index"
         ]
         
-        # Field requirements and examples (Row 3) - matching frontend modal inputs exactly
+        # Field requirements and examples (Row 3) - including entity selection guidance
         field_examples = [
-            "e.g., Acme Fund III", "Select from dropdown", "Select from dropdown", "e.g., ABC Capital", "e.g., Growth Buyout",
+            "Select entity from dropdown", "e.g., Acme Fund III", "Select from dropdown", "Select from dropdown", "e.g., ABC Capital", "e.g., Growth Buyout",
             "e.g., 2024", "e.g., 500000000", "North America, Europe", "e.g., 5000000", "YYYY-MM-DD format",
             "2.5 (for 2.5%)", "20.0 (for 20%)", "8.0 (for 8%)", "Distribution description", "USD, EUR, etc.",
             "Select from dropdown", "YYYY-MM-DD", "Select from dropdown", "Contact name", "email@domain.com",
@@ -797,7 +797,7 @@ class ExcelTemplateService:
         
         sheet.column_dimensions['A'].width = 80
 
-    def _create_investment_validation_data_sheet(self, sheet, entity_names: List[str], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], tax_classifications: List[str], activity_classifications: List[str], currencies: List[str], styles: Dict):
+    def _create_investment_validation_data_sheet(self, sheet, entity_names: List[str], entity_ids: List[int], asset_classes: List[str], investment_structures: List[str], liquidity_profiles: List[str], reporting_frequencies: List[str], risk_ratings: List[str], tax_classifications: List[str], activity_classifications: List[str], currencies: List[str], styles: Dict):
         """Create validation data for Investment template dropdowns"""
         
         # Column headers - include all dropdown fields

@@ -29,7 +29,7 @@ class ImportResult:
     def add_warning(self, row: int, message: str):
         self.warnings.append({"row": row, "message": message})
 
-def validate_and_convert_row(row: Dict[str, Any], row_num: int, force_upload: bool = False) -> Tuple[schemas.InvestmentCreate, List[str]]:
+def validate_and_convert_row(row: Dict[str, Any], row_num: int, db: Session, force_upload: bool = False) -> Tuple[schemas.InvestmentCreate, List[str]]:
     """Validate and convert a row to InvestmentCreate schema with full 32-field support"""
     errors = []
     
@@ -145,13 +145,22 @@ def validate_and_convert_row(row: Dict[str, Any], row_num: int, force_upload: bo
         }
         investment_structure = structure_mapping.get(str(structure_str).strip() if structure_str else '', InvestmentStructure.LIMITED_PARTNERSHIP)
         
-        # Entity ID* (Required by backend but not in Excel template - use default)
-        # Note: Excel template doesn't include entity_id field since frontend uses EntitySelector dropdown
-        # Future enhancement: Allow entity selection by name in Excel and map to ID during import
-        entity_id = 1  # Default to first entity
-        if force_upload:
-            errors.append("Entity ID defaulted to 1 - please assign correct entity after import")
-        # Note: We don't add this as an error for normal upload since it's not expected in Excel
+        # Entity ID* (Required) - Now properly handled by entity name lookup
+        entity_id = None
+        entity_name = get_field_value('entity_id')  # This will actually be entity name from dropdown
+        if entity_name:
+            # Look up entity by name in the database
+            entities = crud.get_entities(db, skip=0, limit=1000)
+            for entity in entities:
+                entity_display_name = f"{entity.name} ({entity.entity_type.value if entity.entity_type else 'Unknown'})"
+                if entity_display_name == entity_name or entity.name == entity_name:
+                    entity_id = entity.id
+                    break
+            
+            if not entity_id:
+                errors.append(f"Entity not found: {entity_name}. Please select a valid entity from the dropdown.")
+        else:
+            errors.append("Missing required field: entity_id (Entity Owner)")
         
         # Manager (Optional)
         manager = get_field_value('manager', 'Manager') or None
@@ -387,7 +396,7 @@ def import_investments_from_file(file_content: bytes, filename: str, db: Session
             if row.isna().all():
                 continue
                 
-            investment, errors = validate_and_convert_row(row.to_dict(), row_num, force_upload)
+            investment, errors = validate_and_convert_row(row.to_dict(), row_num, db, force_upload)
             
             if errors:
                 for error in errors:

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { investmentAPI, ImportResult, importExportAPI } from '../services/api';
+import { ImportResult, importExportAPI } from '../services/api';
 import './UploadWidget.css';
 
 interface UploadWidgetProps {
@@ -98,8 +98,8 @@ const UploadWidget: React.FC<UploadWidgetProps> = ({
           uploadResult = await importExportAPI.importInvestments(file);
           break;
         case 'entities':
-          // TODO: Implement when backend API is ready
-          throw new Error('Entity bulk upload not yet implemented');
+          uploadResult = await importExportAPI.bulkUploadEntities(file);
+          break;
         case 'navs':
           uploadResult = await importExportAPI.bulkUploadNAVs(file);
           break;
