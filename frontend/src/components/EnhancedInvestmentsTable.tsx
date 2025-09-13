@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Investment, InvestmentUpdate } from '../types/investment';
-import { investmentAPI } from '../services/api';
+import { Investment, InvestmentUpdate, InvestmentPerformance, PerformanceMetrics } from '../types/investment';
+import { investmentAPI, performanceAPI } from '../services/api';
 import { formatCurrency, formatPercentage } from '../utils/formatters';
 import EditInvestmentModal from './EditInvestmentModal';
 import './EnhancedInvestmentsTable.css';
@@ -47,6 +47,8 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
     vintageYear: ''
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [performanceData, setPerformanceData] = useState<Map<number, PerformanceMetrics>>(new Map());
+  const [loadingPerformance, setLoadingPerformance] = useState(false);
   const itemsPerPage = 25;
   const navigate = useNavigate();
 
@@ -85,6 +87,54 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
     setFilters({ search: '', assetClass: '', entity: '', vintageYear: '' });
     setCurrentPage(1);
   }, []);
+
+  // Fetch performance data for investments when performance tab is active
+  const fetchPerformanceData = useCallback(async () => {
+    if (activeTab !== 'performance' || investments.length === 0) return;
+    
+    setLoadingPerformance(true);
+    const performanceMap = new Map<number, PerformanceMetrics>();
+    
+    try {
+      const performancePromises = investments.map(async (investment) => {
+        try {
+          const result = await performanceAPI.getInvestmentPerformance(investment.id);
+          return { id: investment.id, performance: result.performance };
+        } catch (error) {
+          console.warn(`Failed to fetch performance for investment ${investment.id}:`, error);
+          return { id: investment.id, performance: null };
+        }
+      });
+      
+      const results = await Promise.all(performancePromises);
+      results.forEach(result => {
+        if (result.performance) {
+          performanceMap.set(result.id, result.performance);
+        }
+      });
+      
+      setPerformanceData(performanceMap);
+    } catch (error) {
+      console.error('Error fetching performance data:', error);
+    } finally {
+      setLoadingPerformance(false);
+    }
+  }, [activeTab, investments]);
+
+  // Effect to fetch performance data when tab changes to performance
+  useEffect(() => {
+    fetchPerformanceData();
+  }, [fetchPerformanceData]);
+
+  // Helper function to determine performance status relative to target
+  const getPerformanceStatus = (actual: number | undefined, target: number | undefined): 'outperform' | 'underperform' | 'ontrack' | 'unknown' => {
+    if (!actual || !target) return 'unknown';
+    
+    const ratio = actual / target;
+    if (ratio >= 1.1) return 'outperform';     // 10%+ above target
+    if (ratio <= 0.9) return 'underperform';  // 10%+ below target
+    return 'ontrack';                          // Within 10% of target
+  };
 
   // Get unique filter options
   const filterOptions = useMemo(() => {
@@ -197,7 +247,31 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         <tbody>
           {paginatedInvestments.map((investment) => (
             <tr key={investment.id}>
-              <td className="investment-name">{investment.name}</td>
+              <td className="investment-name">
+                <span 
+                  onClick={() => handleViewDetails(investment.id)}
+                  style={{
+                    color: '#007bff',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    transition: 'color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#0056b3';
+                    target.style.textDecoration = 'underline';
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#007bff';
+                    target.style.textDecoration = 'none';
+                  }}
+                  title="Click to view investment details"
+                >
+                  {investment.name}
+                </span>
+              </td>
               <td>{investment.asset_class}</td>
               <td>{investment.investment_structure}</td>
               <td className="entity-cell">
@@ -213,27 +287,45 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.strategy}</td>
               <td>{investment.vintage_year}</td>
               <td className="actions">
-                <button
-                  onClick={() => handleViewDetails(investment.id)}
-                  className="details-button"
-                  title="View Details"
-                >
-                  Details
-                </button>
-                <button
+                <span
                   onClick={() => handleEdit(investment)}
-                  className="edit-button"
-                  title="Edit"
+                  title="Edit Investment"
+                  style={{ 
+                    marginRight: '6px', 
+                    padding: '3px 6px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
                 >
                   Edit
-                </button>
-                <button
+                </span>
+                <span
                   onClick={() => handleDelete(investment.id, investment.name)}
-                  className="delete-button"
-                  title="Delete"
+                  title="Delete Investment"
+                  style={{ 
+                    padding: '3px 4px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
                 >
                   Delete
-                </button>
+                </span>
               </td>
             </tr>
           ))}
@@ -268,7 +360,31 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         <tbody>
           {paginatedInvestments.map((investment) => (
             <tr key={investment.id}>
-              <td className="investment-name">{investment.name}</td>
+              <td className="investment-name">
+                <span 
+                  onClick={() => handleViewDetails(investment.id)}
+                  style={{
+                    color: '#007bff',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    transition: 'color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#0056b3';
+                    target.style.textDecoration = 'underline';
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#007bff';
+                    target.style.textDecoration = 'none';
+                  }}
+                  title="Click to view investment details"
+                >
+                  {investment.name}
+                </span>
+              </td>
               <td className="currency">{formatCurrency(investment.commitment_amount)}</td>
               <td className="currency">{formatCurrency(investment.called_amount)}</td>
               <td>{investment.commitment_date || '-'}</td>
@@ -278,9 +394,45 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.hurdle_rate ? formatPercentage(investment.hurdle_rate) : '-'}</td>
               <td className="currency">{formatCurrency(investment.fees)}</td>
               <td className="actions">
-                <button onClick={() => handleViewDetails(investment.id)} className="details-button">Details</button>
-                <button onClick={() => handleEdit(investment)} className="edit-button">Edit</button>
-                <button onClick={() => handleDelete(investment.id, investment.name)} className="delete-button">Delete</button>
+                <span
+                  onClick={() => handleEdit(investment)}
+                  title="Edit Investment"
+                  style={{ 
+                    marginRight: '6px', 
+                    padding: '3px 6px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
+                >
+                  Edit
+                </span>
+                <span
+                  onClick={() => handleDelete(investment.id, investment.name)}
+                  title="Delete Investment"
+                  style={{ 
+                    padding: '3px 4px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
+                >
+                  Delete
+                </span>
               </td>
             </tr>
           ))}
@@ -311,7 +463,31 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         <tbody>
           {paginatedInvestments.map((investment) => (
             <tr key={investment.id}>
-              <td className="investment-name">{investment.name}</td>
+              <td className="investment-name">
+                <span 
+                  onClick={() => handleViewDetails(investment.id)}
+                  style={{
+                    color: '#007bff',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    transition: 'color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#0056b3';
+                    target.style.textDecoration = 'underline';
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#007bff';
+                    target.style.textDecoration = 'none';
+                  }}
+                  title="Click to view investment details"
+                >
+                  {investment.name}
+                </span>
+              </td>
               <td>{investment.contact_person || '-'}</td>
               <td>{investment.email || '-'}</td>
               <td>{investment.portal_link || '-'}</td>
@@ -321,9 +497,45 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.fund_life ? `${investment.fund_life}y` : '-'}</td>
               <td>{investment.reporting_frequency || '-'}</td>
               <td className="actions">
-                <button onClick={() => handleViewDetails(investment.id)} className="details-button">Details</button>
-                <button onClick={() => handleEdit(investment)} className="edit-button">Edit</button>
-                <button onClick={() => handleDelete(investment.id, investment.name)} className="delete-button">Delete</button>
+                <span
+                  onClick={() => handleEdit(investment)}
+                  title="Edit Investment"
+                  style={{ 
+                    marginRight: '6px', 
+                    padding: '3px 6px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
+                >
+                  Edit
+                </span>
+                <span
+                  onClick={() => handleDelete(investment.id, investment.name)}
+                  title="Delete Investment"
+                  style={{ 
+                    padding: '3px 4px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
+                >
+                  Delete
+                </span>
               </td>
             </tr>
           ))}
@@ -352,7 +564,31 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         <tbody>
           {paginatedInvestments.map((investment) => (
             <tr key={investment.id}>
-              <td className="investment-name">{investment.name}</td>
+              <td className="investment-name">
+                <span 
+                  onClick={() => handleViewDetails(investment.id)}
+                  style={{
+                    color: '#007bff',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    transition: 'color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#0056b3';
+                    target.style.textDecoration = 'underline';
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.target as HTMLElement;
+                    target.style.color = '#007bff';
+                    target.style.textDecoration = 'none';
+                  }}
+                  title="Click to view investment details"
+                >
+                  {investment.name}
+                </span>
+              </td>
               <td>{investment.geography_focus || '-'}</td>
               <td>{investment.fund_domicile || '-'}</td>
               <td>
@@ -366,9 +602,45 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.due_diligence_date || '-'}</td>
               <td>{investment.ic_approval_date || '-'}</td>
               <td className="actions">
-                <button onClick={() => handleViewDetails(investment.id)} className="details-button">Details</button>
-                <button onClick={() => handleEdit(investment)} className="edit-button">Edit</button>
-                <button onClick={() => handleDelete(investment.id, investment.name)} className="delete-button">Delete</button>
+                <span
+                  onClick={() => handleEdit(investment)}
+                  title="Edit Investment"
+                  style={{ 
+                    marginRight: '6px', 
+                    padding: '3px 6px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
+                >
+                  Edit
+                </span>
+                <span
+                  onClick={() => handleDelete(investment.id, investment.name)}
+                  title="Delete Investment"
+                  style={{ 
+                    padding: '3px 4px', 
+                    fontSize: '0.75rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    opacity: 1,
+                    visibility: 'visible',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    display: 'inline-block'
+                  }}
+                >
+                  Delete
+                </span>
               </td>
             </tr>
           ))}
@@ -377,64 +649,152 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
     </div>
   );
 
-  const renderPerformanceTab = () => (
-    <div className="table-container">
-      <table className="enhanced-investments-table">
-        <thead>
-          <tr>
-            <th className="sortable" onClick={() => handleSort('name')}>
-              Name <SortIcon field="name" />
-            </th>
-            <th>Target IRR</th>
-            <th>Actual IRR</th>
-            <th>Performance</th>
-            <th>TVPI</th>
-            <th>DPI</th>
-            <th>Current NAV</th>
-            <th>Total Called</th>
-            <th>Total Distributions</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedInvestments.map((investment) => {
-            const performanceClass = '';
-            
-            return (
-              <tr key={investment.id}>
-                <td className="investment-name">{investment.name}</td>
-                <td>{investment.target_irr ? formatPercentage(investment.target_irr) : '-'}</td>
-                <td className="performance-metric">
-                  N/A
-                </td>
-                <td className="performance-indicator">
-                  -
-                </td>
-                <td className="performance-metric">
-                  N/A
-                </td>
-                <td className="performance-metric">
-                  N/A
-                </td>
-                <td className="currency">
-                  N/A
-                </td>
-                <td className="currency">{formatCurrency(investment.called_amount)}</td>
-                <td className="currency">
-                  $0
-                </td>
-                <td className="actions">
-                  <button onClick={() => handleViewDetails(investment.id)} className="details-button">Details</button>
-                  <button onClick={() => handleEdit(investment)} className="edit-button">Edit</button>
-                  <button onClick={() => handleDelete(investment.id, investment.name)} className="delete-button">Delete</button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
+  const renderPerformanceTab = () => {
+    if (loadingPerformance) {
+      return (
+        <div className="table-container">
+          <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+            Loading performance data...
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="table-container">
+        <table className="enhanced-investments-table">
+          <thead>
+            <tr>
+              <th className="sortable" onClick={() => handleSort('name')}>
+                Name <SortIcon field="name" />
+              </th>
+              <th>Target IRR</th>
+              <th>Actual IRR</th>
+              <th>Performance</th>
+              <th>TVPI</th>
+              <th>DPI</th>
+              <th>RVPI</th>
+              <th>Current NAV</th>
+              <th>Total Called</th>
+              <th>Total Distributions</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedInvestments.map((investment) => {
+              const performance = performanceData.get(investment.id);
+              const actualIRR = performance?.irr;
+              const targetIRR = investment.target_irr;
+              const performanceStatus = getPerformanceStatus(actualIRR, targetIRR);
+              
+              return (
+                <tr key={investment.id}>
+                  <td className="investment-name">
+                    <span 
+                      onClick={() => handleViewDetails(investment.id)}
+                      style={{
+                        color: '#007bff',
+                        cursor: 'pointer',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        const target = e.target as HTMLElement;
+                        target.style.color = '#0056b3';
+                        target.style.textDecoration = 'underline';
+                      }}
+                      onMouseLeave={(e) => {
+                        const target = e.target as HTMLElement;
+                        target.style.color = '#007bff';
+                        target.style.textDecoration = 'none';
+                      }}
+                      title="Click to view investment details"
+                    >
+                      {investment.name}
+                    </span>
+                  </td>
+                  <td>{targetIRR ? formatPercentage(targetIRR) : '-'}</td>
+                  <td className={`performance-metric ${performanceStatus}`}>
+                    {actualIRR ? formatPercentage(actualIRR) : 'N/A'}
+                  </td>
+                  <td className="performance-indicator">
+                    {performanceStatus !== 'unknown' && (
+                      <span className={`performance-badge ${performanceStatus}`}>
+                        {performanceStatus === 'outperform' && '⬆️ Above Target'}
+                        {performanceStatus === 'underperform' && '⬇️ Below Target'}
+                        {performanceStatus === 'ontrack' && '➡️ On Track'}
+                      </span>
+                    )}
+                    {performanceStatus === 'unknown' && '-'}
+                  </td>
+                  <td className={`performance-metric ${performance?.tvpi ? (performance.tvpi >= 1.1 ? 'outperform' : performance.tvpi <= 0.9 ? 'underperform' : 'ontrack') : ''}`}>
+                    {performance?.tvpi ? `${performance.tvpi.toFixed(2)}x` : 'N/A'}
+                  </td>
+                  <td className="performance-metric">
+                    {performance?.dpi ? `${performance.dpi.toFixed(2)}x` : 'N/A'}
+                  </td>
+                  <td className="performance-metric">
+                    {performance?.rvpi ? `${performance.rvpi.toFixed(2)}x` : 'N/A'}
+                  </td>
+                  <td className="currency">
+                    {performance?.current_nav ? formatCurrency(performance.current_nav) : 'N/A'}
+                  </td>
+                  <td className="currency">
+                    {performance?.total_contributions ? formatCurrency(performance.total_contributions) : formatCurrency(investment.called_amount)}
+                  </td>
+                  <td className="currency">
+                    {performance?.total_distributions ? formatCurrency(performance.total_distributions) : '$0'}
+                  </td>
+                  <td className="actions">
+                    <span
+                      onClick={() => handleEdit(investment)}
+                      title="Edit Investment"
+                      style={{ 
+                        marginRight: '6px', 
+                        padding: '3px 6px', 
+                        fontSize: '0.75rem',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        opacity: 1,
+                        visibility: 'visible',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        display: 'inline-block'
+                      }}
+                    >
+                      Edit
+                    </span>
+                    <span
+                      onClick={() => handleDelete(investment.id, investment.name)}
+                      title="Delete Investment"
+                      style={{ 
+                        padding: '3px 4px', 
+                        fontSize: '0.75rem',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        opacity: 1,
+                        visibility: 'visible',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        display: 'inline-block'
+                      }}
+                    >
+                      Delete
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const renderCurrentTab = () => {
     switch (activeTab) {

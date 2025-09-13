@@ -149,25 +149,53 @@
 .enhanced-investments-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1200px;
+  min-width: 900px;
+  table-layout: fixed;
 }
+
+/* Specific column widths to optimize space */
+.enhanced-investments-table th:nth-child(1) { width: 18%; } /* Name */
+.enhanced-investments-table th:nth-child(2) { width: 12%; } /* Asset Class */
+.enhanced-investments-table th:nth-child(3) { width: 10%; } /* Structure */
+.enhanced-investments-table th:nth-child(4) { width: 15%; } /* Entity */
+.enhanced-investments-table th:nth-child(5) { width: 12%; } /* Strategy - shrunk as requested */
+.enhanced-investments-table th:nth-child(6) { width: 8%; }  /* Vintage */
+.enhanced-investments-table th:nth-child(7) { width: 10%; } /* Commitment */
+.enhanced-investments-table th:nth-child(8) { width: 10%; } /* Called */
+.enhanced-investments-table th:nth-child(9) { width: 15%; } /* Actions */
 
 .enhanced-investments-table th {
   background-color: #f8f9fa;
-  padding: 12px 8px;
+  padding: 6px 4px;
   text-align: left;
   font-weight: 600;
   color: #495057;
   border-bottom: 2px solid #dee2e6;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .enhanced-investments-table td {
-  padding: 12px 8px;
+  padding: 6px 4px;
   border-bottom: 1px solid #dee2e6;
-  font-size: 0.9rem;
+  font-size: 0.75rem !important;
   vertical-align: middle;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Strategy column - allow wrapping */
+.enhanced-investments-table td:nth-child(5) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.1;
+  max-height: 2.2rem;
+  overflow: hidden;
 }
 
 .enhanced-investments-table tr:hover {
@@ -177,18 +205,19 @@
 .investment-name {
   font-weight: 500;
   color: #007bff;
-  min-width: 150px;
+  font-size: 0.75rem;
 }
 
 .currency {
   text-align: right;
   font-family: 'Courier New', monospace;
   font-weight: 500;
+  font-size: 0.75rem;
 }
 
 /* Entity Cell Styles */
 .entity-cell {
-  min-width: 140px;
+  /* Removed min-width to allow column to shrink */
 }
 
 .entity-info {
@@ -198,20 +227,23 @@
 }
 
 .entity-name {
-  font-weight: 500;
+  font-weight: 400 !important;
   color: #333;
+  font-size: 0.75rem !important;
 }
 
 .entity-type {
-  font-size: 0.8rem;
+  font-size: 0.65rem !important;
   color: #666;
   font-style: italic;
+  font-weight: 400 !important;
 }
 
 .no-entity {
   color: #dc3545;
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: 0.75rem !important;
+  font-weight: 400 !important;
 }
 
 /* Action Buttons */
@@ -266,21 +298,33 @@
   text-align: right;
   font-family: 'Courier New', monospace;
   font-weight: 600;
+  padding: 4px 6px !important;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .performance-metric.outperform {
-  color: #28a745;
-  background-color: #d4edda;
+  color: #155724 !important;
+  background-color: #d4edda !important;
+  border: 1px solid #c3e6cb;
 }
 
 .performance-metric.underperform {
-  color: #dc3545;
-  background-color: #f8d7da;
+  color: #721c24 !important;
+  background-color: #f8d7da !important;
+  border: 1px solid #f5c6cb;
 }
 
 .performance-metric.ontrack {
-  color: #ffc107;
-  background-color: #fff3cd;
+  color: #856404 !important;
+  background-color: #fff3cd !important;
+  border: 1px solid #ffeaa7;
+}
+
+.performance-metric.unknown {
+  color: #6c757d !important;
+  background-color: #f8f9fa !important;
+  font-style: italic;
 }
 
 .performance-indicator {
@@ -289,29 +333,53 @@
 
 .performance-badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-align: center;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .performance-badge.outperform {
-  background-color: #d4edda;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
   color: #155724;
   border: 1px solid #c3e6cb;
 }
 
 .performance-badge.underperform {
-  background-color: #f8d7da;
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
   color: #721c24;
   border: 1px solid #f5c6cb;
 }
 
 .performance-badge.ontrack {
-  background-color: #fff3cd;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
   color: #856404;
   border: 1px solid #ffeaa7;
+}
+
+/* Hover effects for performance metrics */
+.performance-metric:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.performance-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Enhanced styling for performance table headers */
+.enhanced-investments-table thead th:nth-child(3),
+.enhanced-investments-table thead th:nth-child(4),
+.enhanced-investments-table thead th:nth-child(5),
+.enhanced-investments-table thead th:nth-child(6),
+.enhanced-investments-table thead th:nth-child(7) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 3px solid #007bff;
 }
 
 /* Risk Rating Badges */
@@ -441,8 +509,8 @@
   
   .enhanced-investments-table th,
   .enhanced-investments-table td {
-    padding: 8px 6px;
-    font-size: 0.8rem;
+    padding: 6px 4px;
+    font-size: 0.7rem;
   }
   
   .details-button, .edit-button, .delete-button {
