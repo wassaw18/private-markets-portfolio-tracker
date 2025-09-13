@@ -30,6 +30,8 @@
   font-size: 0.9rem;
   font-weight: 500;
   transition: background-color 0.2s;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .add-button:hover {
@@ -170,11 +172,42 @@
 
 .cashflow-table {
   overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
 }
 
 .cashflow-table table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.cashflow-table th:nth-child(1) { /* Date */
+  width: 18%;
+}
+
+.cashflow-table th:nth-child(2) { /* Type */
+  width: 32%;
+}
+
+.cashflow-table th:nth-child(3) { /* Amount */
+  width: 24%;
+  text-align: center;
+}
+
+.cashflow-table th:nth-child(4) { /* Actions */
+  width: 26%;
+  min-width: 140px;
+}
+
+.cashflow-table td:nth-child(3) { /* Amount data cells */
+  text-align: center;
+}
+
+.cashflow-table td:nth-child(4) {
+  white-space: nowrap;
 }
 
 .cashflow-table th {
@@ -220,11 +253,14 @@
   background-color: #dc3545;
   color: white;
   border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
+  padding: 8px 16px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
   transition: background-color 0.2s;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .delete-button:hover {

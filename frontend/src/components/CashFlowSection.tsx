@@ -12,6 +12,7 @@ interface Props {
 
 const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate }) => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingCashFlow, setEditingCashFlow] = useState<CashFlow | null>(null);
   const [formData, setFormData] = useState<CashFlowCreate>({
     date: getTodayDateString(),
     type: CashFlowType.CAPITAL_CALL,
@@ -34,20 +35,47 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
     setError(null);
 
     try {
-      await cashFlowAPI.createCashFlow(investmentId, formData);
+      if (editingCashFlow) {
+        await cashFlowAPI.updateCashFlow(investmentId, editingCashFlow.id, formData);
+      } else {
+        await cashFlowAPI.createCashFlow(investmentId, formData);
+      }
       setFormData({
         date: getTodayDateString(),
         type: CashFlowType.CAPITAL_CALL,
         amount: 0,
       });
       setShowAddForm(false);
+      setEditingCashFlow(null);
       onUpdate();
     } catch (err) {
-      setError('Failed to add cash flow. Please check all fields.');
-      console.error('Error creating cash flow:', err);
+      setError(editingCashFlow ? 'Failed to update cash flow. Please check all fields.' : 'Failed to add cash flow. Please check all fields.');
+      console.error(editingCashFlow ? 'Error updating cash flow:' : 'Error creating cash flow:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (cashFlow: CashFlow) => {
+    setEditingCashFlow(cashFlow);
+    setFormData({
+      date: cashFlow.date,
+      type: cashFlow.type,
+      amount: cashFlow.amount,
+    });
+    setShowAddForm(true);
+    setError(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCashFlow(null);
+    setShowAddForm(false);
+    setFormData({
+      date: getTodayDateString(),
+      type: CashFlowType.CAPITAL_CALL,
+      amount: 0,
+    });
+    setError(null);
   };
 
   const handleDelete = async (cashFlowId: number) => {
@@ -77,9 +105,6 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
       .reduce((sum, cf) => sum + cf.amount, 0);
   };
 
-  // Legacy functions for backwards compatibility
-  const getTotalContributions = () => getTotalOutflows();
-  const getTotalDistributions = () => getTotalInflows();
 
   return (
     <div className="cashflow-section">
@@ -87,7 +112,7 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
         <h3>Cash Flows ({cashFlows.length})</h3>
         <button 
           className="add-button"
-          onClick={() => setShowAddForm(!showAddForm)}
+          onClick={() => editingCashFlow ? handleCancelEdit() : setShowAddForm(!showAddForm)}
         >
           {showAddForm ? 'Cancel' : 'Add Cash Flow'}
         </button>
@@ -97,7 +122,7 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
 
       {showAddForm && (
         <div className="add-form-container">
-          <h4>Add Cash Flow</h4>
+          <h4>{editingCashFlow ? 'Edit Cash Flow' : 'Add Cash Flow'}</h4>
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
@@ -148,11 +173,11 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
               </div>
             </div>
             <div className="form-actions">
-              <button type="button" onClick={() => setShowAddForm(false)} className="cancel-button">
+              <button type="button" onClick={handleCancelEdit} className="cancel-button">
                 Cancel
               </button>
               <button type="submit" disabled={loading} className="submit-button">
-                {loading ? 'Adding...' : 'Add Cash Flow'}
+                {loading ? (editingCashFlow ? 'Updating...' : 'Adding...') : (editingCashFlow ? 'Update Cash Flow' : 'Add Cash Flow')}
               </button>
             </div>
           </form>
@@ -172,10 +197,10 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
         </div>
         <div className="summary-item">
           <label>Net Cash Flow</label>
-          <span className={`currency ${getTotalInflows() - getTotalOutflows() >= 0 ? 'positive' : 'negative'}`}>
-            {formatCurrency(getTotalInflows() - getTotalOutflows())}
+          <span className={`currency ${getTotalInflows() + getTotalOutflows() >= 0 ? 'positive' : 'negative'}`}>
+            {formatCurrency(getTotalInflows() + getTotalOutflows())}
           </span>
-          <small>Total return to date</small>
+          <small>Inflows minus outflows (net position)</small>
         </div>
       </div>
 
@@ -208,13 +233,33 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
                       </td>
                       <td className={`currency ${isOutflow ? 'negative' : 'positive'}`}>
                         {isOutflow ? '-' : '+'}
-                        {formatCurrency(cashFlow.amount)}
+                        {formatCurrency(Math.abs(cashFlow.amount))}
                       </td>
                       <td>
+                        <button
+                          onClick={() => handleEdit(cashFlow)}
+                          className="add-button"
+                          title="Edit Cash Flow"
+                          style={{ marginRight: '6px', padding: '3px 6px', fontSize: '0.75rem' }}
+                        >
+                          Edit
+                        </button>
                         <button
                           onClick={() => handleDelete(cashFlow.id)}
                           className="delete-button"
                           title="Delete Cash Flow"
+                          style={{ 
+                            padding: '3px 4px', 
+                            fontSize: '0.75rem',
+                            backgroundColor: '#dc3545',
+                            color: 'white',
+                            opacity: 1,
+                            visibility: 'visible',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: 500
+                          }}
                         >
                           Delete
                         </button>

@@ -7,9 +7,20 @@
 }
 
 .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 25px;
   padding-bottom: 15px;
   border-bottom: 2px solid #e9ecef;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  flex-shrink: 0;
 }
 
 .section-header h3 {
@@ -25,18 +36,65 @@
   font-style: italic;
 }
 
+/* Investment Status Indicator */
+.investment-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.status-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.status-value.active {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-value.realized {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.status-value.pending {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
   margin-bottom: 30px;
 }
 
 .metric-group {
   background: #f8f9fa;
   border-radius: 6px;
-  padding: 20px;
+  padding: 22px;
   border: 1px solid #dee2e6;
+  min-height: 420px;
 }
 
 .metric-group h4 {
@@ -51,8 +109,8 @@
 }
 
 .metric-item {
-  margin-bottom: 15px;
-  padding: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
   background: white;
   border-radius: 4px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -175,20 +233,40 @@
 }
 
 /* Responsive design */
+@media (max-width: 1200px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+  
+  .metric-group {
+    min-height: auto;
+  }
+}
+
 @media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+  
+  .header-right {
+    align-self: flex-end;
+  }
+  
+  .investment-status {
+    padding: 6px 12px;
+  }
+  
   .metrics-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
   
-  .insights-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .insight-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+  .metric-group {
+    padding: 18px;
+    min-height: auto;
   }
   
   .metric-value {

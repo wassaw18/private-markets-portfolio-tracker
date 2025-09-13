@@ -264,13 +264,13 @@ const LiquidityForecastDashboard: React.FC<Props> = ({
               <tr key={index} className={getRowClass(dataPoint)}>
                 <td className="month-cell">{dataPoint.month}</td>
                 <td className="currency outflow">
-                  {dataPoint.capitalCalls > 0 ? `-${formatCurrency(dataPoint.capitalCalls)}` : '-'}
+                  {dataPoint.capitalCalls > 0 ? `-${formatCurrency(Math.abs(dataPoint.capitalCalls))}` : '-'}
                 </td>
                 <td className="currency inflow">
-                  {dataPoint.distributions > 0 ? `+${formatCurrency(dataPoint.distributions)}` : '-'}
+                  {dataPoint.distributions > 0 ? `+${formatCurrency(Math.abs(dataPoint.distributions))}` : '-'}
                 </td>
                 <td className={`currency ${dataPoint.netCashFlow >= 0 ? 'inflow' : 'outflow'}`}>
-                  {dataPoint.netCashFlow >= 0 ? '+' : ''}{formatCurrency(dataPoint.netCashFlow)}
+                  {dataPoint.netCashFlow >= 0 ? '+' : ''}{formatCurrency(Math.abs(dataPoint.netCashFlow))}
                 </td>
                 <td className={`currency ${dataPoint.cumulativeNet >= 0 ? 'positive' : 'deficit'}`}>
                   {formatCurrency(dataPoint.cumulativeNet)}
@@ -292,10 +292,10 @@ const LiquidityForecastDashboard: React.FC<Props> = ({
                           <div key={idx} className="investment-detail">
                             <span className="investment-name">{detail.name}</span>
                             {detail.calls > 1000 && (
-                              <span className="call-amount">-{formatCurrency(detail.calls)}</span>
+                              <span className="call-amount">-{formatCurrency(Math.abs(detail.calls))}</span>
                             )}
                             {detail.distributions > 1000 && (
-                              <span className="dist-amount">+{formatCurrency(detail.distributions)}</span>
+                              <span className="dist-amount">+{formatCurrency(Math.abs(detail.distributions))}</span>
                             )}
                           </div>
                         ))}

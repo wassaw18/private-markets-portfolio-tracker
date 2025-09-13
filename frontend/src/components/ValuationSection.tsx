@@ -11,6 +11,7 @@ interface Props {
 
 const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate }) => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingValuation, setEditingValuation] = useState<Valuation | null>(null);
   const [formData, setFormData] = useState<ValuationCreate>({
     date: new Date().toISOString().split('T')[0],
     nav_value: 0,
@@ -32,19 +33,44 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
     setError(null);
 
     try {
-      await valuationAPI.createValuation(investmentId, formData);
+      if (editingValuation) {
+        await valuationAPI.updateValuation(investmentId, editingValuation.id, formData);
+      } else {
+        await valuationAPI.createValuation(investmentId, formData);
+      }
       setFormData({
         date: new Date().toISOString().split('T')[0],
         nav_value: 0,
       });
       setShowAddForm(false);
+      setEditingValuation(null);
       onUpdate();
     } catch (err) {
-      setError('Failed to add valuation. Please check all fields.');
-      console.error('Error creating valuation:', err);
+      setError(editingValuation ? 'Failed to update valuation. Please check all fields.' : 'Failed to add valuation. Please check all fields.');
+      console.error(editingValuation ? 'Error updating valuation:' : 'Error creating valuation:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEdit = (valuation: Valuation) => {
+    setEditingValuation(valuation);
+    setFormData({
+      date: valuation.date,
+      nav_value: valuation.nav_value,
+    });
+    setShowAddForm(true);
+    setError(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingValuation(null);
+    setShowAddForm(false);
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      nav_value: 0,
+    });
+    setError(null);
   };
 
   const handleDelete = async (valuationId: number) => {
@@ -110,7 +136,7 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
         <h3>Valuations ({valuations.length})</h3>
         <button 
           className="add-button"
-          onClick={() => setShowAddForm(!showAddForm)}
+          onClick={() => editingValuation ? handleCancelEdit() : setShowAddForm(!showAddForm)}
         >
           {showAddForm ? 'Cancel' : 'Add Valuation'}
         </button>
@@ -120,7 +146,7 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
 
       {showAddForm && (
         <div className="add-form-container">
-          <h4>Add NAV Valuation</h4>
+          <h4>{editingValuation ? 'Edit NAV Valuation' : 'Add NAV Valuation'}</h4>
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
@@ -150,11 +176,11 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
               </div>
             </div>
             <div className="form-actions">
-              <button type="button" onClick={() => setShowAddForm(false)} className="cancel-button">
+              <button type="button" onClick={handleCancelEdit} className="cancel-button">
                 Cancel
               </button>
               <button type="submit" disabled={loading} className="submit-button">
-                {loading ? 'Adding...' : 'Add Valuation'}
+                {loading ? (editingValuation ? 'Updating...' : 'Adding...') : (editingValuation ? 'Update Valuation' : 'Add Valuation')}
               </button>
             </div>
           </form>
@@ -168,28 +194,25 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
             {latestValuation ? formatCurrency(latestValuation.nav_value) : 'N/A'}
           </span>
           {latestValuation && (
-            <small className="date-info">{formatDate(latestValuation.date)}</small>
+            <small>{formatDate(latestValuation.date)}</small>
           )}
         </div>
         
-        {performance && (
-          <>
-            <div className="summary-item">
-              <label>Total Return</label>
-              <span className={`percentage ${performance.totalReturn >= 0 ? 'positive' : 'negative'}`}>
-                {performance.totalReturn >= 0 ? '+' : ''}{performance.totalReturn.toFixed(1)}%
-              </span>
-              <small className="date-info">{performance.periodDays} days</small>
-            </div>
-            <div className="summary-item">
-              <label>Annualized Return</label>
-              <span className={`percentage ${performance.annualizedReturn >= 0 ? 'positive' : 'negative'}`}>
-                {performance.annualizedReturn >= 0 ? '+' : ''}{performance.annualizedReturn.toFixed(1)}%
-              </span>
-              <small className="date-info">Estimated</small>
-            </div>
-          </>
-        )}
+        <div className="summary-item">
+          <label>Total Return</label>
+          <span className={`currency ${performance && performance.totalReturn >= 0 ? 'positive' : 'negative'}`}>
+            {performance ? `${performance.totalReturn >= 0 ? '+' : ''}${performance.totalReturn.toFixed(1)}%` : 'N/A'}
+          </span>
+          <small>{performance ? `${performance.periodDays} days` : 'Need multiple valuations'}</small>
+        </div>
+        
+        <div className="summary-item">
+          <label>Annualized Return</label>
+          <span className={`currency ${performance && performance.annualizedReturn >= 0 ? 'positive' : 'negative'}`}>
+            {performance ? `${performance.annualizedReturn >= 0 ? '+' : ''}${performance.annualizedReturn.toFixed(1)}%` : 'N/A'}
+          </span>
+          <small>{performance ? 'Estimated' : 'Need multiple valuations'}</small>
+        </div>
       </div>
 
       <div className="valuation-list">
@@ -230,9 +253,29 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
                       </td>
                       <td>
                         <button
+                          onClick={() => handleEdit(valuation)}
+                          className="add-button"
+                          title="Edit Valuation"
+                          style={{ marginRight: '6px', padding: '3px 6px', fontSize: '0.75rem' }}
+                        >
+                          Edit
+                        </button>
+                        <button
                           onClick={() => handleDelete(valuation.id)}
                           className="delete-button"
                           title="Delete Valuation"
+                          style={{ 
+                            padding: '3px 4px', 
+                            fontSize: '0.75rem',
+                            backgroundColor: '#dc3545',
+                            color: 'white',
+                            opacity: 1,
+                            visibility: 'visible',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: 500
+                          }}
                         >
                           Delete
                         </button>

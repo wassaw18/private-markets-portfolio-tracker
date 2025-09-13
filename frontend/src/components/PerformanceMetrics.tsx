@@ -98,16 +98,28 @@ const PerformanceMetrics: React.FC<Props> = ({ investmentId, onUpdate }) => {
   return (
     <div className="performance-metrics">
       <div className="section-header">
-        <h3>Performance Metrics</h3>
-        <div className="metrics-subtitle">
-          Professional private markets performance analysis
+        <div className="header-left">
+          <h3>Performance Metrics</h3>
+          <div className="metrics-subtitle">
+            Professional private markets performance analysis
+          </div>
+        </div>
+        <div className="header-right">
+          <div className="investment-status">
+            <span className="status-label">Status:</span>
+            <span className={`status-value ${metrics.current_nav && metrics.current_nav > 0 ? 'active' : 
+                             metrics.total_distributions > 0 ? 'realized' : 'pending'}`}>
+              {metrics.current_nav && metrics.current_nav > 0 ? 'Active' : 
+               metrics.total_distributions > 0 ? 'Realized' : 'Pending'}
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="metrics-grid">
-        {/* Core Performance Metrics */}
+        {/* Return Metrics */}
         <div className="metric-group">
-          <h4>Returns</h4>
+          <h4>Return Metrics</h4>
           <div className="metric-item">
             <label>IRR (Internal Rate of Return)</label>
             <span className={`metric-value ${getPerformanceColor(metrics.irr)}`}>
@@ -122,11 +134,13 @@ const PerformanceMetrics: React.FC<Props> = ({ investmentId, onUpdate }) => {
             </span>
             <small className="metric-description">Total return multiple (MOIC)</small>
           </div>
-        </div>
-
-        {/* Capital Efficiency Metrics */}
-        <div className="metric-group">
-          <h4>Capital Efficiency</h4>
+          <div className="metric-item">
+            <label>RVPI (Residual Value / Paid-In)</label>
+            <span className={`metric-value ${getMultipleColor(metrics.rvpi)}`}>
+              {formatMultiple(metrics.rvpi)}
+            </span>
+            <small className="metric-description">Remaining value multiple</small>
+          </div>
           <div className="metric-item">
             <label>DPI (Distributed / Paid-In)</label>
             <span className={`metric-value ${getPerformanceColor(metrics.dpi)}`}>
@@ -134,12 +148,56 @@ const PerformanceMetrics: React.FC<Props> = ({ investmentId, onUpdate }) => {
             </span>
             <small className="metric-description">Cash-on-cash return realized</small>
           </div>
+        </div>
+
+        {/* Yield Metrics */}
+        <div className="metric-group">
+          <h4>Yield Metrics</h4>
           <div className="metric-item">
-            <label>RVPI (Residual Value / Paid-In)</label>
-            <span className={`metric-value ${getMultipleColor(metrics.rvpi)}`}>
-              {formatMultiple(metrics.rvpi)}
+            <label>Trailing Yield (12-Month)</label>
+            <span className={`metric-value ${getPerformanceColor(metrics.trailing_yield)}`}>
+              {formatPercentage(metrics.trailing_yield)}
             </span>
-            <small className="metric-description">Remaining value multiple</small>
+            <small className="metric-description">
+              {metrics.trailing_yield ? 'Actual yield over past 12 months' : 'No yield distributions'}
+            </small>
+          </div>
+          
+          <div className="metric-item">
+            <label>Trailing Yield ($)</label>
+            <span className="metric-value capital">
+              {metrics.trailing_yield_amount 
+                ? formatCurrency(metrics.trailing_yield_amount)
+                : 'N/A'
+              }
+            </span>
+            <small className="metric-description">Sum of all yields in past 12 months</small>
+          </div>
+          
+          <div className="metric-item">
+            <label>Forward Yield</label>
+            <span className={`metric-value ${getPerformanceColor(metrics.forward_yield)}`} 
+                  title={metrics.yield_frequency ? `Based on ${metrics.yield_frequency.toLowerCase()} distributions` : undefined}>
+              {formatPercentage(metrics.forward_yield)}
+            </span>
+            <small className="metric-description">
+              {metrics.yield_frequency 
+                ? `Projected (${metrics.yield_frequency.toLowerCase()} frequency)` 
+                : 'Cannot determine frequency'}
+            </small>
+          </div>
+          
+          <div className="metric-item">
+            <label>Forward Yield ($)</label>
+            <span className="metric-value capital">
+              {metrics.latest_yield_amount && metrics.forward_yield && (metrics.current_nav || metrics.total_contributions)
+                ? `${formatCurrency(metrics.latest_yield_amount)} (${formatCurrency(metrics.forward_yield * (metrics.current_nav || Math.abs(metrics.total_contributions)))} annualized)`
+                : metrics.latest_yield_amount
+                ? formatCurrency(metrics.latest_yield_amount)
+                : 'N/A'
+              }
+            </span>
+            <small className="metric-description">Latest single yield payment (annualized projection)</small>
           </div>
         </div>
 
@@ -177,34 +235,6 @@ const PerformanceMetrics: React.FC<Props> = ({ investmentId, onUpdate }) => {
         </div>
       </div>
 
-      {/* Performance Insights */}
-      <div className="performance-insights">
-        <h4>Performance Insights</h4>
-        <div className="insights-grid">
-          <div className="insight-item">
-            <span className="insight-label">Investment Status:</span>
-            <span className="insight-value">
-              {metrics.current_nav && metrics.current_nav > 0 ? 'Active' : 
-               metrics.total_distributions > 0 ? 'Realized' : 'Pending'}
-            </span>
-          </div>
-          <div className="insight-item">
-            <span className="insight-label">Cash Returned:</span>
-            <span className="insight-value">
-              {metrics.total_contributions > 0 ? 
-                formatPercentage(metrics.total_distributions / metrics.total_contributions) : 'N/A'}
-            </span>
-          </div>
-          <div className="insight-item">
-            <span className="insight-label">Capital Efficiency:</span>
-            <span className="insight-value">
-              {metrics.tvpi && metrics.tvpi > 2 ? 'Excellent' :
-               metrics.tvpi && metrics.tvpi > 1.5 ? 'Good' :
-               metrics.tvpi && metrics.tvpi > 1 ? 'Positive' : 'Below Target'}
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
