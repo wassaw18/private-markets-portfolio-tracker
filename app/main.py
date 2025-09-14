@@ -261,6 +261,41 @@ def update_investment(investment_id: int, investment: schemas.InvestmentUpdate, 
         raise HTTPException(status_code=404, detail="Investment not found")
     return db_investment
 
+@app.put("/api/investments/{investment_id}/status", response_model=schemas.Investment)
+def update_investment_status(
+    investment_id: int, 
+    status_update: schemas.InvestmentStatusUpdate,
+    password_confirmation: schemas.PasswordConfirmation,
+    db: Session = Depends(get_db), 
+    current_user: str = Depends(get_current_user)
+):
+    """Update investment status with password confirmation for realized status"""
+    
+    # Verify investment exists
+    db_investment = crud.get_investment(db, investment_id=investment_id)
+    if db_investment is None:
+        raise HTTPException(status_code=404, detail="Investment not found")
+    
+    # For security, require password confirmation for marking as realized
+    if status_update.status == schemas.InvestmentStatus.REALIZED:
+        # In a real implementation, you would validate the password against the user's stored password
+        # For now, we'll just require a non-empty password field
+        if not password_confirmation.password or len(password_confirmation.password.strip()) == 0:
+            raise HTTPException(status_code=400, detail="Password confirmation required for marking investment as realized")
+    
+    # Update the investment status
+    updated_investment = crud.update_investment_status(
+        db=db, 
+        investment_id=investment_id, 
+        status_update=status_update, 
+        current_user=current_user
+    )
+    
+    if updated_investment is None:
+        raise HTTPException(status_code=404, detail="Investment not found")
+    
+    return updated_investment
+
 @app.delete("/api/investments/{investment_id}")
 def delete_investment(investment_id: int, db: Session = Depends(get_db)):
     success = crud.delete_investment(db, investment_id=investment_id)

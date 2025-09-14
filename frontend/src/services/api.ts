@@ -216,6 +216,29 @@ export const investmentAPI = {
     return response.data;
   },
 
+  // Update investment status
+  updateInvestmentStatus: async (
+    id: number, 
+    status: string, 
+    password: string, 
+    realizationDate?: string, 
+    realizationNotes?: string
+  ): Promise<Investment> => {
+    const requestBody = {
+      status_update: {
+        status,
+        realization_date: realizationDate || null,
+        realization_notes: realizationNotes || null
+      },
+      password_confirmation: {
+        password
+      }
+    };
+    
+    const response = await api.put(`/api/investments/${id}/status`, requestBody);
+    return response.data;
+  },
+
   // Delete investment
   deleteInvestment: async (id: number): Promise<void> => {
     await api.delete(`/api/investments/${id}`);

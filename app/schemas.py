@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import date, datetime
-from app.models import AssetClass, InvestmentStructure, CashFlowType, CallScheduleType, DistributionTimingType, ForecastScenario, EntityType, RelationshipType, AdvancedRelationshipType, OwnershipType, DocumentCategory, DocumentStatus, LiquidityProfile, ReportingFrequency, RiskRating
+from app.models import AssetClass, InvestmentStructure, InvestmentStatus, CashFlowType, CallScheduleType, DistributionTimingType, ForecastScenario, EntityType, RelationshipType, AdvancedRelationshipType, OwnershipType, DocumentCategory, DocumentStatus, LiquidityProfile, ReportingFrequency, RiskRating
 
 class CashFlowBase(BaseModel):
     date: date
@@ -160,6 +160,13 @@ class InvestmentBase(BaseModel):
     call_schedule: Optional[CallScheduleType] = Field(default=CallScheduleType.STEADY)
     distribution_timing: Optional[DistributionTimingType] = Field(default=DistributionTimingType.BACKEND)
     forecast_enabled: Optional[bool] = Field(default=True)
+    
+    # Investment Status Management
+    status: InvestmentStatus = Field(default=InvestmentStatus.ACTIVE)
+    realization_date: Optional[date] = None
+    realization_notes: Optional[str] = Field(None, max_length=500)
+    status_changed_by: Optional[str] = None
+    status_changed_date: Optional[datetime] = None
 
 class InvestmentCreate(InvestmentBase):
     # Override to make required fields explicit for creation
@@ -216,20 +223,29 @@ class Investment(InvestmentBase):
     class Config:
         from_attributes = True
 
+# Investment Status Management Schemas
+class InvestmentStatusUpdate(BaseModel):
+    status: InvestmentStatus
+    realization_date: Optional[date] = None
+    realization_notes: Optional[str] = Field(None, max_length=500)
+
+class PasswordConfirmation(BaseModel):
+    password: str = Field(..., min_length=1)
+
 class PerformanceMetrics(BaseModel):
     irr: Optional[float] = Field(None, description="Internal Rate of Return (decimal)")
     tvpi: Optional[float] = Field(None, description="Total Value to Paid-In (MOIC)")
     dpi: Optional[float] = Field(None, description="Distributed to Paid-In")  
     rvpi: Optional[float] = Field(None, description="Residual Value to Paid-In")
-    total_contributions: float
-    total_distributions: float = Field(..., ge=0, description="Total distributions received")
-    current_nav: Optional[float] = Field(None, ge=0, description="Current Net Asset Value")
-    total_value: Optional[float] = Field(None, ge=0, description="NAV + Distributions")
+    total_contributions: float = Field(..., description="Total contributions (can be negative if recording capital calls as negative)")
+    total_distributions: float = Field(..., description="Total distributions received (can be negative if recording fees/losses)")
+    current_nav: Optional[float] = Field(None, description="Current Net Asset Value (can be negative for underwater investments)")
+    total_value: Optional[float] = Field(None, description="NAV + Distributions (can be negative)")
     trailing_yield: Optional[float] = Field(None, description="Trailing 12-month yield (decimal)")
     forward_yield: Optional[float] = Field(None, description="Forward yield based on most recent distribution (decimal)")
     yield_frequency: Optional[str] = Field(None, description="Detected distribution frequency for forward yield")
-    trailing_yield_amount: Optional[float] = Field(None, ge=0, description="Dollar amount of trailing 12-month yield")
-    latest_yield_amount: Optional[float] = Field(None, ge=0, description="Dollar amount of most recent single yield")
+    trailing_yield_amount: Optional[float] = Field(None, description="Dollar amount of trailing 12-month yield (can be negative)")
+    latest_yield_amount: Optional[float] = Field(None, description="Dollar amount of most recent single yield (can be negative)")
 
 class InvestmentPerformance(BaseModel):
     investment_id: int

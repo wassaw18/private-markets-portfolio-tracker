@@ -220,6 +220,27 @@ def update_investment(db: Session, investment_id: int, investment_update: schema
         db.refresh(db_investment)
     return db_investment
 
+def update_investment_status(db: Session, investment_id: int, status_update: schemas.InvestmentStatusUpdate, current_user: str = "admin") -> Optional[models.Investment]:
+    """Update investment status with audit trail"""
+    from datetime import datetime
+    
+    db_investment = db.query(models.Investment).filter(models.Investment.id == investment_id).first()
+    if db_investment:
+        # Update status fields
+        db_investment.status = status_update.status
+        db_investment.status_changed_by = current_user
+        db_investment.status_changed_date = datetime.utcnow()
+        
+        # Update realization fields if provided
+        if status_update.realization_date:
+            db_investment.realization_date = status_update.realization_date
+        if status_update.realization_notes:
+            db_investment.realization_notes = status_update.realization_notes
+            
+        db.commit()
+        db.refresh(db_investment)
+    return db_investment
+
 def delete_investment(db: Session, investment_id: int) -> bool:
     db_investment = db.query(models.Investment).filter(models.Investment.id == investment_id).first()
     if db_investment:

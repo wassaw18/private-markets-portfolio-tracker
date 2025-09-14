@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Investment, CashFlow, Valuation } from '../types/investment';
+import { Investment, CashFlow, Valuation, InvestmentStatus } from '../types/investment';
 import { investmentAPI, cashFlowAPI, valuationAPI } from '../services/api';
 import CashFlowSection from '../components/CashFlowSection';
 import ValuationSection from '../components/ValuationSection';
@@ -9,6 +9,7 @@ import BenchmarkComparison from '../components/BenchmarkComparison';
 import PacingModelPanel from '../components/PacingModelPanel';
 import InvestmentForecastChart from '../components/InvestmentForecastChart';
 import UploadWidget from '../components/UploadWidget';
+import InvestmentStatusManagement from '../components/InvestmentStatusManagement';
 import { ImportResult } from '../services/api';
 import './InvestmentDetails.css';
 
@@ -81,6 +82,30 @@ const InvestmentDetails: React.FC = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const handleStatusUpdate = async (
+    investmentId: number,
+    status: InvestmentStatus,
+    password: string,
+    realizationDate?: string,
+    realizationNotes?: string
+  ) => {
+    try {
+      const updatedInvestment = await investmentAPI.updateInvestmentStatus(
+        investmentId,
+        status,
+        password,
+        realizationDate,
+        realizationNotes
+      );
+      
+      // Update the local investment state
+      setInvestment(updatedInvestment);
+    } catch (error: any) {
+      // Re-throw the error so the component can display it
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update investment status');
+    }
   };
 
   if (loading) {
@@ -165,6 +190,12 @@ const InvestmentDetails: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Investment Status Management */}
+      <InvestmentStatusManagement
+        investment={investment}
+        onStatusUpdate={handleStatusUpdate}
+      />
 
       <PerformanceMetrics
         investmentId={investmentId}

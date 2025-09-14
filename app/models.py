@@ -27,6 +27,11 @@ class InvestmentStructure(str, enum.Enum):
     BANK_ACCOUNT = "Bank Account"
     LOAN = "Loan"
 
+class InvestmentStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"      # Current investments being tracked
+    DORMANT = "DORMANT"    # Inactive but may resume activity
+    REALIZED = "REALIZED"  # Completely finished, no future activity
+
 class CashFlowType(str, enum.Enum):
     # Capital calls and contributions
     CAPITAL_CALL = "Capital Call"
@@ -346,6 +351,13 @@ class Investment(Base):
     # Forecast configuration
     forecast_enabled = Column(Boolean, default=True)
     last_forecast_date = Column(DateTime)
+    
+    # Investment Status Management
+    status = Column(Enum(InvestmentStatus), default=InvestmentStatus.ACTIVE, nullable=False)
+    realization_date = Column(Date, nullable=True)
+    realization_notes = Column(String(500), nullable=True)
+    status_changed_by = Column(String, nullable=True)  # Username who changed status
+    status_changed_date = Column(DateTime, nullable=True)
     
     # Audit trail
     created_date = Column(DateTime, default=datetime.utcnow)

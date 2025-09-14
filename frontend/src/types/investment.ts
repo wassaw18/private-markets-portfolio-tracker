@@ -40,6 +40,12 @@ export enum RiskRating {
   HIGH = "High"
 }
 
+export enum InvestmentStatus {
+  ACTIVE = "ACTIVE",
+  DORMANT = "DORMANT", 
+  REALIZED = "REALIZED"
+}
+
 export enum TaxClassification {
   FORM_1099 = "1099",
   K1_PARTNERSHIP = "K-1",
@@ -155,6 +161,13 @@ export interface Investment {
   distribution_timing?: 'Early' | 'Backend' | 'Steady';
   forecast_enabled?: boolean;
   last_forecast_date?: string;
+  
+  // Investment Status Management
+  status: InvestmentStatus;
+  realization_date?: string;
+  realization_notes?: string;
+  status_changed_by?: string;
+  status_changed_date?: string;
 }
 
 export interface InvestmentCreate {
@@ -252,6 +265,13 @@ export interface InvestmentUpdate {
   distribution_timing?: 'Early' | 'Backend' | 'Steady';
   forecast_enabled?: boolean;
   last_forecast_date?: string;
+  
+  // Investment Status Management updates
+  status?: InvestmentStatus;
+  realization_date?: string;
+  realization_notes?: string;
+  status_changed_by?: string;
+  status_changed_date?: string;
 }
 
 export interface PerformanceMetrics {
