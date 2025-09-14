@@ -17,7 +17,6 @@
   right: 0;
   bottom: 0;
   background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(10px);
   z-index: 1;
 }
 
@@ -50,7 +49,6 @@
   margin: 25px 0;
   text-align: center;
   border: 2px solid rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 
@@ -96,18 +94,25 @@
 }
 
 .breakdown-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.8);
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.95);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .breakdown-value {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 800;
   font-family: 'Courier New', monospace;
-  color: white;
+  color: #1a1a1a;
+  text-shadow: none;
+  background: rgba(255,255,255,0.95);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .breakdown-divider {
@@ -123,17 +128,19 @@
 }
 
 .performance-badge {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.9);
   border-radius: 25px;
   padding: 12px 20px;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  backdrop-filter: none;
 }
 
 .badge-value {
   font-size: 1.1rem;
   font-weight: 700;
   font-family: 'Courier New', monospace;
-  color: white;
+  color: #1a1a1a;
 }
 
 .badge-value.positive {
@@ -151,7 +158,10 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: rgba(255,255,255,0.9);
+  color: white;
+  background: rgba(0,0,0,0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
 }
 
 .stat-item {
@@ -170,11 +180,12 @@
 }
 
 .summary-section {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.2);
   border-radius: 8px;
   padding: 20px;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: none;
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .summary-section h4 {
@@ -266,43 +277,6 @@
   font-weight: 700;
 }
 
-/* Efficiency Ratios */
-.ratio-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.ratio-item {
-  text-align: center;
-  padding: 15px 10px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 6px;
-}
-
-.ratio-item label {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 8px;
-}
-
-.ratio-item .value {
-  display: block;
-  font-size: 1.2rem;
-  font-weight: 700;
-  font-family: 'Courier New', monospace;
-  color: white;
-  margin-bottom: 4px;
-}
-
-.ratio-item small {
-  display: block;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.8);
-  line-height: 1.2;
-}
 
 /* Performance Colors */
 .value.positive {
@@ -321,10 +295,11 @@
 
 /* Portfolio Insights */
 .portfolio-insights {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.9);
   border-radius: 8px;
   padding: 20px;
   border-top: 2px solid rgba(255,255,255,0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .insight-row {
@@ -341,7 +316,7 @@
 
 .insight-label {
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.8);
+  color: #1a1a1a;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -350,7 +325,7 @@
 .insight-value {
   font-size: 1rem;
   font-weight: 600;
-  color: white;
+  color: #1a1a1a;
   font-family: 'Courier New', monospace;
 }
 
@@ -394,8 +369,13 @@
   
   .hero-breakdown {
     flex-direction: column;
-    gap: 15px;
-    padding: 15px 0;
+    gap: 20px;
+    padding: 20px 0;
+  }
+  
+  .breakdown-value {
+    font-size: 1.6rem;
+    padding: 10px 16px;
   }
   
   .breakdown-divider {
@@ -421,9 +401,6 @@
     grid-template-columns: 1fr;
   }
   
-  .ratio-grid {
-    grid-template-columns: 1fr;
-  }
   
   .insight-row {
     grid-template-columns: 1fr;

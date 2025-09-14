@@ -6,7 +6,9 @@ from app.performance import (
     aggregate_portfolio_performance, 
     calculate_called_amount_from_cashflows,
     calculate_fees_from_cashflows,
-    PerformanceMetrics as PerfMetrics
+    calculate_true_portfolio_performance,
+    PerformanceMetrics as PerfMetrics,
+    CashFlowEvent
 )
 from app.models import CashFlowType
 from sqlalchemy.orm import joinedload
@@ -269,6 +271,27 @@ def update_investment_summary_fields(db: Session, investment_id: int) -> None:
     
     db.commit()
 
+def update_cashflow(db: Session, cashflow_id: int, cashflow_update: schemas.CashFlowUpdate, current_user: str = "admin") -> Optional[models.CashFlow]:
+    """Update an existing cashflow"""
+    db_cashflow = db.query(models.CashFlow).filter(models.CashFlow.id == cashflow_id).first()
+    if not db_cashflow:
+        return None
+    
+    # Update only provided fields
+    update_data = cashflow_update.model_dump(exclude_unset=True)
+    update_data['updated_by'] = current_user
+    
+    for field, value in update_data.items():
+        setattr(db_cashflow, field, value)
+    
+    db.commit()
+    db.refresh(db_cashflow)
+    
+    # Update investment summary fields
+    update_investment_summary_fields(db, db_cashflow.investment_id)
+    
+    return db_cashflow
+
 def delete_cashflow(db: Session, cashflow_id: int) -> bool:
     db_cashflow = db.query(models.CashFlow).filter(models.CashFlow.id == cashflow_id).first()
     if db_cashflow:
@@ -333,7 +356,12 @@ def get_investment_performance(db: Session, investment_id: int) -> Optional[sche
         total_contributions=perf_metrics.total_contributions,
         total_distributions=perf_metrics.total_distributions,
         current_nav=perf_metrics.current_nav,
-        total_value=perf_metrics.total_value
+        total_value=perf_metrics.total_value,
+        trailing_yield=perf_metrics.trailing_yield,
+        forward_yield=perf_metrics.forward_yield,
+        yield_frequency=perf_metrics.yield_frequency,
+        trailing_yield_amount=perf_metrics.trailing_yield_amount,
+        latest_yield_amount=perf_metrics.latest_yield_amount
     )
     
     return schemas.InvestmentPerformance(
@@ -348,6 +376,7 @@ def get_portfolio_performance(db: Session) -> schemas.PortfolioPerformance:
     
     investment_metrics = []
     investments_with_nav = 0
+    all_cash_flows = []  # Collect all cash flows for true portfolio IRR
     
     for investment in investments:
         # Include ALL relevant cash flow types for contributions and distributions
@@ -360,9 +389,21 @@ def get_portfolio_performance(db: Session) -> schemas.PortfolioPerformance:
         
         if perf_metrics.current_nav is not None:
             investments_with_nav += 1
+            
+        # Collect all cash flows for portfolio-level IRR calculation
+        for cf in contributions:
+            all_cash_flows.append(CashFlowEvent(cf.date, -abs(cf.amount)))  # Contributions are negative
+        for cf in distributions:
+            all_cash_flows.append(CashFlowEvent(cf.date, abs(cf.amount)))   # Distributions are positive
+            
+        # Add current NAV as final cash flow if exists
+        if perf_metrics.current_nav and perf_metrics.current_nav > 0:
+            # Use today's date for NAV valuation
+            from datetime import date
+            all_cash_flows.append(CashFlowEvent(date.today(), perf_metrics.current_nav))
     
-    # Aggregate portfolio metrics
-    portfolio_metrics = aggregate_portfolio_performance(investment_metrics)
+    # Calculate true portfolio-level metrics using all cash flows
+    portfolio_metrics = calculate_true_portfolio_performance(all_cash_flows, investment_metrics)
     
     # Convert to schema
     portfolio_performance_schema = schemas.PerformanceMetrics(
@@ -373,13 +414,44 @@ def get_portfolio_performance(db: Session) -> schemas.PortfolioPerformance:
         total_contributions=portfolio_metrics.total_contributions,
         total_distributions=portfolio_metrics.total_distributions,
         current_nav=portfolio_metrics.current_nav,
-        total_value=portfolio_metrics.total_value
+        total_value=portfolio_metrics.total_value,
+        trailing_yield=portfolio_metrics.trailing_yield,
+        forward_yield=portfolio_metrics.forward_yield,
+        yield_frequency=portfolio_metrics.yield_frequency,
+        trailing_yield_amount=portfolio_metrics.trailing_yield_amount,
+        latest_yield_amount=portfolio_metrics.latest_yield_amount
     )
+    
+    # Calculate additional portfolio metrics
+    entities = db.query(models.Entity).filter(models.Entity.is_active == True).all()
+    entity_count = len(entities)
+    
+    # Calculate commitment and called amounts
+    total_commitment = sum(inv.commitment_amount for inv in investments)
+    total_called = sum(inv.called_amount for inv in investments)
+    
+    # Get unique asset classes and vintage years
+    asset_classes = set()
+    vintage_years = set()
+    active_investments = 0
+    
+    for investment in investments:
+        asset_classes.add(investment.asset_class)
+        vintage_years.add(investment.vintage_year)
+        # Count as active if it has NAV or recent activity (could refine this logic)
+        if investment.valuations or investment.cashflows:
+            active_investments += 1
     
     return schemas.PortfolioPerformance(
         portfolio_performance=portfolio_performance_schema,
         investment_count=len(investments),
-        investments_with_nav=investments_with_nav
+        investments_with_nav=investments_with_nav,
+        entity_count=entity_count,
+        asset_class_count=len(asset_classes),
+        vintage_year_count=len(vintage_years),
+        active_investment_count=active_investments,
+        total_commitment=total_commitment,
+        total_called=total_called
     )
 
 # Document Management CRUD operations

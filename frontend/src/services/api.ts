@@ -251,6 +251,12 @@ export const cashFlowAPI = {
     return response.data;
   },
 
+  // Update cash flow
+  updateCashFlow: async (investmentId: number, cashFlowId: number, cashFlow: CashFlowCreate): Promise<CashFlow> => {
+    const response = await api.put(`/api/investments/${investmentId}/cashflows/${cashFlowId}`, cashFlow);
+    return response.data;
+  },
+
   // Delete cash flow
   deleteCashFlow: async (investmentId: number, cashFlowId: number): Promise<void> => {
     await api.delete(`/api/investments/${investmentId}/cashflows/${cashFlowId}`);
@@ -267,6 +273,12 @@ export const valuationAPI = {
   // Create valuation
   createValuation: async (investmentId: number, valuation: ValuationCreate): Promise<Valuation> => {
     const response = await api.post(`/api/investments/${investmentId}/valuations`, valuation);
+    return response.data;
+  },
+
+  // Update valuation
+  updateValuation: async (investmentId: number, valuationId: number, valuation: ValuationCreate): Promise<Valuation> => {
+    const response = await api.put(`/api/investments/${investmentId}/valuations/${valuationId}`, valuation);
     return response.data;
   },
 

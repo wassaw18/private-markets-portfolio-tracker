@@ -320,6 +320,25 @@ def create_investment_cashflow(investment_id: int, cashflow: schemas.CashFlowCre
         raise HTTPException(status_code=404, detail="Investment not found")
     return crud.create_cashflow(db, investment_id=investment_id, cashflow=cashflow, current_user=current_user)
 
+@app.put("/api/investments/{investment_id}/cashflows/{cashflow_id}", response_model=schemas.CashFlow)
+def update_investment_cashflow(investment_id: int, cashflow_id: int, cashflow_update: schemas.CashFlowUpdate, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    # Verify investment exists
+    db_investment = crud.get_investment(db, investment_id=investment_id)
+    if db_investment is None:
+        raise HTTPException(status_code=404, detail="Investment not found")
+    
+    # Verify cashflow exists and belongs to investment
+    db_cashflow = crud.get_cashflow(db, cashflow_id=cashflow_id)
+    if db_cashflow is None or db_cashflow.investment_id != investment_id:
+        raise HTTPException(status_code=404, detail="Cash flow not found")
+    
+    # Update cashflow
+    updated_cashflow = crud.update_cashflow(db, cashflow_id=cashflow_id, cashflow_update=cashflow_update, current_user=current_user)
+    if updated_cashflow is None:
+        raise HTTPException(status_code=404, detail="Cash flow not found")
+    
+    return updated_cashflow
+
 @app.delete("/api/investments/{investment_id}/cashflows/{cashflow_id}")
 def delete_cashflow(investment_id: int, cashflow_id: int, db: Session = Depends(get_db)):
     # Verify investment exists

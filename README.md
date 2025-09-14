@@ -4,50 +4,59 @@ A comprehensive, institutional-grade portfolio management system designed for fa
 
 ## 🎯 **Key Features**
 
-### **📊 Investment Management**
-- **Professional 4-Tab Investment Modal** with 22+ institutional-grade fields
-- **Performance Analytics** with IRR/TVPI calculations using Newton-Raphson method
-- **Cash Flow Tracking** with multiple flow types (Capital Calls, Distributions, Fees, Yield)
-- **Valuation Management** with automated performance grade calculations
+### **📊 Investment Management & Performance**
+- **Professional Investment Dashboard** with clean, family-office-grade UI design  
+- **True Portfolio-Level IRR Calculations** using aggregated cash flows and Newton-Raphson method
+- **Enhanced Performance Metrics** (IRR, TVPI, DPI, RVPI) with accurate calculations
+- **12-Month NAV Window** for current portfolio valuation (industry-standard approach)
+- **Portfolio Summary Dashboard** with total portfolio value, performance metrics, and portfolio overview
+- **Individual Investment Pages** with detailed cash flow, NAV, and performance tracking
+- **Professional Investment Modal** with comprehensive investment data entry
 
-### **🔮 Advanced Forecasting**
-- **Sophisticated Pacing Model** with J-curve modeling and scenario analysis
-- **12-Month Liquidity Forecast Dashboard** with portfolio-level visibility
-- **Forecast Override System** for incorporating known/confirmed cash flows
-- **Stress Testing** scenarios (accelerated calls, delayed distributions)
-- **Liquidity Alerts** and risk management warnings
+### **💰 Cash Flow & Valuation Management** 
+- **Complete Cash Flow Tracking** supporting negative amounts (capital calls vs distributions)
+- **Multi-Type Cash Flows**: Capital Calls, Distributions, Fees, Yield, Return of Principal
+- **NAV/Valuation Management** with date-based tracking and 12-month current windows
+- **Automated Performance Calculations** based on real cash flow data
+- **Cash Flow Calendar Integration** for timeline visibility
+- **CRUD Operations** for editing and updating cash flow data
 
-### **🏢 Entity & Relationship Management**
-- **Complex Entity Structures** (Family Office, Trusts, LLCs, Partnerships)
-- **Entity Hierarchy Visualization** with parent/subsidiary relationships
-- **Investment Ownership Tracking** with percentage allocations
-- **Family Member Management** with role assignments
-
-### **📅 Cash Flow & Calendar Management**
-- **Interactive Cash Flow Calendar** with monthly/quarterly views
-- **Cash Flow Matching** opportunities for liquidity optimization
-- **Performance Insights** with rolling metrics and forecasting
-- **Document Integration** with cash flow attachments
-
-### **📄 Document Management & Bulk Upload**
-- **Secure Document Upload** with categorization and tagging
-- **Document Status Tracking** (Pending, Received, Processed)
+### **📋 Data Management & Import/Export**
 - **Professional Excel Template System** for bulk data imports
-- **Investment Bulk Upload** with 32-field validation and error handling
-- **Entity Bulk Upload** with conditional validation and 85% code reuse
-- **Document Search and Filtering** with confidentiality controls
+- **Investment Bulk Upload** with comprehensive field validation  
+- **Entity Bulk Upload** with conditional validation
+- **NAV Bulk Upload** with investment dropdown validation
+- **Cash Flow Bulk Upload** with type and investment validation
+- **Template Download System** with pre-configured Excel templates
+- **Error Handling & Validation** with detailed user feedback
 
-### **🔒 Audit & Compliance**
-- **Enhanced Basic Auditing System** with complete user tracking
-- **"Who changed what when"** visibility for all data modifications
-- **Regulatory Compliance** features for family office operations
-- **Data Quality Assurance** through comprehensive audit trails
+### **🏢 Entity & Ownership Management**
+- **Entity Management System** supporting Family Office, Trust, LLC, Partnership structures
+- **Family Member Management** with relationship tracking and contact information
+- **Investment Ownership Assignment** linking investments to entities
+- **Entity Relationship Visualization** with interactive network diagrams
+- **Entity Hierarchy Support** with parent/subsidiary relationships
+
+### **📈 Analytics & Visualization**
+- **Portfolio Performance Dashboard** with key metrics visualization
+- **Asset Class Allocation Charts** with interactive breakdowns
+- **Vintage Year Analysis** with portfolio diversification insights  
+- **Commitment vs Called Analysis** showing capital deployment efficiency
+- **J-Curve Visualization** for portfolio performance over time
+- **Portfolio Timeline Charts** showing value progression
+
+### **📄 Document Management**
+- **Secure Document Upload System** with drag-and-drop interface
+- **Document Categorization** with Investment Reports, Legal Documents, etc.
+- **Document Status Tracking** (Pending, Received, Processed, Archived)
+- **Document Search and Filtering** with advanced filter options
+- **Investment-Linked Documents** for organized document management
 
 ## 🚀 **Quick Start**
 
 ### **Prerequisites**
 - Python 3.8+ (3.12 recommended)
-- Node.js 16+ (18+ recommended)
+- Node.js 16+ (18+ recommended)  
 - npm 8+ or yarn
 
 ### **Installation**
@@ -55,7 +64,7 @@ A comprehensive, institutional-grade portfolio management system designed for fa
 #### **1. Clone Repository**
 ```bash
 git clone <your-repo-url>
-cd private-markets-portfolio-tracker
+cd private-markets-tracker
 ```
 
 #### **2. Backend Setup**
@@ -71,11 +80,6 @@ source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Run database migrations
-python migrations/migration_audit_fields.py
-python migrations/migration_liquidity_forecast.py
-python migrations/migration_entity_management.py
 ```
 
 #### **3. Frontend Setup**
@@ -84,218 +88,232 @@ cd frontend
 npm install
 ```
 
-#### **4. Environment Configuration**
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env with your settings (optional for development)
-```
-
-#### **5. Start Application**
+#### **4. Start Application**
 ```bash
 # Terminal 1: Backend (from project root)
+source venv/bin/activate
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Terminal 2: Frontend (from frontend/ directory)
+cd frontend
 npm start
 ```
 
-#### **6. Access Application**
+#### **5. Access Application**
 - **Application**: http://localhost:3000
-- **API Documentation**: http://localhost:8000/docs
+- **API Documentation**: http://localhost:8000/docs  
 - **Default Login**: admin / password
 
 ## 📁 **Project Structure**
 
 ```
-private-markets-portfolio-tracker/
+private-markets-tracker/
 ├── README.md                     # This file
-├── requirements.txt             # Python dependencies
-├── portfolio.db                 # SQLite database
+├── requirements.txt              # Python dependencies  
+├── portfolio_tracker.db         # SQLite database (created on first run)
 ├── app/                          # FastAPI Backend
 │   ├── main.py                   # API endpoints and application setup
 │   ├── models.py                 # SQLAlchemy database models
-│   ├── schemas.py                # Pydantic request/response schemas
+│   ├── schemas.py                # Pydantic request/response schemas  
 │   ├── crud.py                   # Database operations
 │   ├── database.py               # Database configuration
-│   ├── performance.py            # IRR/TVPI calculation engine
-│   ├── pacing_model.py           # Sophisticated cash flow forecasting
-│   ├── liquidity_forecast_service.py  # 12-month liquidity forecasting
+│   ├── performance.py            # Portfolio performance calculations
+│   ├── excel_template_service.py # Excel template & bulk upload system
 │   ├── entity_relationships.py   # Entity hierarchy management
-│   ├── excel_template_service.py # Excel template & bulk upload engine
-│   └── ...                       # Additional services
+│   ├── document_service.py       # Document management system
+│   ├── calendar_service.py       # Cash flow calendar functionality
+│   ├── dashboard.py              # Dashboard analytics
+│   └── benchmark_service.py      # Benchmark data management
 ├── frontend/                     # React TypeScript Frontend
 │   ├── src/
 │   │   ├── components/           # React components
-│   │   ├── pages/               # Page-level components
-│   │   ├── contexts/            # React contexts (Auth, etc.)
-│   │   ├── services/            # API service layer
-│   │   ├── types/               # TypeScript type definitions
-│   │   └── utils/               # Utility functions
-│   ├── public/                  # Static assets
-│   └── package.json             # Node.js dependencies
-├── docs/                        # Documentation
-│   ├── implementations/         # Feature implementation summaries
-│   ├── FAMILY_OFFICE_FEATURE_ROADMAP.md  # Strategic roadmap
-│   └── GITHUB_SECURITY_CHECKLIST.md      # Security guidelines
-├── migrations/                  # Database migration scripts
-├── tests/                       # Test files
-├── scripts/                     # Utility and validation scripts
-├── sample-data/                 # Sample data for testing
-└── deployment/                  # Deployment guides
+│   │   │   ├── PortfolioSummary.tsx      # Main portfolio dashboard
+│   │   │   ├── EnhancedInvestmentsTable.tsx  # Investment list view
+│   │   │   ├── AddInvestmentModal.tsx    # Professional investment form
+│   │   │   ├── CashFlowSection.tsx       # Cash flow management
+│   │   │   ├── ValuationSection.tsx      # NAV management
+│   │   │   ├── PerformanceMetrics.tsx    # Performance analytics
+│   │   │   ├── EntityManagement.tsx     # Entity management
+│   │   │   └── [60+ other components]
+│   │   ├── pages/                # Page-level components
+│   │   │   ├── Holdings.tsx      # Main holdings page
+│   │   │   ├── InvestmentDetails.tsx  # Individual investment view
+│   │   │   ├── BulkUpload.tsx    # Bulk import interface
+│   │   │   ├── Entities.tsx      # Entity management page
+│   │   │   ├── Documents.tsx     # Document management
+│   │   │   └── Visuals.tsx       # Analytics dashboard
+│   │   ├── services/             # API service layer
+│   │   ├── types/                # TypeScript type definitions
+│   │   └── contexts/             # React contexts (Auth, etc.)
+│   └── package.json              # Node.js dependencies
+├── tests/                        # Test files  
+├── sample-data/                  # Sample data for testing
+├── docs/                         # Documentation
+├── uploads/                      # Document upload directory
+└── venv/                         # Python virtual environment
 ```
 
 ## 🔧 **Architecture**
 
 ### **Backend (FastAPI + SQLAlchemy)**
-- **RESTful API** with automatic OpenAPI documentation
-- **SQLite Database** (easily upgradeable to PostgreSQL)
-- **Pydantic Validation** for type safety and data integrity
-- **Advanced ORM Models** with complex relationships and indexing
+- **RESTful API** with automatic OpenAPI documentation at `/docs`
+- **SQLite Database** with comprehensive schema for private markets data
+- **Pydantic Validation** for type safety and data integrity  
+- **Advanced Performance Calculations** with true portfolio-level IRR
+- **Bulk Upload System** with Excel template generation and validation
+- **Entity Relationship Management** with complex hierarchy support
 
-### **Frontend (React + TypeScript)**
+### **Frontend (React + TypeScript)** 
 - **Modern React** with hooks and functional components
-- **TypeScript** for type safety and developer experience
-- **Recharts** for professional data visualizations
+- **TypeScript** for type safety and enhanced developer experience
+- **Professional UI Design** optimized for family office workflows
+- **Recharts Integration** for financial data visualizations
 - **Responsive Design** with CSS Grid and Flexbox
+- **Context-Based State Management** for user authentication and global state
 
 ### **Key Architectural Decisions**
 - **API-First Design**: Clear separation between frontend and backend
-- **Entity-Relationship Model**: Supports complex family office structures
-- **Audit-First Approach**: All modifications tracked for compliance
-- **Performance Optimized**: Efficient database queries and responsive UI
+- **True Portfolio Performance**: Aggregated cash flow calculations vs weighted averages  
+- **Family Office Optimized**: UI and workflows designed for institutional users
+- **Validation-First Approach**: Comprehensive input validation for data integrity
+- **Professional Grade**: Enterprise-ready with proper error handling
 
 ## 📊 **Core Capabilities**
 
-### **Investment Tracking**
-- **Asset Classes**: Private Equity, Private Credit, Hedge Funds, Real Estate
-- **Performance Metrics**: IRR, TVPI, DPI, RVPI with industry-standard calculations
-- **Cash Flow Types**: Capital Calls, Contributions, Distributions, Yield, Fees
-- **Forecasting**: Sophisticated pacing model with J-curve analysis
+### **Investment Performance**
+- **True IRR Calculation**: Portfolio-level IRR using aggregated cash flows with Newton-Raphson method
+- **Standard PE Metrics**: IRR, TVPI (Total Value to Paid-In), DPI (Distributions to Paid-In), RVPI (Residual Value to Paid-In)
+- **12-Month NAV Window**: Current valuations based on NAV data within 12-month window
+- **Negative Cash Flow Support**: Proper handling of capital calls vs distributions
+- **Performance Color Coding**: Visual indicators for positive/negative performance
 
-### **Entity Management**
-- **Entity Types**: Family Office, Trust, LLC, Partnership, Individual
-- **Relationship Mapping**: Parent/subsidiary, ownership, control relationships
-- **Investment Ownership**: Track percentage allocations across entities
-- **Family Structure**: Complete family member and role management
+### **Data Management**
+- **Asset Classes**: Private Equity, Private Credit, Real Estate, Hedge Funds, Infrastructure
+- **Investment Structures**: Limited Partnership, LLC, Corporation, Trust, Direct Investment
+- **Cash Flow Types**: Capital Calls, Distributions, Fees, Yield, Return of Principal
+- **Entity Types**: Family Office, Trust, LLC, Partnership, Individual, Corporation
 
-### **Liquidity Management**
-- **12-Month Forecasting**: Rolling liquidity visibility with monthly granularity
-- **Override System**: Incorporate known/confirmed cash flows
-- **Risk Alerts**: Early warning for liquidity shortfalls
-- **Cash Flow Matching**: Optimize liquidity through distribution/call alignment
+### **Bulk Operations** 
+- **Excel Template System**: Professional templates with validation dropdowns
+- **Investment Import**: 30+ field bulk upload with comprehensive validation
+- **Entity Import**: Entity and family member bulk creation  
+- **NAV Import**: Bulk valuation uploads with investment matching
+- **Cash Flow Import**: Bulk cash flow uploads with type validation
+- **Template Downloads**: Fresh templates with current data for validation
 
-## 🛡️ **Security & Compliance**
+### **Portfolio Analytics**
+- **Total Portfolio Value**: Real-time NAV calculation across all investments
+- **Performance Metrics**: Grid-based display of key performance indicators  
+- **Capital Deployment**: Commitment vs called vs distributions analysis
+- **Portfolio Overview**: Active investments, entity count, realization tracking
+- **Asset Allocation**: Breakdown by asset class and vintage year
+- **Timeline Analysis**: Portfolio value progression over time
 
-### **Data Protection**
-- **User Tracking**: Complete audit trail for all data modifications
-- **Soft Deletes**: Maintain data integrity and historical context
-- **Input Validation**: Comprehensive validation on all user inputs
-- **Error Handling**: Robust error management with user-friendly messages
+## 🛡️ **Security & Data Management**
 
-### **Authentication & Authorization**
-- **Basic Authentication**: Development-ready login system
-- **Session Management**: Secure session handling with logout
-- **User Context**: Request-level user tracking for audit trails
-- **Production Ready**: Easy integration with JWT/OAuth systems
+### **Data Validation & Integrity**
+- **Comprehensive Input Validation**: All user inputs validated via Pydantic schemas
+- **Cash Flow Constraints**: Proper handling of negative amounts for capital calls
+- **Investment Field Validation**: 30+ field validation with business rule enforcement  
+- **Template-Based Imports**: Structured data import with validation feedback
+- **Database Constraints**: Foreign key relationships and data consistency enforcement
+
+### **Authentication & Access**
+- **Development Authentication**: Basic admin/password system for development
+- **Session Management**: Secure session handling with proper logout
+- **Production Ready**: Easily configurable for JWT/OAuth integration
+- **User Context Tracking**: Request-level user identification for audit trails
 
 ### **Development Security Notes**
-- ✅ **No personal information** included in codebase
-- ✅ **Generic demo data** only (no real financial information)
-- ✅ **Configurable credentials** via environment variables
-- ✅ **Localhost references** are configurable
-- ✅ **Professional naming** throughout (no personal identifiers)
+- ✅ **No Personal Data**: All sample data is generic and fictional
+- ✅ **Configurable Database**: SQLite for development, PostgreSQL-ready for production  
+- ✅ **Environment Variables**: Configurable settings via .env files
+- ✅ **Professional Naming**: No personal identifiers in codebase
+- ✅ **Clean Repository**: No machine-specific paths or sensitive data
 
 ## 🧪 **Testing**
 
-### **Run Tests**
-```bash
-# Backend tests
-python tests/test_audit_system.py
-python tests/test_performance.py
-python tests/test_entity_management.py
-python tests/test_bulk_upload_fix.py
+### **API Testing**
+- **Interactive Documentation**: http://localhost:8000/docs with live API testing
+- **Sample Data**: Comprehensive test data including 11 investments with cash flows and NAVs
+- **Validation Testing**: Test negative cash flows, bulk uploads, and edge cases
 
-# Frontend validation
-cd frontend
-npm test
+### **Manual Testing Examples**
+```bash
+# Test investment API
+curl "http://localhost:8000/api/investments"
+
+# Test individual investment  
+curl "http://localhost:8000/api/investments/1"
+
+# Test cash flows
+curl "http://localhost:8000/api/investments/1/cashflows"
+
+# Test portfolio performance
+curl "http://localhost:8000/api/portfolio/performance"
 ```
 
-### **API Testing**
-- **Interactive Documentation**: http://localhost:8000/docs
-- **Manual Testing**: Use Postman or curl with provided endpoints
-- **Sample Data**: Seeder scripts available for testing
+## 📚 **Key Features Status**
 
-## 📚 **Documentation**
+### **✅ Fully Implemented**
+- **Investment Management**: Complete CRUD with professional modal interface
+- **Portfolio Performance**: True IRR calculations with 12-month NAV windows
+- **Cash Flow Management**: Full cash flow tracking with negative amount support  
+- **Bulk Upload System**: Excel templates with validation for investments, entities, NAVs, cash flows
+- **Entity Management**: Complete entity and family member management
+- **Document Management**: File upload, categorization, and search functionality
+- **Analytics Dashboard**: Portfolio summary, allocation charts, performance metrics
+- **Individual Investment Views**: Detailed investment pages with performance data
 
-### **Implementation Guides**
-- `docs/implementations/ENHANCED_AUDITING_IMPLEMENTATION_SUMMARY.md` - Complete audit system documentation
-- `docs/implementations/LIQUIDITY_FORECAST_DASHBOARD_IMPLEMENTATION.md` - Liquidity forecasting features
-- `docs/implementations/ENTITY_MANAGEMENT_IMPLEMENTATION.md` - Entity hierarchy system
-- `docs/implementations/ENTITY_BULK_UPLOAD_IMPLEMENTATION.md` - Entity bulk upload system
-- `docs/implementations/BULK_UPLOAD_FIX_SUMMARY.md` - Investment bulk upload improvements
-- `docs/FAMILY_OFFICE_FEATURE_ROADMAP.md` - Future enhancement roadmap
+### **🏗️ In Development** 
+- **Advanced Forecasting**: J-curve modeling and scenario analysis
+- **Liquidity Management**: 12-month liquidity forecasting dashboard  
+- **Regulatory Reporting**: Automated quarterly report generation
+- **Advanced Analytics**: Benchmark comparisons and peer analysis
 
-### **Technical Documentation**
-- `docs/implementations/PERFORMANCE_GRADE_METHODOLOGY.md` - Performance calculation methods
-- `docs/implementations/EXCEL_TEMPLATES_IMPLEMENTATION.md` - Template system documentation
-- Database schema documentation in model files
+### **🔮 Planned Features**
+- **Banking Integration**: Real-time cash position connectivity
+- **Mobile Application**: Native mobile interface for key features
+- **ESG Integration**: Impact and sustainability metrics
+- **API Integrations**: Third-party data feeds and reporting systems
 
-## 🔮 **Roadmap**
+## 🔧 **Configuration & Deployment**
 
-### **Immediate (Implemented)**
-- ✅ Enhanced Basic Auditing System
-- ✅ 12-Month Liquidity Forecast Dashboard
-- ✅ Entity Relationship Management
-- ✅ Professional Investment Modal
-- ✅ Investment Bulk Upload with 32-field validation
-- ✅ Entity Bulk Upload with conditional validation
-- ✅ Professional Excel Template System
+### **Development Setup**
+- **Database**: SQLite (portfolio_tracker.db) created automatically
+- **Ports**: Backend on 8000, Frontend on 3000
+- **Authentication**: admin/password (configurable in production)
+- **File Storage**: Local uploads/ directory for documents
 
-### **Next Priority**
-- [ ] **Automated Client Reporting** - Professional quarterly report generation
-- [ ] **Advanced Risk Analytics** - Portfolio stress testing and concentration monitoring
-- [ ] **Regulatory Compliance Suite** - Beneficial ownership and compliance tracking
-
-### **Future Enhancements**
-- [ ] **ESG Integration** - Impact and sustainability metrics
-- [ ] **Banking Integration** - Real-time cash position connectivity
-- [ ] **Mobile App** - Native mobile interface
-- [ ] **Advanced Analytics** - Peer benchmarking and market intelligence
+### **Production Considerations**  
+- **Database**: Upgrade to PostgreSQL for production use
+- **Authentication**: Implement JWT/OAuth2 authentication system
+- **File Storage**: Configure cloud storage (AWS S3, Azure Blob, etc.)
+- **SSL/TLS**: Enable HTTPS for secure communications
+- **Environment Variables**: Configure production settings via .env
+- **Backup Strategy**: Implement regular database backups
 
 ## 🤝 **Contributing**
 
-This is a professional-grade private markets management system. Contributions welcome for:
-- Performance optimizations
-- Additional asset class support
-- Enhanced visualizations
-- Security improvements
-- Test coverage expansion
+This is a professional-grade private markets management system suitable for:
+- Family offices managing private market portfolios
+- Investment managers needing performance tracking
+- Financial advisors serving high-net-worth clients
+- Institutional investors requiring detailed analytics
+
+Contributions welcome for:
+- Performance optimizations and database efficiency
+- Additional asset class support and investment structures  
+- Enhanced visualizations and reporting features
+- Security improvements and production hardening
+- Test coverage expansion and automation
 
 ## ⚖️ **License**
 
-This project is intended for educational and professional development purposes. Please ensure compliance with all applicable regulations when handling real financial data.
-
-## 🚨 **Important Notes**
-
-### **Development vs Production**
-- **Current Configuration**: Development/demo use with basic authentication
-- **Production Requirements**: 
-  - Replace basic auth with proper authentication system
-  - Configure production database (PostgreSQL recommended)
-  - Set up SSL/TLS certificates
-  - Update environment variables
-  - Implement proper backup strategy
-
-### **Data Privacy**
-- **No Personal Data**: Codebase contains no personal or sensitive information
-- **Demo Credentials**: Default admin/password for development only
-- **Generic Examples**: All sample data is fictional and generic
-- **Clean Repository**: No machine-specific paths or personal identifiers
+This project is intended for educational and professional development purposes. Please ensure compliance with all applicable financial regulations when handling real investment data.
 
 ---
 
-**Private Markets Portfolio Tracker v2.0**  
-*Enhanced with Liquidity Forecasting & Audit Capabilities*  
-*Built for Family Offices and Institutional Investors*
+**Private Markets Portfolio Tracker**  
+*Professional Family Office Portfolio Management*  
+*Built for Institutional-Grade Investment Tracking*

@@ -96,67 +96,44 @@ const PortfolioSummary: React.FC<Props> = ({ onUpdate }) => {
 
   return (
     <div className="portfolio-summary">
-      <div className="summary-header">
-        <h3>Portfolio Performance</h3>
-        <div className="portfolio-stats">
-          <span className="stat-item">
-            {portfolio.investment_count} Investment{portfolio.investment_count !== 1 ? 's' : ''}
-          </span>
-          <span className="stat-divider">•</span>
-          <span className="stat-item">
-            {portfolio.investments_with_nav} with Current NAV
-          </span>
-        </div>
-      </div>
 
       {/* Prominent Total Portfolio Value Display */}
       <div className="portfolio-value-hero">
         <div className="hero-content">
           <h2 className="hero-label">Total Portfolio Value</h2>
           <div className="hero-value">
-            {formatCurrency(perf.total_value)}
-          </div>
-          <div className="hero-breakdown">
-            <div className="breakdown-item">
-              <span className="breakdown-label">Current NAV</span>
-              <span className="breakdown-value">{formatCurrency(perf.current_nav)}</span>
-            </div>
-            <div className="breakdown-divider">+</div>
-            <div className="breakdown-item">
-              <span className="breakdown-label">Total Distributions</span>
-              <span className="breakdown-value">{formatCurrency(perf.total_distributions)}</span>
-            </div>
-          </div>
-          <div className="hero-performance">
-            <div className="performance-badge">
-              <span className={`badge-value ${getMultipleColor(perf.tvpi)}`}>
-                {formatMultiple(perf.tvpi)} TVPI
-              </span>
-            </div>
-            <div className="performance-badge">
-              <span className={`badge-value ${getPerformanceColor(perf.irr)}`}>
-                {formatPercentage(perf.irr)} IRR
-              </span>
-            </div>
+            {formatCurrency(perf.current_nav)}
           </div>
         </div>
       </div>
 
       <div className="summary-grid">
-        {/* Key Performance Indicators */}
+        {/* Performance Metrics */}
         <div className="summary-section">
-          <h4>Key Metrics</h4>
+          <h4>Performance Metrics</h4>
           <div className="summary-metrics">
             <div className="metric-card primary">
-              <label>Portfolio IRR</label>
+              <label>IRR</label>
               <span className={`value ${getPerformanceColor(perf.irr)}`}>
                 {formatPercentage(perf.irr)}
               </span>
             </div>
             <div className="metric-card primary">
-              <label>Total Multiple (TVPI)</label>
+              <label>TVPI</label>
               <span className={`value ${getMultipleColor(perf.tvpi)}`}>
                 {formatMultiple(perf.tvpi)}
+              </span>
+            </div>
+            <div className="metric-card primary">
+              <label>DPI</label>
+              <span className={`value ${getPerformanceColor(perf.dpi)}`}>
+                {formatMultiple(perf.dpi)}
+              </span>
+            </div>
+            <div className="metric-card primary">
+              <label>RVPI</label>
+              <span className={`value ${getMultipleColor(perf.rvpi)}`}>
+                {formatMultiple(perf.rvpi)}
               </span>
             </div>
           </div>
@@ -168,75 +145,55 @@ const PortfolioSummary: React.FC<Props> = ({ onUpdate }) => {
           <div className="capital-breakdown">
             <div className="capital-item">
               <label>Total Committed</label>
-              <span className="value">{formatCurrency(perf.total_contributions)}</span>
+              <span className="value">{formatCurrency(portfolio.total_commitment)}</span>
             </div>
             <div className="capital-item">
-              <label>Current NAV</label>
-              <span className="value">{formatCurrency(perf.current_nav)}</span>
+              <label>Total Called</label>
+              <span className="value">{formatCurrency(portfolio.total_called)}</span>
             </div>
             <div className="capital-item">
-              <label>Distributions</label>
+              <label>Total Distributions</label>
               <span className="value">{formatCurrency(perf.total_distributions)}</span>
             </div>
             <div className="capital-item total-value">
-              <label>Total Value</label>
-              <span className="value">{formatCurrency(perf.total_value)}</span>
+              <label>Total Portfolio NAV</label>
+              <span className="value">{formatCurrency(perf.current_nav)}</span>
             </div>
           </div>
         </div>
 
-        {/* Efficiency Ratios */}
+        {/* Portfolio Overview */}
         <div className="summary-section">
-          <h4>Efficiency Ratios</h4>
-          <div className="ratio-grid">
-            <div className="ratio-item">
-              <label>DPI</label>
-              <span className={`value ${getPerformanceColor(perf.dpi)}`}>
-                {formatMultiple(perf.dpi)}
+          <h4>Portfolio Overview</h4>
+          <div className="summary-metrics">
+            <div className="metric-card primary">
+              <label>Active Investments</label>
+              <span className="value">
+                {portfolio.active_investment_count}
               </span>
-              <small>Distributed / Paid-In</small>
             </div>
-            <div className="ratio-item">
-              <label>RVPI</label>
-              <span className={`value ${getMultipleColor(perf.rvpi)}`}>
-                {formatMultiple(perf.rvpi)}
+            <div className="metric-card primary">
+              <label>With Recent NAV</label>
+              <span className="value">
+                {portfolio.investments_with_nav}
               </span>
-              <small>Residual Value / Paid-In</small>
+            </div>
+            <div className="metric-card primary">
+              <label>Entities</label>
+              <span className="value">
+                {portfolio.entity_count}
+              </span>
+            </div>
+            <div className="metric-card primary">
+              <label>Realized Investments</label>
+              <span className="value">
+                {portfolio.investment_count - portfolio.active_investment_count}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Portfolio Insights */}
-      <div className="portfolio-insights">
-        <div className="insight-row">
-          <div className="insight-item">
-            <span className="insight-label">Portfolio Status:</span>
-            <span className="insight-value">
-              {perf.current_nav && perf.current_nav > 0 ? 
-                (perf.total_distributions > 0 ? 'Active with Realizations' : 'Active') : 
-                'Fully Realized'}
-            </span>
-          </div>
-          <div className="insight-item">
-            <span className="insight-label">Capital Returned:</span>
-            <span className="insight-value">
-              {perf.total_contributions > 0 ? 
-                formatPercentage(perf.total_distributions / perf.total_contributions) : 'N/A'}
-            </span>
-          </div>
-          <div className="insight-item">
-            <span className="insight-label">Performance Grade:</span>
-            <span className="insight-value">
-              {perf.tvpi && perf.tvpi > 3 ? 'A+' :
-               perf.tvpi && perf.tvpi > 2.5 ? 'A' :
-               perf.tvpi && perf.tvpi > 2 ? 'B+' :
-               perf.tvpi && perf.tvpi > 1.5 ? 'B' :
-               perf.tvpi && perf.tvpi > 1 ? 'C' : 'D'}
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

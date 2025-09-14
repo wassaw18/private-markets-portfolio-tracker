@@ -106,3 +106,8 @@ test_*.db
 
 # Documentation build
 docs/_build/
+
+# Temporary Excel files and templates
+*_temp.xlsx
+*_fresh.xlsx
+*_old.xlsx

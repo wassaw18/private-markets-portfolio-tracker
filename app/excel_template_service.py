@@ -1122,12 +1122,15 @@ class BulkUploadProcessor:
         
         try:
             # Read Excel file
-            df = pd.read_excel(BytesIO(file_content), sheet_name='NAV Data', skiprows=1)
+            df = pd.read_excel(BytesIO(file_content), sheet_name='NAV Data')
             
             logger.info(f"Processing {len(df)} NAV records from {filename}")
             
-            # Remove empty rows
+            # Remove empty rows and template format row
             df = df.dropna(how='all')
+            
+            # Filter out template instruction rows
+            df = df[~df['Investment Name'].astype(str).str.contains('Select from dropdown|Format:', case=False, na=False)]
             
             # Get investment name mapping
             investments = crud.get_investments(db, skip=0, limit=1000)
@@ -1178,16 +1181,15 @@ class BulkUploadProcessor:
                     
                     if existing_valuation:
                         result.add_warning(row_num, f"NAV for {nav_date} already exists, updating value")
-                        existing_valuation.value = float(nav_value)
-                        existing_valuation.notes = str(row.get('Notes', ''))
+                        existing_valuation.nav_value = float(nav_value)
                         db.commit()
                     else:
                         # Create new valuation
                         valuation = models.Valuation(
                             investment_id=investment_id,
                             date=nav_date,
-                            value=float(nav_value),
-                            notes=str(row.get('Notes', '')) if not pd.isna(row.get('Notes')) else ""
+                            nav_value=float(nav_value),
+                            created_by="bulk_upload"
                         )
                         db.add(valuation)
                         db.commit()
@@ -1213,12 +1215,15 @@ class BulkUploadProcessor:
         
         try:
             # Read Excel file
-            df = pd.read_excel(BytesIO(file_content), sheet_name='Cash Flow Data', skiprows=1)
+            df = pd.read_excel(BytesIO(file_content), sheet_name='Cash Flow Data')
             
             logger.info(f"Processing {len(df)} cash flow records from {filename}")
             
-            # Remove empty rows
+            # Remove empty rows and template format row
             df = df.dropna(how='all')
+            
+            # Filter out template instruction rows
+            df = df[~df['Investment Name'].astype(str).str.contains('Select from dropdown|Format:', case=False, na=False)]
             
             # Get investment name mapping
             investments = crud.get_investments(db, skip=0, limit=1000)

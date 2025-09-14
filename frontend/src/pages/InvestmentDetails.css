@@ -131,10 +131,18 @@
 }
 .data-upload-widgets {
   margin-bottom: 30px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  padding: 25px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.data-upload-widgets h3 {
+  color: white;
+  margin: 0 0 20px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 .upload-widgets-row {

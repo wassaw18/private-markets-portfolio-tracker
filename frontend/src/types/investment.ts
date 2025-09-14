@@ -263,6 +263,11 @@ export interface PerformanceMetrics {
   total_distributions: number;
   current_nav?: number;
   total_value?: number; // NAV + Distributions
+  trailing_yield?: number; // Trailing 12-month yield (decimal)
+  forward_yield?: number;  // Forward yield projection (decimal) 
+  yield_frequency?: string; // Detected distribution frequency
+  trailing_yield_amount?: number; // Dollar amount of trailing 12-month yield
+  latest_yield_amount?: number; // Dollar amount of most recent single yield
 }
 
 export interface InvestmentPerformance {
@@ -275,6 +280,12 @@ export interface PortfolioPerformance {
   portfolio_performance: PerformanceMetrics;
   investment_count: number;
   investments_with_nav: number;
+  entity_count: number;
+  asset_class_count: number;
+  vintage_year_count: number;
+  active_investment_count: number;
+  total_commitment: number;
+  total_called: number;
 }
 
 export interface CommitmentVsCalledData {

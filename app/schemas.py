@@ -6,10 +6,15 @@ from app.models import AssetClass, InvestmentStructure, CashFlowType, CallSchedu
 class CashFlowBase(BaseModel):
     date: date
     type: CashFlowType
-    amount: float = Field(..., ge=0)
+    amount: float = Field(..., description="Cash flow amount - can be positive or negative")
 
 class CashFlowCreate(CashFlowBase):
     pass
+
+class CashFlowUpdate(BaseModel):
+    date: Optional[date] = None
+    type: Optional[CashFlowType] = None
+    amount: Optional[float] = None
 
 class CashFlow(CashFlowBase):
     id: int
@@ -113,7 +118,7 @@ class InvestmentBase(BaseModel):
     strategy: str = Field(..., min_length=1, max_length=255)
     vintage_year: int = Field(..., ge=1900, le=2100)
     commitment_amount: float = Field(..., ge=0)
-    called_amount: Optional[float] = Field(default=0.0, ge=0)
+    called_amount: Optional[float] = Field(default=0.0)
     fees: Optional[float] = Field(default=0.0, ge=0)
     
     # Basic Information (new fields)
@@ -169,7 +174,7 @@ class InvestmentUpdate(BaseModel):
     strategy: Optional[str] = Field(None, min_length=1, max_length=255)
     vintage_year: Optional[int] = Field(None, ge=1900, le=2100)
     commitment_amount: Optional[float] = Field(None, ge=0)
-    called_amount: Optional[float] = Field(None, ge=0)
+    called_amount: Optional[float] = Field(None)
     fees: Optional[float] = Field(None, ge=0)
     
     # Basic Information updates
@@ -216,10 +221,15 @@ class PerformanceMetrics(BaseModel):
     tvpi: Optional[float] = Field(None, description="Total Value to Paid-In (MOIC)")
     dpi: Optional[float] = Field(None, description="Distributed to Paid-In")  
     rvpi: Optional[float] = Field(None, description="Residual Value to Paid-In")
-    total_contributions: float = Field(..., ge=0, description="Total contributed capital")
+    total_contributions: float
     total_distributions: float = Field(..., ge=0, description="Total distributions received")
     current_nav: Optional[float] = Field(None, ge=0, description="Current Net Asset Value")
     total_value: Optional[float] = Field(None, ge=0, description="NAV + Distributions")
+    trailing_yield: Optional[float] = Field(None, description="Trailing 12-month yield (decimal)")
+    forward_yield: Optional[float] = Field(None, description="Forward yield based on most recent distribution (decimal)")
+    yield_frequency: Optional[str] = Field(None, description="Detected distribution frequency for forward yield")
+    trailing_yield_amount: Optional[float] = Field(None, ge=0, description="Dollar amount of trailing 12-month yield")
+    latest_yield_amount: Optional[float] = Field(None, ge=0, description="Dollar amount of most recent single yield")
 
 class InvestmentPerformance(BaseModel):
     investment_id: int
@@ -230,6 +240,12 @@ class PortfolioPerformance(BaseModel):
     portfolio_performance: PerformanceMetrics
     investment_count: int
     investments_with_nav: int
+    entity_count: int
+    asset_class_count: int
+    vintage_year_count: int
+    active_investment_count: int
+    total_commitment: float
+    total_called: float
 
 class CommitmentVsCalledData(BaseModel):
     commitment_amount: float

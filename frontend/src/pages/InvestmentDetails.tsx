@@ -147,36 +147,33 @@ const InvestmentDetails: React.FC = () => {
         </div>
       </div>
 
+      {/* Upload Widgets - moved to top for easy access */}
+      <div className="data-upload-widgets">
+        <h3>📤 Data Upload</h3>
+        <div className="upload-widgets-row">
+          <UploadWidget 
+            type="cashflows" 
+            onUploadComplete={handleDataUploadComplete}
+            size="small"
+            currentInvestmentId={investmentId}
+          />
+          <UploadWidget 
+            type="navs" 
+            onUploadComplete={handleDataUploadComplete}
+            size="small"
+            currentInvestmentId={investmentId}
+          />
+        </div>
+      </div>
+
       <PerformanceMetrics
         investmentId={investmentId}
         onUpdate={performanceUpdateTrigger > 0 ? () => {} : undefined}
         key={performanceUpdateTrigger}
       />
 
-      <BenchmarkComparison investmentId={investmentId} />
-
-      <PacingModelPanel investment={investment} onUpdate={fetchInvestmentData} />
-
-      <InvestmentForecastChart investmentId={investmentId} onUpdate={fetchInvestmentData} />
-
+      {/* Data Sections - moved up for better visibility */}
       <div className="details-sections">
-        <div className="data-upload-widgets">
-          <div className="upload-widgets-row">
-            <UploadWidget 
-              type="cashflows" 
-              onUploadComplete={handleDataUploadComplete}
-              size="small"
-              currentInvestmentId={investmentId}
-            />
-            <UploadWidget 
-              type="navs" 
-              onUploadComplete={handleDataUploadComplete}
-              size="small"
-              currentInvestmentId={investmentId}
-            />
-          </div>
-        </div>
-
         <CashFlowSection 
           investmentId={investmentId}
           cashFlows={cashFlows}
@@ -189,6 +186,13 @@ const InvestmentDetails: React.FC = () => {
           onUpdate={handleValuationUpdate}
         />
       </div>
+
+      {/* Analysis Sections - moved down */}
+      <BenchmarkComparison investmentId={investmentId} />
+
+      <PacingModelPanel investment={investment} onUpdate={fetchInvestmentData} />
+
+      <InvestmentForecastChart investmentId={investmentId} onUpdate={fetchInvestmentData} />
     </div>
   );
 };

@@ -79,42 +79,18 @@ def test_template_generation_and_import():
         # Step 4: Create test data that matches the template structure
         print("\n📝 STEP 4: Creating test data row...")
         
-        # Simulate user filling out first data row (row 4 in Excel, index 0 in DataFrame)
-        # The template already has sample data in the first row
-        df.iloc[0] = pd.Series({
-            'name': 'Test Fund IV',
-            'asset_class': 'PRIVATE_EQUITY',
-            'investment_structure': 'LIMITED_PARTNERSHIP', 
-            'entity_id': str(entity.id),
-            'manager': 'Test Capital Partners',
-            'strategy': 'Growth Buyout',
-            'vintage_year': '2024',
-            'target_raise': '500000000',
-            'geography_focus': 'North America',
-            'commitment_amount': '5000000',
-            'commitment_date': '2024-01-15',
-            'management_fee': '2.5',
-            'performance_fee': '20.0',
-            'hurdle_rate': '8.0',
-            'distribution_target': 'Quarterly distributions',
-            'currency': 'USD',
-            'liquidity_profile': 'ILLIQUID',
-            'expected_maturity_date': '2034-01-15',
-            'reporting_frequency': 'QUARTERLY',
-            'contact_person': 'John Smith',
-            'email': 'john@testfund.com',
-            'portal_link': 'https://portal.testfund.com',
-            'fund_administrator': 'Test Admin Corp',
-            'fund_domicile': 'Delaware',
-            'tax_classification': 'K-1',
-            'activity_classification': 'PASSIVE',
-            'due_diligence_date': '2023-12-01',
-            'ic_approval_date': '2024-01-10',
-            'risk_rating': 'MEDIUM',
-            'benchmark_index': 'S&P 500',
-            'called_amount': '2500000',
-            'fees': '50000'
-        })
+        # Simulate user filling out first data row using column-by-column assignment
+        # Set the key required fields first
+        df.loc[0, 'entity_id'] = f"{entity.name} ({entity.entity_type.value})"  # Use display format
+        df.loc[0, 'name'] = 'Test Fund IV'
+        df.loc[0, 'asset_class'] = 'PRIVATE_EQUITY'
+        df.loc[0, 'investment_structure'] = 'LIMITED_PARTNERSHIP'
+        df.loc[0, 'manager'] = 'Test Capital Partners'
+        df.loc[0, 'strategy'] = 'Growth Buyout'
+        df.loc[0, 'vintage_year'] = '2024'
+        df.loc[0, 'commitment_amount'] = '5000000'
+        df.loc[0, 'commitment_date'] = '2024-01-15'
+        df.loc[0, 'liquidity_profile'] = 'ILLIQUID'
         
         print("✅ Test data row created")
         
