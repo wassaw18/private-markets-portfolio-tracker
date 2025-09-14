@@ -14,7 +14,7 @@ class CashFlowCreate(CashFlowBase):
 class CashFlowUpdate(BaseModel):
     date: Optional[date] = None
     type: Optional[CashFlowType] = None
-    amount: Optional[float] = None
+    amount: Optional[float] = Field(None, description="Cash flow amount - can be positive or negative")
 
 class CashFlow(CashFlowBase):
     id: int
@@ -29,6 +29,10 @@ class ValuationBase(BaseModel):
 
 class ValuationCreate(ValuationBase):
     pass
+
+class ValuationUpdate(BaseModel):
+    date: Optional[date] = None
+    nav_value: Optional[float] = Field(None, ge=0)
 
 class Valuation(ValuationBase):
     id: int
@@ -346,6 +350,77 @@ class InvestmentBenchmarkComparison(BaseModel):
     # Overall assessment
     overall_performance_summary: str
     data_availability: str  # "Full", "Partial", "No benchmark data"
+
+# Market Benchmark Schemas (for monthly returns)
+class MarketBenchmarkBase(BaseModel):
+    """Base schema for market benchmarks"""
+    name: str = Field(..., min_length=1, max_length=255)
+    ticker: str = Field(..., min_length=1, max_length=50)
+    category: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+    data_source: str = Field(..., min_length=1, max_length=100)
+    is_active: bool = True
+
+class MarketBenchmarkCreate(MarketBenchmarkBase):
+    pass
+
+class MarketBenchmarkUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    ticker: Optional[str] = Field(None, min_length=1, max_length=50)
+    category: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    data_source: Optional[str] = Field(None, min_length=1, max_length=100)
+    is_active: Optional[bool] = None
+
+class MarketBenchmark(MarketBenchmarkBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class BenchmarkReturnBase(BaseModel):
+    """Base schema for benchmark returns"""
+    period_date: date = Field(..., description="First day of month (YYYY-MM-01)")
+    total_return: Optional[float] = Field(None, description="Monthly total return (decimal: 0.0224 = 2.24%)")
+    price_return: Optional[float] = Field(None, description="Monthly price return (decimal: 0.0217 = 2.17%)")
+    dividend_yield: Optional[float] = Field(None, description="Annualized dividend yield (decimal)")
+    volatility: Optional[float] = Field(None, description="Monthly volatility if available")
+    notes: Optional[str] = Field(None, max_length=500)
+
+class BenchmarkReturnCreate(BenchmarkReturnBase):
+    benchmark_id: int = Field(..., gt=0)
+
+class BenchmarkReturnUpdate(BaseModel):
+    period_date: Optional[date] = None
+    total_return: Optional[float] = None
+    price_return: Optional[float] = None
+    dividend_yield: Optional[float] = None
+    volatility: Optional[float] = None
+    notes: Optional[str] = Field(None, max_length=500)
+
+class BenchmarkReturn(BenchmarkReturnBase):
+    id: int
+    benchmark_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class MarketBenchmarkWithReturns(MarketBenchmark):
+    """Market benchmark with its return data"""
+    returns: List[BenchmarkReturn] = []
+
+class BenchmarkReturnImport(BaseModel):
+    """Schema for bulk importing benchmark returns via CSV"""
+    benchmark_ticker: str = Field(..., description="Ticker symbol to identify benchmark")
+    period_date: date = Field(..., description="Period date (YYYY-MM-DD)")
+    total_return: Optional[float] = Field(None, description="Total return as percentage (2.24 for 2.24%)")
+    price_return: Optional[float] = Field(None, description="Price return as percentage (2.17 for 2.17%)")
+    dividend_yield: Optional[float] = None
+    notes: Optional[str] = None
 
 # Cash Flow Forecast Schemas
 class CashFlowForecastBase(BaseModel):

@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import date
 from app import crud, models, schemas
 from app.database import get_db, create_database
 from app import dashboard
@@ -407,6 +408,25 @@ def create_investment_valuation(investment_id: int, valuation: schemas.Valuation
     if db_investment is None:
         raise HTTPException(status_code=404, detail="Investment not found")
     return crud.create_valuation(db, investment_id=investment_id, valuation=valuation, current_user=current_user)
+
+@app.put("/api/investments/{investment_id}/valuations/{valuation_id}", response_model=schemas.Valuation)
+def update_investment_valuation(investment_id: int, valuation_id: int, valuation_update: schemas.ValuationUpdate, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    # Verify investment exists
+    db_investment = crud.get_investment(db, investment_id=investment_id)
+    if db_investment is None:
+        raise HTTPException(status_code=404, detail="Investment not found")
+    
+    # Verify valuation exists and belongs to investment
+    db_valuation = crud.get_valuation(db, valuation_id=valuation_id)
+    if db_valuation is None or db_valuation.investment_id != investment_id:
+        raise HTTPException(status_code=404, detail="Valuation not found")
+    
+    # Update valuation
+    updated_valuation = crud.update_valuation(db, valuation_id=valuation_id, valuation_update=valuation_update, current_user=current_user)
+    if updated_valuation is None:
+        raise HTTPException(status_code=404, detail="Valuation not found")
+    
+    return updated_valuation
 
 @app.delete("/api/investments/{investment_id}/valuations/{valuation_id}")
 def delete_valuation(investment_id: int, valuation_id: int, db: Session = Depends(get_db)):
@@ -1093,6 +1113,172 @@ def get_calendar_heatmap(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving heatmap data: {str(e)}")
+
+# Market Benchmark Endpoints
+
+@app.get("/api/benchmarks", response_model=List[schemas.MarketBenchmark])
+def get_market_benchmarks(
+    skip: int = 0,
+    limit: int = 100,
+    include_inactive: bool = False,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get all market benchmarks"""
+    return crud.get_market_benchmarks(db, skip=skip, limit=limit, include_inactive=include_inactive)
+
+@app.post("/api/benchmarks", response_model=schemas.MarketBenchmark)
+def create_market_benchmark(
+    benchmark: schemas.MarketBenchmarkCreate,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Create a new market benchmark"""
+    # Check if ticker already exists
+    existing = crud.get_market_benchmark_by_ticker(db, benchmark.ticker)
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Benchmark with ticker '{benchmark.ticker}' already exists")
+    
+    return crud.create_market_benchmark(db, benchmark, current_user)
+
+@app.get("/api/benchmarks/{benchmark_id}", response_model=schemas.MarketBenchmarkWithReturns)
+def get_market_benchmark(
+    benchmark_id: int,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get a specific market benchmark with its returns"""
+    benchmark = crud.get_market_benchmark(db, benchmark_id)
+    if not benchmark:
+        raise HTTPException(status_code=404, detail="Benchmark not found")
+    
+    # Get returns for this benchmark
+    returns = crud.get_benchmark_returns(db, benchmark_id)
+    
+    # Return benchmark with its returns
+    return schemas.MarketBenchmarkWithReturns(
+        **benchmark.__dict__,
+        returns=returns
+    )
+
+@app.put("/api/benchmarks/{benchmark_id}", response_model=schemas.MarketBenchmark)
+def update_market_benchmark(
+    benchmark_id: int,
+    benchmark_update: schemas.MarketBenchmarkUpdate,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Update a market benchmark"""
+    updated_benchmark = crud.update_market_benchmark(db, benchmark_id, benchmark_update, current_user)
+    if not updated_benchmark:
+        raise HTTPException(status_code=404, detail="Benchmark not found")
+    return updated_benchmark
+
+@app.delete("/api/benchmarks/{benchmark_id}")
+def delete_market_benchmark(
+    benchmark_id: int,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Delete a market benchmark and all its returns"""
+    success = crud.delete_market_benchmark(db, benchmark_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Benchmark not found")
+    return {"message": "Benchmark deleted successfully"}
+
+@app.get("/api/benchmarks/{benchmark_id}/returns", response_model=List[schemas.BenchmarkReturn])
+def get_benchmark_returns(
+    benchmark_id: int,
+    start_date: Optional[date] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get returns for a specific benchmark"""
+    # Verify benchmark exists
+    benchmark = crud.get_market_benchmark(db, benchmark_id)
+    if not benchmark:
+        raise HTTPException(status_code=404, detail="Benchmark not found")
+    
+    return crud.get_benchmark_returns(db, benchmark_id, start_date, end_date)
+
+@app.post("/api/benchmarks/{benchmark_id}/returns", response_model=schemas.BenchmarkReturn)
+def create_benchmark_return(
+    benchmark_id: int,
+    return_data: schemas.BenchmarkReturnBase,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Create a new benchmark return"""
+    # Verify benchmark exists
+    benchmark = crud.get_market_benchmark(db, benchmark_id)
+    if not benchmark:
+        raise HTTPException(status_code=404, detail="Benchmark not found")
+    
+    # Create the return with benchmark_id
+    return_create = schemas.BenchmarkReturnCreate(**return_data.model_dump(), benchmark_id=benchmark_id)
+    return crud.create_benchmark_return(db, return_create, current_user)
+
+@app.post("/api/benchmarks/{benchmark_id}/returns/bulk-import")
+def bulk_import_benchmark_returns(
+    benchmark_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Bulk import benchmark returns from CSV file"""
+    # Verify benchmark exists
+    benchmark = crud.get_market_benchmark(db, benchmark_id)
+    if not benchmark:
+        raise HTTPException(status_code=404, detail="Benchmark not found")
+    
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+    
+    try:
+        import pandas as pd
+        import io
+        
+        # Read CSV file
+        content = file.file.read()
+        df = pd.read_csv(io.StringIO(content.decode('utf-8')))
+        
+        # Expected columns: period_date, total_return, price_return, dividend_yield, notes
+        required_columns = ['period_date']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise HTTPException(status_code=400, detail=f"Missing required columns: {missing_columns}")
+        
+        # Convert to import schemas
+        returns_data = []
+        for _, row in df.iterrows():
+            try:
+                return_item = schemas.BenchmarkReturnImport(
+                    benchmark_ticker=benchmark.ticker,
+                    period_date=pd.to_datetime(row['period_date']).date(),
+                    total_return=row.get('total_return', None),
+                    price_return=row.get('price_return', None),
+                    dividend_yield=row.get('dividend_yield', None),
+                    notes=row.get('notes', None)
+                )
+                returns_data.append(return_item)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error processing row {len(returns_data) + 1}: {str(e)}")
+        
+        # Bulk import
+        result = crud.bulk_create_benchmark_returns(db, benchmark_id, returns_data, current_user)
+        
+        return {
+            "message": f"Import completed",
+            "benchmark": benchmark.name,
+            "created_count": result['created_count'],
+            "updated_count": result['updated_count'],
+            "error_count": result['error_count'],
+            "errors": result['errors']
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing CSV file: {str(e)}")
 
 # Document Management Endpoints
 

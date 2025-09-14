@@ -193,6 +193,7 @@ const InvestmentDetails: React.FC = () => {
 
       {/* Investment Status Management */}
       <InvestmentStatusManagement
+        key={`status-${investment.status}-${investment.realization_date}-${investment.status_changed_date}`}
         investment={investment}
         onStatusUpdate={handleStatusUpdate}
       />

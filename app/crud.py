@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import date
 from app import models, schemas
 from app.performance import (
     calculate_investment_performance, 
@@ -10,7 +11,7 @@ from app.performance import (
     PerformanceMetrics as PerfMetrics,
     CashFlowEvent
 )
-from app.models import CashFlowType
+from app.models import CashFlowType, MarketBenchmark, BenchmarkReturn
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc, and_, or_
 from datetime import datetime, timedelta
@@ -249,12 +250,54 @@ def delete_investment(db: Session, investment_id: int) -> bool:
         return True
     return False
 
+# Helper function for cash flow sign convention
+def _apply_cash_flow_sign_convention(amount: float, cash_flow_type: CashFlowType) -> float:
+    """
+    Apply proper sign convention for cash flows:
+    - Outflows (Capital Call, Contribution, Fees) should be negative
+    - Inflows (Distribution, Yield, Return of Principal) should be positive
+    
+    Users input positive amounts, this function applies the correct sign.
+    """
+    # Always work with absolute value first
+    amount = abs(amount)
+    
+    # Outflow types (money going out, should be negative)
+    outflow_types = {
+        CashFlowType.CAPITAL_CALL,
+        CashFlowType.CONTRIBUTION,
+        CashFlowType.FEES
+    }
+    
+    # Inflow types (money coming in, should be positive)
+    inflow_types = {
+        CashFlowType.DISTRIBUTION,
+        CashFlowType.YIELD,
+        CashFlowType.RETURN_OF_PRINCIPAL
+    }
+    
+    if cash_flow_type in outflow_types:
+        return -amount  # Make negative for outflows
+    elif cash_flow_type in inflow_types:
+        return amount   # Keep positive for inflows
+    else:
+        # Fallback: if unknown type, keep user's input as-is
+        return amount
+
 # CashFlow CRUD operations
 def get_investment_cashflows(db: Session, investment_id: int) -> List[models.CashFlow]:
     return db.query(models.CashFlow).filter(models.CashFlow.investment_id == investment_id).order_by(models.CashFlow.date.desc()).all()
 
 def create_cashflow(db: Session, investment_id: int, cashflow: schemas.CashFlowCreate, current_user: str = "admin") -> models.CashFlow:
     cashflow_data = cashflow.model_dump()
+    
+    # Apply sign convention to the amount based on cash flow type
+    if 'amount' in cashflow_data and 'cash_flow_type' in cashflow_data:
+        cashflow_data['amount'] = _apply_cash_flow_sign_convention(
+            cashflow_data['amount'], 
+            CashFlowType(cashflow_data['cash_flow_type'])
+        )
+    
     cashflow_data['created_by'] = current_user
     cashflow_data['updated_by'] = current_user
     db_cashflow = models.CashFlow(**cashflow_data, investment_id=investment_id)
@@ -300,6 +343,21 @@ def update_cashflow(db: Session, cashflow_id: int, cashflow_update: schemas.Cash
     
     # Update only provided fields
     update_data = cashflow_update.model_dump(exclude_unset=True)
+    
+    # Apply sign convention if amount or cash_flow_type is being updated
+    if 'amount' in update_data:
+        cash_flow_type = update_data.get('cash_flow_type', db_cashflow.cash_flow_type)
+        update_data['amount'] = _apply_cash_flow_sign_convention(
+            update_data['amount'], 
+            CashFlowType(cash_flow_type)
+        )
+    elif 'cash_flow_type' in update_data:
+        # If only changing the type, re-apply sign convention to existing amount
+        update_data['amount'] = _apply_cash_flow_sign_convention(
+            abs(db_cashflow.amount),  # Use absolute value of current amount
+            CashFlowType(update_data['cash_flow_type'])
+        )
+    
     update_data['updated_by'] = current_user
     
     for field, value in update_data.items():
@@ -338,6 +396,18 @@ def create_valuation(db: Session, investment_id: int, valuation: schemas.Valuati
     db.add(db_valuation)
     db.commit()
     db.refresh(db_valuation)
+    return db_valuation
+
+def update_valuation(db: Session, valuation_id: int, valuation_update: schemas.ValuationUpdate, current_user: str = "admin") -> Optional[models.Valuation]:
+    db_valuation = db.query(models.Valuation).filter(models.Valuation.id == valuation_id).first()
+    if db_valuation:
+        update_data = valuation_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_valuation, field, value)
+        # Always update the updated_by field
+        setattr(db_valuation, 'updated_by', current_user)
+        db.commit()
+        db.refresh(db_valuation)
     return db_valuation
 
 def get_valuation(db: Session, valuation_id: int) -> Optional[models.Valuation]:
@@ -1116,4 +1186,150 @@ def get_system_activity_summary(db: Session, days: int = 7) -> dict:
             'active_users': sorted(list(all_active_users)),
             'active_user_count': len(all_active_users)
         }
+    }
+
+# Market Benchmark CRUD operations
+def get_market_benchmarks(db: Session, skip: int = 0, limit: int = 100, include_inactive: bool = False) -> List[MarketBenchmark]:
+    """Get market benchmarks with optional pagination and filtering"""
+    query = db.query(MarketBenchmark)
+    
+    if not include_inactive:
+        query = query.filter(MarketBenchmark.is_active == True)
+    
+    return query.offset(skip).limit(limit).all()
+
+def get_market_benchmark(db: Session, benchmark_id: int) -> Optional[MarketBenchmark]:
+    """Get a single market benchmark by ID"""
+    return db.query(MarketBenchmark).filter(MarketBenchmark.id == benchmark_id).first()
+
+def get_market_benchmark_by_ticker(db: Session, ticker: str) -> Optional[MarketBenchmark]:
+    """Get a market benchmark by ticker symbol"""
+    return db.query(MarketBenchmark).filter(MarketBenchmark.ticker == ticker).first()
+
+def create_market_benchmark(db: Session, benchmark: schemas.MarketBenchmarkCreate, current_user: str = "admin") -> MarketBenchmark:
+    """Create a new market benchmark"""
+    benchmark_data = benchmark.model_dump()
+    db_benchmark = MarketBenchmark(**benchmark_data)
+    db.add(db_benchmark)
+    db.commit()
+    db.refresh(db_benchmark)
+    return db_benchmark
+
+def update_market_benchmark(db: Session, benchmark_id: int, benchmark_update: schemas.MarketBenchmarkUpdate, current_user: str = "admin") -> Optional[MarketBenchmark]:
+    """Update an existing market benchmark"""
+    db_benchmark = db.query(MarketBenchmark).filter(MarketBenchmark.id == benchmark_id).first()
+    if not db_benchmark:
+        return None
+    
+    update_data = benchmark_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_benchmark, field, value)
+    
+    db.commit()
+    db.refresh(db_benchmark)
+    return db_benchmark
+
+def delete_market_benchmark(db: Session, benchmark_id: int) -> bool:
+    """Delete a market benchmark and all its returns"""
+    db_benchmark = db.query(MarketBenchmark).filter(MarketBenchmark.id == benchmark_id).first()
+    if db_benchmark:
+        db.delete(db_benchmark)
+        db.commit()
+        return True
+    return False
+
+# Benchmark Return CRUD operations
+def get_benchmark_returns(db: Session, benchmark_id: int, start_date: Optional[date] = None, end_date: Optional[date] = None) -> List[BenchmarkReturn]:
+    """Get benchmark returns for a specific benchmark with optional date filtering"""
+    query = db.query(BenchmarkReturn).filter(BenchmarkReturn.benchmark_id == benchmark_id)
+    
+    if start_date:
+        query = query.filter(BenchmarkReturn.period_date >= start_date)
+    if end_date:
+        query = query.filter(BenchmarkReturn.period_date <= end_date)
+    
+    return query.order_by(BenchmarkReturn.period_date.desc()).all()
+
+def get_benchmark_return(db: Session, return_id: int) -> Optional[BenchmarkReturn]:
+    """Get a single benchmark return by ID"""
+    return db.query(BenchmarkReturn).filter(BenchmarkReturn.id == return_id).first()
+
+def create_benchmark_return(db: Session, return_data: schemas.BenchmarkReturnCreate, current_user: str = "admin") -> BenchmarkReturn:
+    """Create a new benchmark return"""
+    return_dict = return_data.model_dump()
+    db_return = BenchmarkReturn(**return_dict)
+    db.add(db_return)
+    db.commit()
+    db.refresh(db_return)
+    return db_return
+
+def update_benchmark_return(db: Session, return_id: int, return_update: schemas.BenchmarkReturnUpdate, current_user: str = "admin") -> Optional[BenchmarkReturn]:
+    """Update an existing benchmark return"""
+    db_return = db.query(BenchmarkReturn).filter(BenchmarkReturn.id == return_id).first()
+    if not db_return:
+        return None
+    
+    update_data = return_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_return, field, value)
+    
+    db.commit()
+    db.refresh(db_return)
+    return db_return
+
+def delete_benchmark_return(db: Session, return_id: int) -> bool:
+    """Delete a benchmark return"""
+    db_return = db.query(BenchmarkReturn).filter(BenchmarkReturn.id == return_id).first()
+    if db_return:
+        db.delete(db_return)
+        db.commit()
+        return True
+    return False
+
+def bulk_create_benchmark_returns(db: Session, benchmark_id: int, returns_data: List[schemas.BenchmarkReturnImport], current_user: str = "admin") -> dict:
+    """Bulk import benchmark returns from CSV data"""
+    created_count = 0
+    updated_count = 0
+    error_count = 0
+    errors = []
+    
+    for return_item in returns_data:
+        try:
+            # Check if return already exists for this period
+            existing_return = db.query(BenchmarkReturn).filter(
+                BenchmarkReturn.benchmark_id == benchmark_id,
+                BenchmarkReturn.period_date == return_item.period_date
+            ).first()
+            
+            if existing_return:
+                # Update existing return
+                existing_return.total_return = return_item.total_return / 100 if return_item.total_return else None  # Convert percentage to decimal
+                existing_return.price_return = return_item.price_return / 100 if return_item.price_return else None
+                existing_return.dividend_yield = return_item.dividend_yield / 100 if return_item.dividend_yield else None
+                existing_return.notes = return_item.notes
+                updated_count += 1
+            else:
+                # Create new return
+                new_return = BenchmarkReturn(
+                    benchmark_id=benchmark_id,
+                    period_date=return_item.period_date,
+                    total_return=return_item.total_return / 100 if return_item.total_return else None,  # Convert percentage to decimal
+                    price_return=return_item.price_return / 100 if return_item.price_return else None,
+                    dividend_yield=return_item.dividend_yield / 100 if return_item.dividend_yield else None,
+                    notes=return_item.notes
+                )
+                db.add(new_return)
+                created_count += 1
+                
+        except Exception as e:
+            error_count += 1
+            errors.append(f"Period {return_item.period_date}: {str(e)}")
+    
+    db.commit()
+    
+    return {
+        'created_count': created_count,
+        'updated_count': updated_count,
+        'error_count': error_count,
+        'errors': errors[:10]  # Return first 10 errors
     }

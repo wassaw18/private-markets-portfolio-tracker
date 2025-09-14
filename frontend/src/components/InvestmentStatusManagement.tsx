@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InvestmentStatus, Investment } from '../types/investment';
 
 interface InvestmentStatusManagementProps {
@@ -17,6 +17,13 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
   const [realizationNotes, setRealizationNotes] = useState(investment.realization_notes || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync state when investment prop changes
+  useEffect(() => {
+    setSelectedStatus(investment.status);
+    setRealizationDate(investment.realization_date || '');
+    setRealizationNotes(investment.realization_notes || '');
+  }, [investment.status, investment.realization_date, investment.realization_notes]);
 
   const getStatusColor = (status: InvestmentStatus) => {
     switch (status) {
@@ -63,6 +70,7 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if there are actually changes to make
     if (selectedStatus === investment.status && 
         realizationDate === (investment.realization_date || '') && 
         realizationNotes === (investment.realization_notes || '')) {
@@ -70,6 +78,7 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
       return;
     }
 
+    // Validate password for REALIZED status
     if (selectedStatus === InvestmentStatus.REALIZED && !password.trim()) {
       setError('Password is required to mark investment as realized');
       return;
@@ -86,6 +95,8 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
         realizationDate || undefined,
         realizationNotes || undefined
       );
+      
+      // Close modal on success - the parent component should re-render with updated investment data
       handleCloseStatusModal();
     } catch (error: any) {
       setError(error.message || 'Failed to update investment status');
@@ -211,7 +222,7 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
                 </div>
               )}
 
-              {/* Password Confirmation */}
+              {/* Password Confirmation - Required for REALIZED status */}
               {selectedStatus === InvestmentStatus.REALIZED && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -223,11 +234,29 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter password to confirm"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    required={selectedStatus === InvestmentStatus.REALIZED}
+                    required
+                    autoComplete="current-password"
                   />
                   <p className="mt-1 text-xs text-gray-500">
                     Password confirmation is required to mark investments as realized
                   </p>
+                </div>
+              )}
+              
+              {/* Password Confirmation - Optional for other status changes */}
+              {selectedStatus !== InvestmentStatus.REALIZED && selectedStatus !== investment.status && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password Confirmation (Optional)
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password (optional)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    autoComplete="current-password"
+                  />
                 </div>
               )}
 
