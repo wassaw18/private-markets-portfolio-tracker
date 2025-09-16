@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { Investment, InvestmentCreate, InvestmentUpdate, CashFlow, CashFlowCreate, Valuation, ValuationCreate, InvestmentPerformance, PortfolioPerformance, CommitmentVsCalledData, AssetAllocationData, VintageAllocationData, TimelineDataPoint, JCurveDataPoint, DashboardSummaryStats } from '../types/investment';
+import { Investment, InvestmentCreate, InvestmentUpdate, CashFlow, CashFlowCreate, CashFlowUpdate, Valuation, ValuationCreate, ValuationUpdate, InvestmentPerformance, PortfolioPerformance, CommitmentVsCalledData, AssetAllocationData, VintageAllocationData, TimelineDataPoint, JCurveDataPoint, DashboardSummaryStats } from '../types/investment';
 import { Entity, EntityCreate, EntityUpdate, EntityWithMembers, FamilyMember, FamilyMemberCreate, FamilyMemberUpdate } from '../types/entity';
 import { Document, DocumentCreate, DocumentUpdate, DocumentUploadForm, DocumentFilters, DocumentSearchResult, DocumentStatistics, DocumentTag, DocumentTagCreate } from '../types/document';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://172.23.5.82:8000';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -275,7 +275,7 @@ export const cashFlowAPI = {
   },
 
   // Update cash flow
-  updateCashFlow: async (investmentId: number, cashFlowId: number, cashFlow: CashFlowCreate): Promise<CashFlow> => {
+  updateCashFlow: async (investmentId: number, cashFlowId: number, cashFlow: CashFlowUpdate): Promise<CashFlow> => {
     const response = await api.put(`/api/investments/${investmentId}/cashflows/${cashFlowId}`, cashFlow);
     return response.data;
   },
@@ -300,7 +300,7 @@ export const valuationAPI = {
   },
 
   // Update valuation
-  updateValuation: async (investmentId: number, valuationId: number, valuation: ValuationCreate): Promise<Valuation> => {
+  updateValuation: async (investmentId: number, valuationId: number, valuation: ValuationUpdate): Promise<Valuation> => {
     const response = await api.put(`/api/investments/${investmentId}/valuations/${valuationId}`, valuation);
     return response.data;
   },
@@ -851,6 +851,87 @@ export const documentAPI = {
     const params = includeArchived ? '?include_archived=true' : '';
     const response = await api.get(`/api/entities/${entityId}/documents${params}`);
     return response.data;
+  },
+};
+
+// Market Benchmark API for monthly returns
+export interface MarketBenchmark {
+  id: number;
+  name: string;
+  ticker: string;
+  category: string;
+  description?: string;
+  data_source: string;
+  is_active: boolean;
+  returns_count?: number;
+}
+
+export interface BenchmarkReturn {
+  id: number;
+  benchmark_id: number;
+  period_date: string;
+  total_return?: number;
+  price_return?: number;
+  dividend_yield?: number;
+  notes?: string;
+}
+
+export interface BenchmarkReturnImport {
+  benchmark_ticker: string;
+  period_date: string;
+  total_return?: number;
+  price_return?: number;
+  dividend_yield?: number;
+  notes?: string;
+}
+
+export const marketBenchmarkAPI = {
+  // Get all market benchmarks
+  getMarketBenchmarks: async (): Promise<MarketBenchmark[]> => {
+    const response = await api.get('/api/benchmarks');
+    return response.data;
+  },
+
+  // Get single market benchmark
+  getMarketBenchmark: async (id: number): Promise<MarketBenchmark> => {
+    const response = await api.get(`/api/benchmarks/${id}`);
+    return response.data;
+  },
+
+  // Get benchmark returns
+  getBenchmarkReturns: async (benchmarkId: number): Promise<BenchmarkReturn[]> => {
+    const response = await api.get(`/api/benchmarks/${benchmarkId}/returns`);
+    return response.data;
+  },
+
+  // Create benchmark return
+  createBenchmarkReturn: async (benchmarkId: number, returnData: Omit<BenchmarkReturn, 'id' | 'benchmark_id'>): Promise<BenchmarkReturn> => {
+    const response = await api.post(`/api/benchmarks/${benchmarkId}/returns`, returnData);
+    return response.data;
+  },
+
+  // Bulk import benchmark returns
+  bulkImportBenchmarkReturns: async (benchmarkId: number, file: File): Promise<ImportResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post(`/api/benchmarks/${benchmarkId}/returns/bulk-import`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Update benchmark return
+  updateBenchmarkReturn: async (benchmarkId: number, returnId: number, returnData: Omit<BenchmarkReturn, 'id' | 'benchmark_id'>): Promise<BenchmarkReturn> => {
+    const response = await api.put(`/api/benchmarks/${benchmarkId}/returns/${returnId}`, returnData);
+    return response.data;
+  },
+
+  // Delete benchmark return
+  deleteBenchmarkReturn: async (benchmarkId: number, returnId: number): Promise<void> => {
+    await api.delete(`/api/benchmarks/${benchmarkId}/returns/${returnId}`);
   },
 };
 

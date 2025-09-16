@@ -1,0 +1,467 @@
+.benchmark-management {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.benchmark-header {
+  margin-bottom: 32px;
+}
+
+.benchmark-header h2 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.benchmark-header .subtitle {
+  color: #6b7280;
+  font-size: 16px;
+  margin: 0;
+}
+
+.benchmark-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+  min-height: 600px;
+}
+
+/* Benchmarks Sidebar */
+.benchmarks-sidebar {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.benchmarks-sidebar h3 {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.benchmarks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.benchmark-item {
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.benchmark-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.benchmark-item.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+}
+
+.benchmark-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.benchmark-ticker {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: bold;
+  color: #059669;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.benchmark-category {
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.benchmark-stats {
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Benchmark Details */
+.benchmark-details {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.benchmark-info h3 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.benchmark-info p {
+  color: #4b5563;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.benchmark-meta {
+  display: flex;
+  gap: 24px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.benchmark-meta span {
+  display: flex;
+  align-items: center;
+}
+
+/* Upload Section */
+.upload-section {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 20px;
+  background: #f9fafb;
+}
+
+.upload-section h4 {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.upload-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.upload-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-upload-btn {
+  background: #3b82f6;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.file-upload-btn:hover {
+  background: #2563eb;
+}
+
+.download-template-btn {
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.download-template-btn:hover {
+  background: #047857;
+}
+
+.upload-help {
+  color: #6b7280;
+  font-size: 13px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.upload-result {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.upload-result.success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.upload-result.has-errors {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.result-summary {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.error-count {
+  margin-left: 12px;
+}
+
+.error-details h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.error-details ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+/* Add Return Section */
+.add-return-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h4 {
+  margin: 0;
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.toggle-btn {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: #4b5563;
+}
+
+.add-return-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row.full-width {
+  grid-template-columns: 1fr;
+}
+
+.form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.form-row input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-row input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.add-btn {
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  align-self: flex-start;
+  transition: background-color 0.2s ease;
+}
+
+.add-btn:hover {
+  background: #047857;
+}
+
+/* Returns Section */
+.returns-section h4 {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.returns-table {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.returns-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.returns-table th {
+  background: #f9fafb;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.returns-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.returns-table td.number {
+  text-align: right;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 500;
+}
+
+.returns-table td.notes {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.returns-table tr:hover {
+  background: #f9fafb;
+}
+
+.table-footer {
+  padding: 12px;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* States */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.no-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+  height: 100%;
+}
+
+.no-selection h3 {
+  margin: 0 0 8px 0;
+  color: #374151;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #d1d5db;
+}
+
+.error-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.error-message button {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 12px;
+  padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .benchmark-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .benchmark-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

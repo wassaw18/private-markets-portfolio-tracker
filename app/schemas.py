@@ -12,7 +12,7 @@ class CashFlowCreate(CashFlowBase):
     pass
 
 class CashFlowUpdate(BaseModel):
-    date: Optional[date] = None
+    date: Optional[str] = None
     type: Optional[CashFlowType] = None
     amount: Optional[float] = Field(None, description="Cash flow amount - can be positive or negative")
 
@@ -31,7 +31,7 @@ class ValuationCreate(ValuationBase):
     pass
 
 class ValuationUpdate(BaseModel):
-    date: Optional[date] = None
+    date: Optional[str] = None
     nav_value: Optional[float] = Field(None, ge=0)
 
 class Valuation(ValuationBase):
@@ -780,3 +780,8 @@ class ForecastAdjustment(BaseModel):
     
     class Config:
         from_attributes = True
+
+# Market Benchmark Schema (added for monthly returns feature)
+class MarketBenchmarkWithCount(MarketBenchmark):
+    """Market Benchmark with returns count included"""
+    returns_count: int = 0

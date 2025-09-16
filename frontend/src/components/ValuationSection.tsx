@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Valuation, ValuationCreate } from '../types/investment';
+import { Valuation, ValuationCreate, ValuationUpdate } from '../types/investment';
 import { valuationAPI } from '../services/api';
 import './ValuationSection.css';
 
@@ -34,7 +34,12 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
 
     try {
       if (editingValuation) {
-        await valuationAPI.updateValuation(investmentId, editingValuation.id, formData);
+        // Create update object with only changed fields
+        const updateData: ValuationUpdate = {};
+        if (formData.date !== editingValuation.date) updateData.date = formData.date;
+        if (formData.nav_value !== editingValuation.nav_value) updateData.nav_value = formData.nav_value;
+        
+        await valuationAPI.updateValuation(investmentId, editingValuation.id, updateData);
       } else {
         await valuationAPI.createValuation(investmentId, formData);
       }

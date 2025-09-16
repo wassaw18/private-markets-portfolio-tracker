@@ -1116,7 +1116,7 @@ def get_calendar_heatmap(
 
 # Market Benchmark Endpoints
 
-@app.get("/api/benchmarks", response_model=List[schemas.MarketBenchmark])
+@app.get("/api/benchmarks", response_model=List[schemas.MarketBenchmarkWithCount])
 def get_market_benchmarks(
     skip: int = 0,
     limit: int = 100,
@@ -1124,8 +1124,31 @@ def get_market_benchmarks(
     db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    """Get all market benchmarks"""
-    return crud.get_market_benchmarks(db, skip=skip, limit=limit, include_inactive=include_inactive)
+    """Get all market benchmarks with returns count"""
+    benchmarks = crud.get_market_benchmarks(db, skip=skip, limit=limit, include_inactive=include_inactive)
+    
+    # Add returns count to each benchmark
+    results = []
+    for benchmark in benchmarks:
+        returns_count = db.query(models.BenchmarkReturn).filter(
+            models.BenchmarkReturn.benchmark_id == benchmark.id
+        ).count()
+        
+        benchmark_dict = {
+            'id': benchmark.id,
+            'name': benchmark.name,
+            'ticker': benchmark.ticker,
+            'category': benchmark.category,
+            'description': benchmark.description,
+            'data_source': benchmark.data_source,
+            'is_active': benchmark.is_active,
+            'created_at': benchmark.created_at,
+            'updated_at': benchmark.updated_at,
+            'returns_count': returns_count
+        }
+        results.append(benchmark_dict)
+    
+    return results
 
 @app.post("/api/benchmarks", response_model=schemas.MarketBenchmark)
 def create_market_benchmark(

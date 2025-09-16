@@ -89,8 +89,8 @@ class BenchmarkComparisonService:
         # Get investment performance
         performance_metrics = crud.get_investment_performance(self.db, investment_id)
         
-        investment_irr = performance_metrics.irr if performance_metrics else None
-        investment_tvpi = performance_metrics.tvpi if performance_metrics else None
+        investment_irr = performance_metrics.performance.irr if performance_metrics else None
+        investment_tvpi = performance_metrics.performance.tvpi if performance_metrics else None
         
         # Get benchmark data
         irr_benchmark = self.get_benchmark_data(investment.asset_class, investment.vintage_year, "IRR")

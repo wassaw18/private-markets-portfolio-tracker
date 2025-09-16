@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CashFlow, CashFlowCreate, CashFlowType } from '../types/investment';
+import { CashFlow, CashFlowCreate, CashFlowUpdate, CashFlowType } from '../types/investment';
 import { cashFlowAPI } from '../services/api';
 import { formatDate, formatCurrency, getTodayDateString } from '../utils/formatters';
 import './CashFlowSection.css';
@@ -36,7 +36,13 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
 
     try {
       if (editingCashFlow) {
-        await cashFlowAPI.updateCashFlow(investmentId, editingCashFlow.id, formData);
+        // Create update object with only changed fields
+        const updateData: CashFlowUpdate = {};
+        if (formData.date !== editingCashFlow.date) updateData.date = formData.date;
+        if (formData.type !== editingCashFlow.type) updateData.type = formData.type;
+        if (formData.amount !== editingCashFlow.amount) updateData.amount = formData.amount;
+        
+        await cashFlowAPI.updateCashFlow(investmentId, editingCashFlow.id, updateData);
       } else {
         await cashFlowAPI.createCashFlow(investmentId, formData);
       }
@@ -165,7 +171,6 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
                   name="amount"
                   value={formData.amount}
                   onChange={handleChange}
-                  min="0"
                   step="0.01"
                   placeholder="0.00"
                   required

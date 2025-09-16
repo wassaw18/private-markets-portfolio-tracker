@@ -8,6 +8,7 @@ import Documents from './pages/Documents';
 import Entities from './pages/Entities';
 import LiquidityForecast from './pages/LiquidityForecast';
 import BulkUpload from './pages/BulkUpload';
+import BenchmarkManagement from './pages/BenchmarkManagement';
 import PageErrorBoundary from './components/PageErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -30,31 +31,37 @@ const Navigation: React.FC = () => {
           to="/visuals" 
           className={`nav-link ${location.pathname === '/visuals' ? 'active' : ''}`}
         >
-          Visuals & Analytics
+          Visuals
+        </Link>
+        <Link 
+          to="/liquidity" 
+          className={`nav-link ${location.pathname === '/liquidity' ? 'active' : ''}`}
+        >
+          Liquidity
         </Link>
         <Link 
           to="/calendar" 
           className={`nav-link ${location.pathname === '/calendar' ? 'active' : ''}`}
         >
-          Cash Flow Calendar
+          Cash Flow
+        </Link>
+        <Link 
+          to="/entities" 
+          className={`nav-link ${location.pathname === '/entities' ? 'active' : ''}`}
+        >
+          Entity Mgmt
+        </Link>
+        <Link 
+          to="/benchmarks" 
+          className={`nav-link ${location.pathname === '/benchmarks' ? 'active' : ''}`}
+        >
+          Benchmarks
         </Link>
         <Link 
           to="/documents" 
           className={`nav-link ${location.pathname === '/documents' ? 'active' : ''}`}
         >
           Documents
-        </Link>
-        <Link 
-          to="/entities" 
-          className={`nav-link ${location.pathname === '/entities' ? 'active' : ''}`}
-        >
-          Entity Management
-        </Link>
-        <Link 
-          to="/liquidity" 
-          className={`nav-link ${location.pathname === '/liquidity' ? 'active' : ''}`}
-        >
-          Liquidity Forecast
         </Link>
         <Link 
           to="/bulk-upload" 
@@ -132,6 +139,11 @@ function AppContent() {
               <Route path="/bulk-upload" element={
                 <PageErrorBoundary pageName="Bulk Upload">
                   <BulkUpload />
+                </PageErrorBoundary>
+              } />
+              <Route path="/benchmarks" element={
+                <PageErrorBoundary pageName="Benchmark Management">
+                  <BenchmarkManagement />
                 </PageErrorBoundary>
               } />
               <Route path="/investment/:id" element={

@@ -292,10 +292,10 @@ def create_cashflow(db: Session, investment_id: int, cashflow: schemas.CashFlowC
     cashflow_data = cashflow.model_dump()
     
     # Apply sign convention to the amount based on cash flow type
-    if 'amount' in cashflow_data and 'cash_flow_type' in cashflow_data:
+    if 'amount' in cashflow_data and 'type' in cashflow_data:
         cashflow_data['amount'] = _apply_cash_flow_sign_convention(
             cashflow_data['amount'], 
-            CashFlowType(cashflow_data['cash_flow_type'])
+            CashFlowType(cashflow_data['type'])
         )
     
     cashflow_data['created_by'] = current_user
@@ -344,18 +344,36 @@ def update_cashflow(db: Session, cashflow_id: int, cashflow_update: schemas.Cash
     # Update only provided fields
     update_data = cashflow_update.model_dump(exclude_unset=True)
     
-    # Apply sign convention if amount or cash_flow_type is being updated
-    if 'amount' in update_data:
-        cash_flow_type = update_data.get('cash_flow_type', db_cashflow.cash_flow_type)
-        update_data['amount'] = _apply_cash_flow_sign_convention(
-            update_data['amount'], 
-            CashFlowType(cash_flow_type)
-        )
-    elif 'cash_flow_type' in update_data:
+    # Handle date string conversion
+    if 'date' in update_data and isinstance(update_data['date'], str):
+        from datetime import datetime
+        update_data['date'] = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
+    
+    # Handle amount and cash flow type updates
+    if 'amount' in update_data and 'type' in update_data:
+        # Both amount and type are being updated - respect user's signed input
+        # Only apply sign convention if amount is positive (user expects it to be auto-signed)
+        if update_data['amount'] > 0:
+            update_data['amount'] = _apply_cash_flow_sign_convention(
+                update_data['amount'], 
+                CashFlowType(update_data['type'])
+            )
+        # If amount is negative, respect user's intention
+    elif 'amount' in update_data:
+        # Only amount is being updated - respect user's signed input
+        # Only apply sign convention if amount is positive (user expects it to be auto-signed)
+        if update_data['amount'] > 0:
+            cash_flow_type = db_cashflow.type
+            update_data['amount'] = _apply_cash_flow_sign_convention(
+                update_data['amount'], 
+                cash_flow_type
+            )
+        # If amount is negative, respect user's intention
+    elif 'type' in update_data:
         # If only changing the type, re-apply sign convention to existing amount
         update_data['amount'] = _apply_cash_flow_sign_convention(
             abs(db_cashflow.amount),  # Use absolute value of current amount
-            CashFlowType(update_data['cash_flow_type'])
+            CashFlowType(update_data['type'])
         )
     
     update_data['updated_by'] = current_user
@@ -402,6 +420,12 @@ def update_valuation(db: Session, valuation_id: int, valuation_update: schemas.V
     db_valuation = db.query(models.Valuation).filter(models.Valuation.id == valuation_id).first()
     if db_valuation:
         update_data = valuation_update.model_dump(exclude_unset=True)
+        
+        # Handle date string conversion
+        if 'date' in update_data and isinstance(update_data['date'], str):
+            from datetime import datetime
+            update_data['date'] = datetime.strptime(update_data['date'], '%Y-%m-%d').date()
+        
         for field, value in update_data.items():
             setattr(db_valuation, field, value)
         # Always update the updated_by field

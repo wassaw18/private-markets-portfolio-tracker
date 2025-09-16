@@ -89,6 +89,12 @@ export interface CashFlowCreate {
   amount: number;
 }
 
+export interface CashFlowUpdate {
+  date?: string;
+  type?: CashFlowType;
+  amount?: number;
+}
+
 export interface Valuation {
   id: number;
   investment_id: number;
@@ -99,6 +105,11 @@ export interface Valuation {
 export interface ValuationCreate {
   date: string;
   nav_value: number;
+}
+
+export interface ValuationUpdate {
+  date?: string;
+  nav_value?: number;
 }
 
 export interface Investment {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { benchmarkAPI, InvestmentBenchmarkComparison } from '../services/api';
+import { benchmarkAPI, InvestmentBenchmarkComparison, marketBenchmarkAPI, MarketBenchmark, BenchmarkReturn } from '../services/api';
 import './BenchmarkComparison.css';
 
 interface BenchmarkComparisonProps {
@@ -8,6 +8,9 @@ interface BenchmarkComparisonProps {
 
 const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId }) => {
   const [benchmarkData, setBenchmarkData] = useState<InvestmentBenchmarkComparison | null>(null);
+  const [marketBenchmarks, setMarketBenchmarks] = useState<MarketBenchmark[]>([]);
+  const [selectedBenchmark, setSelectedBenchmark] = useState<MarketBenchmark | null>(null);
+  const [benchmarkReturns, setBenchmarkReturns] = useState<BenchmarkReturn[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,8 +19,24 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
       try {
         setLoading(true);
         setError(null);
-        const data = await benchmarkAPI.getInvestmentBenchmark(investmentId);
-        setBenchmarkData(data);
+        
+        // Fetch both vintage year quartile data and monthly benchmark data
+        const [quartileData, monthlyBenchmarks] = await Promise.all([
+          benchmarkAPI.getInvestmentBenchmark(investmentId).catch(() => null),
+          marketBenchmarkAPI.getMarketBenchmarks().catch(() => [])
+        ]);
+        
+        setBenchmarkData(quartileData);
+        setMarketBenchmarks(monthlyBenchmarks);
+        
+        // Default to S&P 500 Total Return if available
+        const sp500 = monthlyBenchmarks.find(b => b.ticker === 'SPY-TR');
+        if (sp500) {
+          setSelectedBenchmark(sp500);
+          // Fetch returns for S&P 500
+          const returns = await marketBenchmarkAPI.getBenchmarkReturns(sp500.id);
+          setBenchmarkReturns(returns.sort((a, b) => new Date(b.period_date).getTime() - new Date(a.period_date).getTime()));
+        }
       } catch (err) {
         console.error('Error fetching benchmark data:', err);
         setError('Failed to load benchmark comparison');
@@ -30,6 +49,19 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
       fetchBenchmarkData();
     }
   }, [investmentId]);
+
+  const handleBenchmarkChange = async (benchmarkId: number) => {
+    const benchmark = marketBenchmarks.find(b => b.id === benchmarkId);
+    if (benchmark) {
+      setSelectedBenchmark(benchmark);
+      try {
+        const returns = await marketBenchmarkAPI.getBenchmarkReturns(benchmarkId);
+        setBenchmarkReturns(returns.sort((a, b) => new Date(b.period_date).getTime() - new Date(a.period_date).getTime()));
+      } catch (err) {
+        console.error('Error fetching benchmark returns:', err);
+      }
+    }
+  };
 
   const getQuartileLabel = (rank: number): string => {
     switch (rank) {
@@ -51,11 +83,13 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
     }
   };
 
-  const formatPercentage = (value: number): string => {
+  const formatPercentage = (value: number | undefined): string => {
+    if (value === undefined || value === null) return 'N/A';
     return `${(value * 100).toFixed(1)}%`;
   };
 
-  const formatMultiple = (value: number): string => {
+  const formatMultiple = (value: number | undefined): string => {
+    if (value === undefined || value === null) return 'N/A';
     return `${value.toFixed(2)}x`;
   };
 
@@ -66,6 +100,16 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
     } else {
       return `${sign}${value.toFixed(2)}x`;
     }
+  };
+
+  const formatDate = (dateString: string): string => {
+    // Parse as local date to avoid timezone shift
+    const [year, month] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short'
+    });
   };
 
   if (loading) {
@@ -237,8 +281,79 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
         </div>
       </div>
 
+      {/* Monthly Benchmark Returns Section */}
+      {marketBenchmarks.length > 0 && (
+        <div className="monthly-benchmark-section">
+          <div className="section-header">
+            <h4>📈 Public Markets Benchmark</h4>
+            <div className="benchmark-selector">
+              <select 
+                value={selectedBenchmark?.id || ''}
+                onChange={(e) => handleBenchmarkChange(parseInt(e.target.value))}
+                className="benchmark-select"
+              >
+                {marketBenchmarks.map(benchmark => (
+                  <option key={benchmark.id} value={benchmark.id}>
+                    {benchmark.name} ({benchmark.ticker})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {selectedBenchmark && (
+            <div className="benchmark-info">
+              <div className="benchmark-description">
+                <p>{selectedBenchmark.description}</p>
+                <span className="data-source">Source: {selectedBenchmark.data_source}</span>
+              </div>
+
+              {benchmarkReturns.length > 0 && (
+                <div className="returns-preview">
+                  <h5>Recent Monthly Returns</h5>
+                  <div className="returns-table-small">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Period</th>
+                          <th>Total Return</th>
+                          <th>Price Return</th>
+                          <th>Div Yield</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {benchmarkReturns.slice(0, 6).map((returnData) => (
+                          <tr key={returnData.id}>
+                            <td>{formatDate(returnData.period_date)}</td>
+                            <td className="number positive">{formatPercentage(returnData.total_return)}</td>
+                            <td className="number">{formatPercentage(returnData.price_return)}</td>
+                            <td className="number">{formatPercentage(returnData.dividend_yield)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {benchmarkReturns.length > 6 && (
+                      <div className="table-footer">
+                        Showing most recent 6 of {benchmarkReturns.length} monthly returns
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {benchmarkReturns.length === 0 && (
+                <div className="no-returns-data">
+                  <p>No monthly returns data available for {selectedBenchmark.name}</p>
+                  <small>Monthly returns are used for PME (Public Markets Equivalent) analysis</small>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* No Data Message */}
-      {!hasIrrData && !hasTvpiData && (
+      {!hasIrrData && !hasTvpiData && marketBenchmarks.length === 0 && (
         <div className="no-data-message">
           <p>{benchmarkData.data_availability}</p>
           <small>
