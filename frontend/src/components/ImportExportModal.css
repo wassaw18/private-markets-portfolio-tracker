@@ -42,7 +42,7 @@
   align-items: center;
   padding: 24px 32px;
   border-bottom: 1px solid #e9ecef;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 50%, var(--luxury-medium-blue) 100%);
   color: white;
 }
 

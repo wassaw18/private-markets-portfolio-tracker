@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { benchmarkAPI, InvestmentBenchmarkComparison, marketBenchmarkAPI, MarketBenchmark, BenchmarkReturn } from '../services/api';
+import { benchmarkAPI, InvestmentBenchmarkComparison, marketBenchmarkAPI, MarketBenchmark, BenchmarkReturn, pmeAPI, PMEAnalysisResult, investmentAPI } from '../services/api';
+import { Investment } from '../types/investment';
 import './BenchmarkComparison.css';
 
 interface BenchmarkComparisonProps {
@@ -13,6 +14,14 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
   const [benchmarkReturns, setBenchmarkReturns] = useState<BenchmarkReturn[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // PME Analysis State
+  const [pmeLoading, setPmeLoading] = useState(false);
+  const [pmeError, setPmeError] = useState<string | null>(null);
+  const [pmeResult, setPmeResult] = useState<PMEAnalysisResult | null>(null);
+  const [availableInvestments, setAvailableInvestments] = useState<Investment[]>([]);
+  const [selectedInvestments, setSelectedInvestments] = useState<number[]>([]);
+  const [showPmeAnalysis, setShowPmeAnalysis] = useState(false);
 
   useEffect(() => {
     const fetchBenchmarkData = async () => {
@@ -20,14 +29,16 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
         setLoading(true);
         setError(null);
         
-        // Fetch both vintage year quartile data and monthly benchmark data
-        const [quartileData, monthlyBenchmarks] = await Promise.all([
+        // Fetch both vintage year quartile data, monthly benchmark data, and available investments
+        const [quartileData, monthlyBenchmarks, investments] = await Promise.all([
           benchmarkAPI.getInvestmentBenchmark(investmentId).catch(() => null),
-          marketBenchmarkAPI.getMarketBenchmarks().catch(() => [])
+          marketBenchmarkAPI.getMarketBenchmarks().catch(() => []),
+          investmentAPI.getInvestments().catch(() => [])
         ]);
         
         setBenchmarkData(quartileData);
         setMarketBenchmarks(monthlyBenchmarks);
+        setAvailableInvestments(investments);
         
         // Default to S&P 500 Total Return if available
         const sp500 = monthlyBenchmarks.find(b => b.ticker === 'SPY-TR');
@@ -110,6 +121,52 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
       year: 'numeric',
       month: 'short'
     });
+  };
+
+  // PME Analysis Functions
+  const handleInvestmentSelection = (investmentId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedInvestments(prev => [...prev, investmentId]);
+    } else {
+      setSelectedInvestments(prev => prev.filter(id => id !== investmentId));
+    }
+  };
+
+  const runPmeAnalysis = async () => {
+    if (!selectedBenchmark || selectedInvestments.length === 0) {
+      setPmeError('Please select a benchmark and at least one investment');
+      return;
+    }
+
+    setPmeLoading(true);
+    setPmeError(null);
+
+    try {
+      let result: PMEAnalysisResult;
+      
+      if (selectedInvestments.length === 1) {
+        // Single investment PME analysis
+        result = await pmeAPI.getInvestmentPME(selectedInvestments[0], selectedBenchmark.id);
+      } else {
+        // Portfolio PME analysis
+        result = await pmeAPI.getPortfolioPME(selectedBenchmark.id, {
+          investmentIds: selectedInvestments
+        });
+      }
+      
+      setPmeResult(result);
+    } catch (err: any) {
+      console.error('Error running PME analysis:', err);
+      setPmeError(err.response?.data?.detail || 'Failed to run PME analysis');
+    } finally {
+      setPmeLoading(false);
+    }
+  };
+
+  const clearPmeAnalysis = () => {
+    setPmeResult(null);
+    setPmeError(null);
+    setSelectedInvestments([]);
   };
 
   if (loading) {
@@ -345,6 +402,171 @@ const BenchmarkComparison: React.FC<BenchmarkComparisonProps> = ({ investmentId 
                 <div className="no-returns-data">
                   <p>No monthly returns data available for {selectedBenchmark.name}</p>
                   <small>Monthly returns are used for PME (Public Markets Equivalent) analysis</small>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PME Analysis Section */}
+      {selectedBenchmark && availableInvestments.length > 0 && (
+        <div className="pme-analysis-section">
+          <div className="section-header">
+            <h4>📊 Public Markets Equivalent (PME) Analysis</h4>
+            <p className="section-description">
+              Compare private investment performance against {selectedBenchmark?.name || 'selected benchmark'} using TVPI methodology
+            </p>
+          </div>
+
+          {!showPmeAnalysis ? (
+            <div className="pme-toggle">
+              <button 
+                className="luxury-button-primary"
+                onClick={() => setShowPmeAnalysis(true)}
+              >
+                Start PME Analysis
+              </button>
+            </div>
+          ) : (
+            <div className="pme-analysis-container">
+              {/* Investment Selection */}
+              <div className="investment-selection">
+                <h5>Select Investments for Analysis</h5>
+                <div className="investment-grid">
+                  {availableInvestments.map(investment => (
+                    <label key={investment.id} className="investment-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedInvestments.includes(investment.id)}
+                        onChange={(e) => handleInvestmentSelection(investment.id, e.target.checked)}
+                      />
+                      <span className="investment-info">
+                        <strong>{investment.name}</strong>
+                        <small>{investment.asset_class} • {investment.vintage_year}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                
+                <div className="analysis-controls">
+                  <button 
+                    className="luxury-button-primary"
+                    onClick={runPmeAnalysis}
+                    disabled={selectedInvestments.length === 0 || pmeLoading}
+                  >
+                    {pmeLoading ? 'Running Analysis...' : `Analyze ${selectedInvestments.length} Investment${selectedInvestments.length !== 1 ? 's' : ''}`}
+                  </button>
+                  
+                  {(pmeResult || selectedInvestments.length > 0) && (
+                    <button 
+                      className="luxury-button-secondary"
+                      onClick={clearPmeAnalysis}
+                    >
+                      Clear Selection
+                    </button>
+                  )}
+                  
+                  <button 
+                    className="luxury-button-secondary"
+                    onClick={() => setShowPmeAnalysis(false)}
+                  >
+                    Hide PME Analysis
+                  </button>
+                </div>
+              </div>
+
+              {/* PME Error Display */}
+              {pmeError && (
+                <div className="error-message">
+                  {pmeError}
+                </div>
+              )}
+
+              {/* PME Results */}
+              {pmeResult && (
+                <div className="pme-results">
+                  <div className="pme-summary">
+                    <h5>PME Analysis Results</h5>
+                    <div className="metrics-grid">
+                      <div className="metric-card">
+                        <span className="metric-label">Private TVPI</span>
+                        <span className="metric-value">{pmeResult.summary_metrics.final_private_tvpi.toFixed(2)}x</span>
+                      </div>
+                      
+                      <div className="metric-card">
+                        <span className="metric-label">Public TVPI</span>
+                        <span className="metric-value">{pmeResult.summary_metrics.final_public_tvpi.toFixed(2)}x</span>
+                      </div>
+                      
+                      <div className="metric-card">
+                        <span className="metric-label">PME Ratio</span>
+                        <span className={`metric-value ${pmeResult.summary_metrics.pme_ratio >= 1 ? 'positive' : 'negative'}`}>
+                          {pmeResult.summary_metrics.pme_ratio.toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      <div className="metric-card">
+                        <span className="metric-label">Illiquidity Premium</span>
+                        <span className={`metric-value ${pmeResult.summary_metrics.final_illiquidity_premium >= 0 ? 'positive' : 'negative'}`}>
+                          {pmeResult.summary_metrics.final_illiquidity_premium >= 0 ? '+' : ''}{(pmeResult.summary_metrics.final_illiquidity_premium * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* TVPI Chart Visualization */}
+                  {pmeResult.pme_series.length > 0 && (
+                    <div className="pme-chart">
+                      <h5>TVPI Comparison Over Time</h5>
+                      <div className="chart-container">
+                        <div className="chart-legend">
+                          <span className="legend-item">
+                            <span className="legend-color private"></span>
+                            Private Investment TVPI
+                          </span>
+                          <span className="legend-item">
+                            <span className="legend-color public"></span>
+                            {selectedBenchmark?.name || 'Benchmark'} TVPI
+                          </span>
+                        </div>
+                        
+                        <div className="simple-line-chart">
+                          {pmeResult.pme_series.map((point, index) => (
+                            <div key={index} className="chart-point-row">
+                              <span className="chart-date">{formatDate(point.date)}</span>
+                              <div className="chart-bars">
+                                <div className="bar-container">
+                                  <div 
+                                    className="bar private" 
+                                    style={{ width: `${Math.min(100, (point.private_tvpi / 3) * 100)}%` }}
+                                  ></div>
+                                  <span className="bar-value">{point.private_tvpi.toFixed(2)}x</span>
+                                </div>
+                                <div className="bar-container">
+                                  <div 
+                                    className="bar public" 
+                                    style={{ width: `${Math.min(100, (point.public_tvpi / 3) * 100)}%` }}
+                                  ></div>
+                                  <span className="bar-value">{point.public_tvpi.toFixed(2)}x</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Methodology Note */}
+                  <div className="pme-methodology">
+                    <h6>PME Methodology</h6>
+                    <p>
+                      Public Markets Equivalent (PME) analysis compares private investment performance 
+                      by investing the same cash flows in {selectedBenchmark?.name || 'the selected benchmark'} at the same timing. 
+                      A PME ratio &gt; 1.0 indicates outperformance vs. public markets.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

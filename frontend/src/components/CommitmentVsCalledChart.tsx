@@ -8,7 +8,7 @@ const CommitmentVsCalledChart: React.FC = () => {
   const [data, setData] = useState<CommitmentVsCalledData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewType, setViewType] = useState<'stacked' | 'pie' | 'liability'>('stacked');
+  const [viewType, setViewType] = useState<'stacked' | 'pie' | 'liability'>('pie');
 
   const fetchData = async () => {
     try {
@@ -77,17 +77,17 @@ const CommitmentVsCalledChart: React.FC = () => {
     }
   ];
 
-  // Prepare data for pie chart
+  // Prepare data for pie chart with luxury colors
   const pieData = [
     {
       name: 'Called Capital',
       value: data.called_amount,
-      color: '#28a745'
+      color: '#2ECC71' // Luxury Success Green
     },
     {
       name: 'Uncalled Capital',
       value: data.uncalled_amount,
-      color: '#ffc107'
+      color: '#C9A96E' // Luxury Gold
     }
   ];
 
@@ -146,8 +146,8 @@ const CommitmentVsCalledChart: React.FC = () => {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                 }}
               />
-              <Bar dataKey="called_amount" stackId="commitment" fill="#28a745" name="Called Capital" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="uncalled_amount" stackId="commitment" fill="#ffc107" name="Uncalled Capital" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="called_amount" stackId="commitment" fill="#2ECC71" name="Called Capital" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="uncalled_amount" stackId="commitment" fill="#C9A96E" name="Uncalled Capital" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : viewType === 'liability' ? (

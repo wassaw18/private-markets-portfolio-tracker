@@ -120,26 +120,34 @@ const Visuals: React.FC = () => {
         </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="charts-grid">
-        {/* Capital Deployment Charts */}
-        <div className="chart-section">
-          <div className="chart-container">
-            <CommitmentVsCalledChart />
-          </div>
-        </div>
-
-        <div className="chart-section">
+      {/* Primary Analysis Grid - 2x1 Layout */}
+      <div className="primary-charts-grid">
+        {/* Asset Class Breakdown - Compact Table View */}
+        <div className="chart-section compact-table">
           <div className="chart-container">
             <AssetAllocationChart />
           </div>
         </div>
 
+        {/* Commitment vs Called - Pie Chart */}
+        <div className="chart-section pie-chart">
+          <div className="chart-container">
+            <CommitmentVsCalledChart />
+          </div>
+        </div>
+      </div>
+
+      {/* Full Width Vintage Chart */}
+      <div className="full-width-chart">
         <div className="chart-section">
           <div className="chart-container">
             <VintageAllocationChart />
           </div>
         </div>
+      </div>
+
+      {/* Additional Charts Grid */}
+      <div className="charts-grid">
 
         {/* Ownership Distribution Chart */}
         <div className="chart-section full-width">

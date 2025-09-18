@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Investment, InvestmentUpdate, InvestmentPerformance, PerformanceMetrics } from '../types/investment';
-import { investmentAPI, performanceAPI } from '../services/api';
+import { Investment, PerformanceMetrics } from '../types/investment';
+import { performanceAPI } from '../services/api';
 import { formatCurrency, formatPercentage } from '../utils/formatters';
 import EditInvestmentModal from './EditInvestmentModal';
 import './EnhancedInvestmentsTable.css';
@@ -213,14 +213,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
     return <span className="sort-icon">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
   };
 
-  // Performance comparison helper
-  const getPerformanceClass = (actual: number | undefined, target: number | undefined): string => {
-    if (!actual || !target) return '';
-    const ratio = actual / target;
-    if (ratio >= 1.1) return 'outperform';  // 10%+ above target
-    if (ratio <= 0.9) return 'underperform'; // 10%+ below target
-    return 'ontrack';
-  };
 
   const renderBasicTab = () => (
     <div className="table-container">
@@ -250,23 +242,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td className="investment-name">
                 <span 
                   onClick={() => handleViewDetails(investment.id)}
-                  style={{
-                    color: '#007bff',
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                    transition: 'color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#0056b3';
-                    target.style.textDecoration = 'underline';
-                  }}
-                  onMouseLeave={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#007bff';
-                    target.style.textDecoration = 'none';
-                  }}
                   title="Click to view investment details"
                 >
                   {investment.name}
@@ -287,45 +262,20 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.strategy}</td>
               <td>{investment.vintage_year}</td>
               <td className="actions">
-                <span
+                <button
                   onClick={() => handleEdit(investment)}
                   title="Edit Investment"
-                  style={{ 
-                    marginRight: '6px', 
-                    padding: '3px 6px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="edit-button"
                 >
                   Edit
-                </span>
-                <span
+                </button>
+                <button
                   onClick={() => handleDelete(investment.id, investment.name)}
                   title="Delete Investment"
-                  style={{ 
-                    padding: '3px 4px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="delete-button"
                 >
                   Delete
-                </span>
+                </button>
               </td>
             </tr>
           ))}
@@ -363,23 +313,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td className="investment-name">
                 <span 
                   onClick={() => handleViewDetails(investment.id)}
-                  style={{
-                    color: '#007bff',
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                    transition: 'color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#0056b3';
-                    target.style.textDecoration = 'underline';
-                  }}
-                  onMouseLeave={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#007bff';
-                    target.style.textDecoration = 'none';
-                  }}
                   title="Click to view investment details"
                 >
                   {investment.name}
@@ -394,45 +327,20 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.hurdle_rate ? formatPercentage(investment.hurdle_rate) : '-'}</td>
               <td className="currency">{formatCurrency(investment.fees)}</td>
               <td className="actions">
-                <span
+                <button
                   onClick={() => handleEdit(investment)}
                   title="Edit Investment"
-                  style={{ 
-                    marginRight: '6px', 
-                    padding: '3px 6px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="edit-button"
                 >
                   Edit
-                </span>
-                <span
+                </button>
+                <button
                   onClick={() => handleDelete(investment.id, investment.name)}
                   title="Delete Investment"
-                  style={{ 
-                    padding: '3px 4px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="delete-button"
                 >
                   Delete
-                </span>
+                </button>
               </td>
             </tr>
           ))}
@@ -466,23 +374,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td className="investment-name">
                 <span 
                   onClick={() => handleViewDetails(investment.id)}
-                  style={{
-                    color: '#007bff',
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                    transition: 'color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#0056b3';
-                    target.style.textDecoration = 'underline';
-                  }}
-                  onMouseLeave={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#007bff';
-                    target.style.textDecoration = 'none';
-                  }}
                   title="Click to view investment details"
                 >
                   {investment.name}
@@ -497,45 +388,20 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.fund_life ? `${investment.fund_life}y` : '-'}</td>
               <td>{investment.reporting_frequency || '-'}</td>
               <td className="actions">
-                <span
+                <button
                   onClick={() => handleEdit(investment)}
                   title="Edit Investment"
-                  style={{ 
-                    marginRight: '6px', 
-                    padding: '3px 6px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="edit-button"
                 >
                   Edit
-                </span>
-                <span
+                </button>
+                <button
                   onClick={() => handleDelete(investment.id, investment.name)}
                   title="Delete Investment"
-                  style={{ 
-                    padding: '3px 4px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="delete-button"
                 >
                   Delete
-                </span>
+                </button>
               </td>
             </tr>
           ))}
@@ -567,23 +433,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td className="investment-name">
                 <span 
                   onClick={() => handleViewDetails(investment.id)}
-                  style={{
-                    color: '#007bff',
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    fontWeight: 500,
-                    transition: 'color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#0056b3';
-                    target.style.textDecoration = 'underline';
-                  }}
-                  onMouseLeave={(e) => {
-                    const target = e.target as HTMLElement;
-                    target.style.color = '#007bff';
-                    target.style.textDecoration = 'none';
-                  }}
                   title="Click to view investment details"
                 >
                   {investment.name}
@@ -602,45 +451,20 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.due_diligence_date || '-'}</td>
               <td>{investment.ic_approval_date || '-'}</td>
               <td className="actions">
-                <span
+                <button
                   onClick={() => handleEdit(investment)}
                   title="Edit Investment"
-                  style={{ 
-                    marginRight: '6px', 
-                    padding: '3px 6px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="edit-button"
                 >
                   Edit
-                </span>
-                <span
+                </button>
+                <button
                   onClick={() => handleDelete(investment.id, investment.name)}
                   title="Delete Investment"
-                  style={{ 
-                    padding: '3px 4px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    opacity: 1,
-                    visibility: 'visible',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    display: 'inline-block'
-                  }}
+                  className="delete-button"
                 >
                   Delete
-                </span>
+                </button>
               </td>
             </tr>
           ))}

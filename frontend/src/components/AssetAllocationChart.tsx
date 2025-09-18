@@ -9,16 +9,16 @@ const AssetAllocationChart: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Professional color palette for asset classes
+  // Luxury color palette for asset classes using design system
   const COLORS = [
-    '#007bff', // Blue - Private Equity
-    '#28a745', // Green - Private Credit
-    '#17a2b8', // Teal - Real Estate
-    '#ffc107', // Yellow - Infrastructure
-    '#dc3545', // Red - Hedge Funds
-    '#6610f2', // Purple - Venture Capital
-    '#fd7e14', // Orange
-    '#20c997', // Turquoise
+    '#0B1426', // Navy - Private Equity
+    '#1A2B47', // Dark Blue - Private Credit  
+    '#2D4263', // Medium Blue - Real Estate
+    '#3B5998', // Accent Blue - Infrastructure
+    '#C9A96E', // Gold - Hedge Funds
+    '#B8860B', // Bronze - Venture Capital
+    '#2C3E50', // Charcoal - Other
+    '#34495E', // Slate - Alternative
   ];
 
   const fetchData = async () => {
@@ -120,62 +120,40 @@ const AssetAllocationChart: React.FC = () => {
         </div>
       </div>
 
-      <div className="chart-content">
-        <ResponsiveContainer width="100%" height={320}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderCustomizedLabel}
-              outerRadius={110}
-              fill="#8884d8"
-              dataKey="commitment_amount"
-            >
-              {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={COLORS[index % COLORS.length]} 
-                  stroke={COLORS[index % COLORS.length]}
-                  strokeWidth={2}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value, entry: any) => (
-                <span style={{ color: entry.color, fontSize: '12px' }}>
-                  {value}
-                </span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="chart-summary">
-        <div className="allocation-breakdown">
-          <h4>Asset Class Breakdown</h4>
-          <div className="breakdown-list">
+      <div className="chart-content compact-allocation">
+        {/* Compact Table View */}
+        <div className="compact-table-wrapper">
+          <div className="allocation-table">
+            <div className="table-header">
+              <span>Asset Class</span>
+              <span>Amount</span>
+              <span>%</span>
+            </div>
             {data.map((item, index) => (
-              <div key={item.asset_class} className="breakdown-item">
-                <div 
-                  className="color-indicator" 
-                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                ></div>
-                <div className="breakdown-details">
-                  <span className="asset-class-name">{item.asset_class}</span>
-                  <div className="breakdown-metrics">
-                    <span className="metric">{formatCurrency(item.commitment_amount)}</span>
-                    <span className="metric">{item.percentage.toFixed(1)}%</span>
-                    <span className="metric">{item.count} inv{item.count !== 1 ? 's' : ''}</span>
-                  </div>
+              <div key={item.asset_class} className="table-row">
+                <div className="asset-info">
+                  <div 
+                    className="color-dot" 
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  ></div>
+                  <span className="asset-name">{item.asset_class}</span>
                 </div>
+                <span className="amount-value">{formatCurrency(item.commitment_amount)}</span>
+                <span className="percentage-value">{item.percentage.toFixed(1)}%</span>
               </div>
             ))}
+          </div>
+          
+          {/* Summary Stats */}
+          <div className="table-summary">
+            <div className="summary-item">
+              <span className="summary-label">Total Classes</span>
+              <span className="summary-value">{data.length}</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">Total Investments</span>
+              <span className="summary-value">{data.reduce((sum, item) => sum + item.count, 0)}</span>
+            </div>
           </div>
         </div>
       </div>

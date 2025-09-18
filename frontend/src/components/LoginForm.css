@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 50%, var(--luxury-medium-blue) 100%);
   padding: 20px;
 }
 
@@ -102,7 +102,7 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--luxury-accent-blue);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -160,7 +160,7 @@
 .login-button {
   width: 100%;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--luxury-dark-blue) 0%, var(--luxury-accent-blue) 100%);
   color: white;
   border: none;
   border-radius: 6px;

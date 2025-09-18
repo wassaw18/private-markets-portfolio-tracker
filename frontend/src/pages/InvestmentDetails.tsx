@@ -5,7 +5,6 @@ import { investmentAPI, cashFlowAPI, valuationAPI } from '../services/api';
 import CashFlowSection from '../components/CashFlowSection';
 import ValuationSection from '../components/ValuationSection';
 import PerformanceMetrics from '../components/PerformanceMetrics';
-import BenchmarkComparison from '../components/BenchmarkComparison';
 import PacingModelPanel from '../components/PacingModelPanel';
 import InvestmentForecastChart from '../components/InvestmentForecastChart';
 import UploadWidget from '../components/UploadWidget';
@@ -220,7 +219,6 @@ const InvestmentDetails: React.FC = () => {
       </div>
 
       {/* Analysis Sections - moved down */}
-      <BenchmarkComparison investmentId={investmentId} />
 
       <PacingModelPanel investment={investment} onUpdate={fetchInvestmentData} />
 

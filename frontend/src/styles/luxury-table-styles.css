@@ -1,0 +1,478 @@
+/* ===================================================================
+   LUXURY DATA TABLE STYLES FOR FINANCIAL APPLICATIONS
+   ================================================================== */
+
+/* Enhanced Investments Table */
+.luxury-table-container {
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--luxury-shadow-medium);
+  overflow: hidden;
+  border: 1px solid var(--luxury-pale-gray);
+  margin-bottom: var(--space-3xl);
+}
+
+.luxury-table-header {
+  padding: var(--space-2xl) var(--space-3xl);
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 100%);
+  color: var(--luxury-white);
+  position: relative;
+  overflow: hidden;
+}
+
+.luxury-table-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--luxury-gold), var(--luxury-bronze));
+}
+
+.luxury-table-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+  color: var(--luxury-white);
+  letter-spacing: -0.01em;
+}
+
+.luxury-table-subtitle {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.8);
+  margin: var(--space-sm) 0 0 0;
+  font-weight: var(--font-weight-regular);
+}
+
+/* Table Controls */
+.luxury-table-controls {
+  padding: var(--space-xl) var(--space-3xl);
+  background: var(--luxury-smoke);
+  border-bottom: 1px solid var(--luxury-pale-gray);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+}
+
+.luxury-search-container {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+}
+
+.luxury-search-input {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg) var(--space-md) var(--space-4xl);
+  border: 2px solid var(--luxury-pale-gray);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  color: var(--luxury-slate);
+  background: var(--luxury-white);
+  transition: all var(--transition-medium);
+}
+
+.luxury-search-input:focus {
+  outline: none;
+  border-color: var(--luxury-accent-blue);
+  box-shadow: 0 0 0 3px rgba(59, 89, 152, 0.1);
+}
+
+.luxury-search-icon {
+  position: absolute;
+  left: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--luxury-medium-gray);
+  pointer-events: none;
+}
+
+.luxury-filter-controls {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.luxury-filter-select {
+  padding: var(--space-md) var(--space-lg);
+  border: 2px solid var(--luxury-pale-gray);
+  border-radius: var(--radius-md);
+  background: var(--luxury-white);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  color: var(--luxury-slate);
+  cursor: pointer;
+  transition: all var(--transition-medium);
+}
+
+.luxury-filter-select:focus {
+  outline: none;
+  border-color: var(--luxury-accent-blue);
+}
+
+/* Table Structure */
+.luxury-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--luxury-white);
+}
+
+.luxury-table thead {
+  background: linear-gradient(135deg, var(--luxury-smoke) 0%, var(--luxury-pearl) 100%);
+}
+
+.luxury-table th {
+  padding: var(--space-lg) var(--space-xl);
+  text-align: left;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--luxury-navy);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--luxury-pale-gray);
+  cursor: pointer;
+  transition: all var(--transition-medium);
+  position: relative;
+}
+
+.luxury-table th:hover {
+  background: rgba(11, 20, 38, 0.05);
+}
+
+.luxury-table th.sortable::after {
+  content: '↕';
+  position: absolute;
+  right: var(--space-sm);
+  color: var(--luxury-medium-gray);
+  font-size: var(--font-size-xs);
+}
+
+.luxury-table th.sorted-asc::after {
+  content: '↑';
+  color: var(--luxury-accent-blue);
+}
+
+.luxury-table th.sorted-desc::after {
+  content: '↓';
+  color: var(--luxury-accent-blue);
+}
+
+.luxury-table tbody tr {
+  border-bottom: 1px solid var(--luxury-pale-gray);
+  transition: all var(--transition-medium);
+}
+
+.luxury-table tbody tr:hover {
+  background: rgba(59, 89, 152, 0.03);
+  transform: scale(1.002);
+}
+
+.luxury-table tbody tr:nth-child(even) {
+  background: rgba(248, 249, 252, 0.5);
+}
+
+.luxury-table tbody tr:nth-child(even):hover {
+  background: rgba(59, 89, 152, 0.05);
+}
+
+.luxury-table td {
+  padding: var(--space-lg) var(--space-xl);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  color: var(--luxury-slate);
+  line-height: 1.5;
+  vertical-align: middle;
+}
+
+/* Financial Data Cells */
+.luxury-table .financial-cell {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-medium);
+  color: var(--luxury-navy);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.luxury-table .currency-cell {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-semibold);
+  color: var(--luxury-dark-blue);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.luxury-table .percentage-cell {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.luxury-table .percentage-positive {
+  color: var(--luxury-success);
+}
+
+.luxury-table .percentage-negative {
+  color: var(--luxury-error);
+}
+
+.luxury-table .percentage-neutral {
+  color: var(--luxury-medium-gray);
+}
+
+/* Investment Name Styling */
+.luxury-table .investment-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--luxury-navy);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.luxury-table .investment-name:hover {
+  color: var(--luxury-accent-blue);
+  text-decoration: underline;
+}
+
+/* Asset Class Badges */
+.luxury-asset-class-badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.luxury-asset-class-badge.private-equity {
+  background: rgba(59, 89, 152, 0.1);
+  color: var(--luxury-accent-blue);
+  border: 1px solid rgba(59, 89, 152, 0.2);
+}
+
+.luxury-asset-class-badge.venture-capital {
+  background: rgba(46, 204, 113, 0.1);
+  color: var(--luxury-success);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.luxury-asset-class-badge.real-estate {
+  background: rgba(201, 169, 110, 0.1);
+  color: var(--luxury-bronze);
+  border: 1px solid rgba(201, 169, 110, 0.2);
+}
+
+.luxury-asset-class-badge.infrastructure {
+  background: rgba(52, 73, 94, 0.1);
+  color: var(--luxury-slate);
+  border: 1px solid rgba(52, 73, 94, 0.2);
+}
+
+.luxury-asset-class-badge.credit {
+  background: rgba(192, 57, 43, 0.1);
+  color: var(--luxury-error);
+  border: 1px solid rgba(192, 57, 43, 0.2);
+}
+
+/* Action Buttons */
+.luxury-table-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+.luxury-action-button {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.luxury-action-button.view {
+  background: linear-gradient(135deg, var(--luxury-accent-blue) 0%, var(--luxury-dark-blue) 100%);
+  color: var(--luxury-white);
+}
+
+.luxury-action-button.edit {
+  background: linear-gradient(135deg, var(--luxury-gold) 0%, var(--luxury-bronze) 100%);
+  color: var(--luxury-navy);
+}
+
+.luxury-action-button.delete {
+  background: linear-gradient(135deg, var(--luxury-error) 0%, #C0392B 100%);
+  color: var(--luxury-white);
+}
+
+.luxury-action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--luxury-shadow-subtle);
+}
+
+/* Pagination */
+.luxury-pagination {
+  padding: var(--space-xl) var(--space-3xl);
+  background: var(--luxury-smoke);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--luxury-pale-gray);
+}
+
+.luxury-pagination-info {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  color: var(--luxury-medium-gray);
+}
+
+.luxury-pagination-controls {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.luxury-pagination-button {
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--luxury-pale-gray);
+  border-radius: var(--radius-sm);
+  background: var(--luxury-white);
+  color: var(--luxury-slate);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-medium);
+}
+
+.luxury-pagination-button:hover:not(:disabled) {
+  border-color: var(--luxury-accent-blue);
+  background: var(--luxury-accent-blue);
+  color: var(--luxury-white);
+}
+
+.luxury-pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.luxury-pagination-button.active {
+  background: var(--luxury-accent-blue);
+  color: var(--luxury-white);
+  border-color: var(--luxury-accent-blue);
+}
+
+/* Tab Navigation for Multi-View Tables */
+.luxury-table-tabs {
+  display: flex;
+  background: var(--luxury-smoke);
+  border-bottom: 1px solid var(--luxury-pale-gray);
+}
+
+.luxury-table-tab {
+  padding: var(--space-lg) var(--space-2xl);
+  border: none;
+  background: transparent;
+  color: var(--luxury-medium-gray);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-medium);
+  border-bottom: 3px solid transparent;
+}
+
+.luxury-table-tab:hover {
+  color: var(--luxury-slate);
+  background: rgba(59, 89, 152, 0.05);
+}
+
+.luxury-table-tab.active {
+  color: var(--luxury-accent-blue);
+  border-bottom-color: var(--luxury-accent-blue);
+  background: var(--luxury-white);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .luxury-table-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .luxury-search-container {
+    max-width: none;
+  }
+  
+  .luxury-filter-controls {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .luxury-table-container {
+    margin: 0 -var(--space-lg);
+    border-radius: 0;
+  }
+  
+  .luxury-table {
+    font-size: var(--font-size-xs);
+  }
+  
+  .luxury-table th,
+  .luxury-table td {
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .luxury-table-header {
+    padding: var(--space-lg) var(--space-xl);
+  }
+  
+  .luxury-table-controls {
+    padding: var(--space-lg);
+  }
+}
+
+/* Loading State */
+.luxury-table-loading {
+  text-align: center;
+  padding: var(--space-5xl);
+  color: var(--luxury-medium-gray);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Empty State */
+.luxury-table-empty {
+  text-align: center;
+  padding: var(--space-5xl);
+  color: var(--luxury-medium-gray);
+}
+
+.luxury-table-empty-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--luxury-slate);
+  margin-bottom: var(--space-md);
+}
+
+.luxury-table-empty-description {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  color: var(--luxury-medium-gray);
+  line-height: 1.6;
+}

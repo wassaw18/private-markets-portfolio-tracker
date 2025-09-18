@@ -48,7 +48,7 @@
 
 /* Selected Entity Info */
 .selected-entity-info {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 50%, var(--luxury-medium-blue) 100%);
   color: white;
   border-radius: 12px;
   padding: 24px;

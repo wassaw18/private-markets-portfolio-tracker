@@ -935,4 +935,116 @@ export const marketBenchmarkAPI = {
   },
 };
 
+// PME (Public Markets Equivalent) Analysis API
+export interface PMEDataPoint {
+  date: string;
+  private_tvpi: number;
+  public_tvpi: number;
+  illiquidity_premium: number;
+  data_quality: {
+    nav_age_days: number;
+    confidence: 'high' | 'medium' | 'low';
+    latest_nav_date?: string;
+    warning?: string;
+  };
+}
+
+export interface PMESummaryMetrics {
+  final_private_tvpi: number;
+  final_public_tvpi: number;
+  final_illiquidity_premium: number;
+  average_illiquidity_premium: number;
+  pme_ratio: number;
+  data_quality: {
+    nav_age_days: number;
+    confidence: 'high' | 'medium' | 'low';
+    latest_nav_date?: string;
+  };
+}
+
+export interface PMEAnalysisResult {
+  investment_id?: number;
+  investment_name?: string;
+  scope?: {
+    asset_class?: string;
+    vintage_years?: number[];
+    investment_count?: number;
+  };
+  benchmark_id: number;
+  benchmark_name: string;
+  start_date: string;
+  end_date: string;
+  pme_series: PMEDataPoint[];
+  summary_metrics: PMESummaryMetrics;
+  investments?: Array<{id: number; name: string}>;
+}
+
+export interface PMEBenchmark {
+  id: number;
+  name: string;
+  ticker: string;
+  category: string;
+  description?: string;
+  data_source: string;
+  returns_count: number;
+  start_date?: string;
+  end_date?: string;
+}
+
+export const pmeAPI = {
+  // Get PME analysis for a specific investment
+  getInvestmentPME: async (
+    investmentId: number,
+    benchmarkId: number,
+    endDate?: string
+  ): Promise<PMEAnalysisResult> => {
+    const params = new URLSearchParams({
+      benchmark_id: benchmarkId.toString()
+    });
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+    
+    const response = await api.get(`/api/investments/${investmentId}/pme-analysis?${params}`);
+    return response.data;
+  },
+
+  // Get PME analysis for portfolio or subset
+  getPortfolioPME: async (
+    benchmarkId: number,
+    options?: {
+      assetClass?: string;
+      vintageYears?: number[];
+      investmentIds?: number[];
+      endDate?: string;
+    }
+  ): Promise<PMEAnalysisResult> => {
+    const params = new URLSearchParams({
+      benchmark_id: benchmarkId.toString()
+    });
+    
+    if (options?.assetClass) {
+      params.append('asset_class', options.assetClass);
+    }
+    if (options?.vintageYears && options.vintageYears.length > 0) {
+      params.append('vintage_years', options.vintageYears.join(','));
+    }
+    if (options?.investmentIds && options.investmentIds.length > 0) {
+      params.append('investment_ids', options.investmentIds.join(','));
+    }
+    if (options?.endDate) {
+      params.append('end_date', options.endDate);
+    }
+    
+    const response = await api.get(`/api/portfolio/pme-analysis?${params}`);
+    return response.data;
+  },
+
+  // Get available benchmarks for PME analysis
+  getAvailableBenchmarks: async (): Promise<PMEBenchmark[]> => {
+    const response = await api.get('/api/pme/benchmarks');
+    return response.data;
+  },
+};
+
 export default api;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PerformanceMetrics as PerfMetrics, InvestmentPerformance } from '../types/investment';
+import { InvestmentPerformance } from '../types/investment';
 import { performanceAPI } from '../services/api';
 import './PerformanceMetrics.css';
 

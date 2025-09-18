@@ -1,10 +1,11 @@
 .portfolio-summary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 50%, var(--luxury-medium-blue) 100%);
   color: white;
-  border-radius: 12px;
-  padding: 30px;
-  margin-bottom: 30px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-3xl);
+  margin-bottom: var(--space-3xl);
+  box-shadow: var(--luxury-shadow-medium);
+  border: 1px solid rgba(255,255,255,0.1);
   position: relative;
   overflow: hidden;
 }
@@ -44,12 +45,25 @@
 /* Prominent Portfolio Value Hero Section */
 .portfolio-value-hero {
   background: rgba(255,255,255,0.15);
-  border-radius: 12px;
-  padding: 30px;
-  margin: 25px 0;
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl);
+  margin: var(--space-2xl) 0;
   text-align: center;
-  border: 2px solid rgba(255,255,255,0.2);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  border: 2px solid var(--luxury-gold);
+  box-shadow: var(--luxury-shadow-bold);
+  backdrop-filter: blur(20px);
+  position: relative;
+}
+
+.portfolio-value-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--luxury-gold), var(--luxury-bronze), var(--luxury-gold));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .hero-content {
@@ -69,12 +83,16 @@
 }
 
 .hero-value {
-  font-size: 3.2rem;
-  font-weight: 800;
-  font-family: 'Courier New', monospace;
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-black);
+  font-family: var(--font-family-mono);
   color: white;
   text-shadow: 0 4px 20px rgba(0,0,0,0.3);
   line-height: 1;
+  background: linear-gradient(135deg, white 0%, var(--luxury-cream) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .hero-breakdown {

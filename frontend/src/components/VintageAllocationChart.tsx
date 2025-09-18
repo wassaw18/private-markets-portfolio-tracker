@@ -53,19 +53,24 @@ const VintageAllocationChart: React.FC = () => {
     return null;
   };
 
-  // Generate color based on vintage year (newer years get different shades)
+  // Generate luxury color based on vintage year (newer years get different shades)
   const getBarColor = (year: number, minYear: number, maxYear: number) => {
-    if (minYear === maxYear) return '#007bff';
+    if (minYear === maxYear) return '#0B1426'; // Luxury Navy
     
     const yearRange = maxYear - minYear;
     const yearPosition = (year - minYear) / yearRange;
     
-    // Gradient from older (darker) to newer (lighter) vintages
-    const hue = 210; // Blue hue
-    const saturation = 70;
-    const lightness = 35 + (yearPosition * 30); // 35% to 65% lightness
+    // Luxury color gradient: Navy to Accent Blue for vintage progression
+    const luxuryColors = [
+      '#0B1426', // Navy (oldest)
+      '#1A2B47', // Dark Blue
+      '#2D4263', // Medium Blue  
+      '#3B5998', // Accent Blue
+      '#2C3E50', // Charcoal (newest)
+    ];
     
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    const colorIndex = Math.floor(yearPosition * (luxuryColors.length - 1));
+    return luxuryColors[colorIndex] || luxuryColors[0];
   };
 
   if (loading) {
@@ -131,8 +136,8 @@ const VintageAllocationChart: React.FC = () => {
             <Bar 
               dataKey="commitment_amount" 
               radius={[4, 4, 0, 0]}
-              stroke="#0056b3"
-              strokeWidth={1}
+              stroke="#0B1426"
+              strokeWidth={2}
             >
               {data.map((entry, index) => (
                 <Cell 

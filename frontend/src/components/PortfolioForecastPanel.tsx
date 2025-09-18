@@ -68,9 +68,9 @@ const PortfolioForecastPanel: React.FC = () => {
 
   const getScenarioColor = (scenario: string) => {
     switch (scenario) {
-      case 'Bull': return '#28a745';
-      case 'Bear': return '#dc3545';
-      default: return '#007bff';
+      case 'Bull': return 'linear-gradient(135deg, var(--luxury-success) 0%, var(--luxury-emerald) 100%)';
+      case 'Bear': return 'linear-gradient(135deg, var(--luxury-error) 0%, var(--luxury-ruby) 100%)';
+      default: return 'linear-gradient(135deg, var(--luxury-accent-blue) 0%, var(--luxury-dark-blue) 100%)';
     }
   };
 
@@ -107,7 +107,7 @@ const PortfolioForecastPanel: React.FC = () => {
             <>
               {/* Summary Cards */}
               <div className="forecast-summary">
-                <div className="summary-card scenario-badge" style={{ backgroundColor: getScenarioColor(scenario) }}>
+                <div className="summary-card scenario-badge" style={{ background: getScenarioColor(scenario) }}>
                   <h4>{scenario} Case Scenario</h4>
                   <p>Portfolio-level cash flow projections</p>
                 </div>

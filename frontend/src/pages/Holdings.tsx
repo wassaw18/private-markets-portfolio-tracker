@@ -10,6 +10,7 @@ import FilterPanel from '../components/FilterPanel';
 import UploadWidget from '../components/UploadWidget';
 import SectionErrorBoundary from '../components/SectionErrorBoundary';
 import ComponentErrorBoundary from '../components/ComponentErrorBoundary';
+import '../styles/luxury-design-system.css';
 import './Holdings.css';
 
 const Holdings: React.FC = () => {
@@ -95,31 +96,42 @@ const Holdings: React.FC = () => {
   }, [fetchInvestments, currentFilters]);
 
   if (loading) {
-    return <div className="holdings-container"><div className="loading">Loading...</div></div>;
+    return (
+      <div className="luxury-card">
+        <div className="luxury-table-loading">Loading portfolio data...</div>
+      </div>
+    );
   }
 
   return (
     <div className="holdings-container">
-      <div className="holdings-header">
-        <h2>Holdings Management</h2>
-        <div className="header-actions">
-          <button 
-            className="add-button secondary"
-            onClick={() => setShowCreateEntityModal(true)}
-            title="Create a new entity (Individual, Trust, LLC, etc.)"
-          >
-            Add New Entity
-          </button>
-          <button 
-            className="add-button primary"
-            onClick={() => setShowAddModal(true)}
-          >
-            Add New Investment
-          </button>
+      <div className="luxury-card">
+        <div className="holdings-header">
+          <h1 className="luxury-heading-1">Holdings Management</h1>
+          <p className="luxury-body-large">Comprehensive portfolio oversight and investment management</p>
+          <div className="header-actions">
+            <button 
+              className="luxury-button-secondary"
+              onClick={() => setShowCreateEntityModal(true)}
+              title="Create a new entity (Individual, Trust, LLC, etc.)"
+            >
+              Add New Entity
+            </button>
+            <button 
+              className="luxury-button-primary"
+              onClick={() => setShowAddModal(true)}
+            >
+              Add New Investment
+            </button>
+          </div>
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="luxury-card" style={{borderColor: 'var(--luxury-error)', backgroundColor: 'rgba(231, 76, 60, 0.05)'}}>
+          <p className="luxury-body" style={{color: 'var(--luxury-error)', margin: 0}}>{error}</p>
+        </div>
+      )}
 
       <SectionErrorBoundary sectionName="Portfolio Summary">
         <PortfolioSummary onUpdate={portfolioUpdateTrigger} />
