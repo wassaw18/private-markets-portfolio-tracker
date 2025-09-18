@@ -44,6 +44,10 @@ A comprehensive, institutional-grade portfolio management system designed for fa
 - **Commitment vs Called Analysis** showing capital deployment efficiency
 - **J-Curve Visualization** for portfolio performance over time
 - **Portfolio Timeline Charts** showing value progression
+- **Centralized Benchmark Management** with market benchmark data management
+- **PME Analysis (Public Markets Equivalent)** with TVPI-based performance comparison
+- **Line Graph Visualizations** with indexed performance starting from common inception
+- **Asset Class Grouping** for aggregated performance analysis against benchmarks
 
 ### **📄 Document Management**
 - **Secure Document Upload System** with drag-and-drop interface
@@ -123,7 +127,8 @@ private-markets-tracker/
 │   ├── document_service.py       # Document management system
 │   ├── calendar_service.py       # Cash flow calendar functionality
 │   ├── dashboard.py              # Dashboard analytics
-│   └── benchmark_service.py      # Benchmark data management
+│   ├── benchmark_service.py      # Benchmark data management
+│   └── pme_service.py            # PME analysis and calculation engine
 ├── frontend/                     # React TypeScript Frontend
 │   ├── src/
 │   │   ├── components/           # React components
@@ -134,6 +139,7 @@ private-markets-tracker/
 │   │   │   ├── ValuationSection.tsx      # NAV management
 │   │   │   ├── PerformanceMetrics.tsx    # Performance analytics
 │   │   │   ├── EntityManagement.tsx     # Entity management
+│   │   │   ├── BenchmarkModal.tsx       # Benchmark data management modal
 │   │   │   └── [60+ other components]
 │   │   ├── pages/                # Page-level components
 │   │   │   ├── Holdings.tsx      # Main holdings page
@@ -141,7 +147,8 @@ private-markets-tracker/
 │   │   │   ├── BulkUpload.tsx    # Bulk import interface
 │   │   │   ├── Entities.tsx      # Entity management page
 │   │   │   ├── Documents.tsx     # Document management
-│   │   │   └── Visuals.tsx       # Analytics dashboard
+│   │   │   ├── Visuals.tsx       # Analytics dashboard
+│   │   │   └── BenchmarkManagement.tsx  # Centralized benchmark & PME analysis
 │   │   ├── services/             # API service layer
 │   │   ├── types/                # TypeScript type definitions
 │   │   └── contexts/             # React contexts (Auth, etc.)
@@ -264,12 +271,16 @@ curl "http://localhost:8000/api/portfolio/performance"
 - **Document Management**: File upload, categorization, and search functionality
 - **Analytics Dashboard**: Portfolio summary, allocation charts, performance metrics
 - **Individual Investment Views**: Detailed investment pages with performance data
+- **Centralized Benchmark Management**: Market benchmark data management with modal interface
+- **PME Analysis**: Public Markets Equivalent analysis with TVPI methodology
+- **Interactive Performance Comparison**: Line graphs with indexed performance visualization
+- **Asset Class Grouping**: Aggregated investment analysis by asset class
 
 ### **🏗️ In Development** 
 - **Advanced Forecasting**: J-curve modeling and scenario analysis
 - **Liquidity Management**: 12-month liquidity forecasting dashboard  
 - **Regulatory Reporting**: Automated quarterly report generation
-- **Advanced Analytics**: Benchmark comparisons and peer analysis
+- **Enhanced PME Features**: Multi-period analysis and risk metrics integration
 
 ### **🔮 Planned Features**
 - **Banking Integration**: Real-time cash position connectivity

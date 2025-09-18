@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query, Fo
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from datetime import date
 from app import crud, models, schemas
@@ -2004,6 +2005,115 @@ def deactivate_forecast_adjustment(
     db.commit()
     
     return {"message": "Forecast adjustment deactivated"}
+
+# PME (Public Markets Equivalent) Analysis Endpoints
+
+@app.get("/api/investments/{investment_id}/pme-analysis")
+def get_investment_pme_analysis(
+    investment_id: int,
+    benchmark_id: int = Query(..., description="Market benchmark ID for comparison"),
+    end_date: Optional[date] = Query(None, description="End date for analysis (defaults to today)"),
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get PME analysis for a specific investment vs benchmark"""
+    from .pme_service import PMECalculator
+    
+    # Verify investment exists
+    investment = crud.get_investment(db, investment_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+    
+    try:
+        calculator = PMECalculator(db)
+        result = calculator.calculate_investment_pme(investment_id, benchmark_id, end_date)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating PME: {str(e)}")
+
+@app.get("/api/portfolio/pme-analysis")
+def get_portfolio_pme_analysis(
+    benchmark_id: int = Query(..., description="Market benchmark ID for comparison"),
+    asset_class: Optional[str] = Query(None, description="Filter by asset class"),
+    vintage_years: Optional[str] = Query(None, description="Comma-separated vintage years"),
+    investment_ids: Optional[str] = Query(None, description="Comma-separated investment IDs"),
+    end_date: Optional[date] = Query(None, description="End date for analysis (defaults to today)"),
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get PME analysis for portfolio or subset vs benchmark"""
+    from .pme_service import PMECalculator
+    
+    # Parse optional filters
+    vintage_years_list = None
+    if vintage_years:
+        try:
+            vintage_years_list = [int(x.strip()) for x in vintage_years.split(',')]
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid vintage years format")
+    
+    investment_ids_list = None
+    if investment_ids:
+        try:
+            investment_ids_list = [int(x.strip()) for x in investment_ids.split(',')]
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid investment IDs format")
+    
+    try:
+        calculator = PMECalculator(db)
+        result = calculator.calculate_portfolio_pme(
+            benchmark_id=benchmark_id,
+            asset_class=asset_class,
+            vintage_years=vintage_years_list,
+            investment_ids=investment_ids_list,
+            end_date=end_date
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating portfolio PME: {str(e)}")
+
+@app.get("/api/pme/benchmarks")
+def get_available_pme_benchmarks(
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get list of available benchmarks for PME analysis"""
+    
+    # Get benchmarks with return data
+    benchmarks_with_data = db.query(models.MarketBenchmark).join(
+        models.BenchmarkReturn,
+        models.MarketBenchmark.id == models.BenchmarkReturn.benchmark_id
+    ).distinct().all()
+    
+    results = []
+    for benchmark in benchmarks_with_data:
+        # Get return count and date range
+        returns_count = db.query(models.BenchmarkReturn).filter(
+            models.BenchmarkReturn.benchmark_id == benchmark.id
+        ).count()
+        
+        date_range = db.query(
+            func.min(models.BenchmarkReturn.period_date),
+            func.max(models.BenchmarkReturn.period_date)
+        ).filter(models.BenchmarkReturn.benchmark_id == benchmark.id).first()
+        
+        results.append({
+            'id': benchmark.id,
+            'name': benchmark.name,
+            'ticker': benchmark.ticker,
+            'category': benchmark.category,
+            'description': benchmark.description,
+            'data_source': benchmark.data_source,
+            'returns_count': returns_count,
+            'start_date': date_range[0].isoformat() if date_range[0] else None,
+            'end_date': date_range[1].isoformat() if date_range[1] else None
+        })
+    
+    return results
 
 # Enable running with basic python command
 if __name__ == "__main__":
