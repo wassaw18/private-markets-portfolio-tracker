@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { InvestmentCreate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating, TaxClassification, ActivityClassification } from '../types/investment';
 import { investmentAPI } from '../services/api';
-import { validateInvestment } from '../utils/validation';
-import { getTodayDateString } from '../utils/formatters';
 import EntitySelector from './EntitySelector';
 import CreateEntityModal from './CreateEntityModal';
 import './AddInvestmentModal.css';
@@ -44,7 +42,6 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [tabValidation, setTabValidation] = useState<TabValidation>({
     basic: false,
     financial: false,
@@ -72,17 +69,10 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
       setSelectedEntityName('');
       setError(null);
       setValidationErrors([]);
-      setFieldErrors({});
     }
   }, [isOpen]);
 
-  // Real-time validation effect
-  useEffect(() => {
-    validateCurrentTab();
-    validateAllTabs();
-  }, [formData, activeTab]);
-
-  const validateCurrentTab = () => {
+  const validateCurrentTab = useCallback(() => {
     const errors: string[] = [];
     
     if (activeTab === 'basic') {
@@ -105,9 +95,9 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
     }
 
     setValidationErrors(errors);
-  };
+  }, [activeTab, formData]);
 
-  const validateAllTabs = () => {
+  const validateAllTabs = useCallback(() => {
     const basicValid = !!(formData.name.trim() && formData.entity_id && 
                          formData.strategy.trim() && formData.vintage_year >= 1900 && 
                          formData.vintage_year <= 2100);
@@ -123,7 +113,13 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
       operational: true, // All optional
       legal: true, // All optional
     });
-  };
+  }, [formData]);
+
+  // Real-time validation effect
+  useEffect(() => {
+    validateCurrentTab();
+    validateAllTabs();
+  }, [formData, activeTab]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

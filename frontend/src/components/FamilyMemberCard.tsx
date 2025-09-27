@@ -74,10 +74,10 @@ const FamilyMemberCard: React.FC<Props> = ({ member, onEdit, onDelete }) => {
         </div>
         
         <div className="member-actions">
-          <button onClick={onEdit} className="edit-button" title="Edit member">
+          <button onClick={onEdit} className="icon-button edit-icon" title="Edit member">
             ✏️
           </button>
-          <button onClick={onDelete} className="delete-button" title="Deactivate member">
+          <button onClick={onDelete} className="icon-button delete-icon" title="Deactivate member">
             🗑️
           </button>
         </div>

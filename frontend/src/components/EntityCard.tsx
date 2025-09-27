@@ -74,10 +74,10 @@ const EntityCard: React.FC<Props> = ({ entity, onEdit, onDelete }) => {
           </div>
         </div>
         <div className="entity-actions">
-          <button onClick={onEdit} className="edit-button" title="Edit entity">
+          <button onClick={onEdit} className="icon-button edit-icon" title="Edit entity">
             ✏️
           </button>
-          <button onClick={onDelete} className="delete-button" title="Deactivate entity">
+          <button onClick={onDelete} className="icon-button delete-icon" title="Deactivate entity">
             🗑️
           </button>
         </div>

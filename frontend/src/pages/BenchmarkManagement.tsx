@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { marketBenchmarkAPI, MarketBenchmark, BenchmarkReturn, investmentAPI, pmeAPI, PMEAnalysisResult } from '../services/api';
+import { marketBenchmarkAPI, MarketBenchmark, BenchmarkReturn, investmentAPI, pmeAPI, PMEAnalysisResult, pitchBookAPI, PitchBookQuarterlyData } from '../services/api';
 import { Investment } from '../types/investment';
 import BenchmarkModal from '../components/BenchmarkModal';
 import './BenchmarkManagement.css';
@@ -14,6 +14,11 @@ const BenchmarkManagement: React.FC = () => {
   const [availableInvestments, setAvailableInvestments] = useState<Investment[]>([]);
   const [selectedInvestmentOption, setSelectedInvestmentOption] = useState<{type: 'investment' | 'asset_class', value: string}>({type: 'investment', value: ''});
   const [selectedBenchmarkId, setSelectedBenchmarkId] = useState<number | null>(null);
+
+  // PitchBook Data State
+  const [pitchBookQuarterlyData, setPitchBookQuarterlyData] = useState<PitchBookQuarterlyData[]>([]);
+  const [pitchBookAssetClasses, setPitchBookAssetClasses] = useState<string[]>([]);
+  const [selectedPitchBookAssetClass, setSelectedPitchBookAssetClass] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [pmeResult, setPmeResult] = useState<PMEAnalysisResult | null>(null);
@@ -24,18 +29,37 @@ const BenchmarkManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const [benchmarkData, investmentData] = await Promise.all([
+      const [benchmarkData, investmentData, pitchBookAssetClassData] = await Promise.all([
         marketBenchmarkAPI.getMarketBenchmarks(),
-        investmentAPI.getInvestments()
+        investmentAPI.getInvestments(),
+        pitchBookAPI.getAssetClasses()
       ]);
       setBenchmarks(benchmarkData);
       setAvailableInvestments(investmentData);
+      setPitchBookAssetClasses(pitchBookAssetClassData);
     } catch (err: any) {
       setError('Failed to fetch data: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchPitchBookQuarterlyData = async (assetClass: string) => {
+    try {
+      const data = await pitchBookAPI.getQuarterlyReturns({
+        asset_class: assetClass
+      });
+      setPitchBookQuarterlyData(data);
+    } catch (err: any) {
+      console.error('Failed to fetch PitchBook quarterly data:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedPitchBookAssetClass) {
+      fetchPitchBookQuarterlyData(selectedPitchBookAssetClass);
+    }
+  }, [selectedPitchBookAssetClass]);
 
   useEffect(() => {
     fetchBenchmarks();
@@ -119,6 +143,8 @@ const BenchmarkManagement: React.FC = () => {
     setPmeError(null);
     setSelectedInvestmentOption({type: 'investment', value: ''});
     setSelectedBenchmarkId(null);
+    setSelectedPitchBookAssetClass('');
+    setPitchBookQuarterlyData([]);
   };
 
   const normalizeToIndex = (series: any[], baseValue: number = 100) => {
@@ -225,18 +251,39 @@ const BenchmarkManagement: React.FC = () => {
               {/* Benchmark Dropdown */}
               <div className="control-group">
                 <label htmlFor="benchmark-select">Benchmark:</label>
-                <select 
+                <select
                   id="benchmark-select"
                   value={selectedBenchmarkId || ''}
-                  onChange={(e) => setSelectedBenchmarkId(e.target.value ? parseInt(e.target.value) : null)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.startsWith('pitchbook_')) {
+                      const assetClass = value.replace('pitchbook_', '');
+                      setSelectedPitchBookAssetClass(assetClass);
+                      setSelectedBenchmarkId(null);
+                    } else {
+                      setSelectedBenchmarkId(value ? parseInt(value) : null);
+                      setSelectedPitchBookAssetClass('');
+                    }
+                  }}
                   className="dropdown-select"
                 >
                   <option value="">Select Benchmark...</option>
-                  {benchmarks.map((benchmark) => (
-                    <option key={benchmark.id} value={benchmark.id}>
-                      {benchmark.name} ({benchmark.ticker})
-                    </option>
-                  ))}
+
+                  <optgroup label="MARKET BENCHMARKS">
+                    {benchmarks.map((benchmark) => (
+                      <option key={benchmark.id} value={benchmark.id}>
+                        {benchmark.name} ({benchmark.ticker})
+                      </option>
+                    ))}
+                  </optgroup>
+
+                  <optgroup label="PRIVATE MARKETS BENCHMARKS (PITCHBOOK)">
+                    {pitchBookAssetClasses.map((assetClass) => (
+                      <option key={`pitchbook_${assetClass}`} value={`pitchbook_${assetClass}`}>
+                        {assetClass.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} (PitchBook Quarterly)
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
@@ -448,6 +495,64 @@ const BenchmarkManagement: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* PitchBook Benchmark Data Section */}
+        <div className="pitchbook-benchmark-section">
+          <h3>🏢 PitchBook Private Markets Benchmark Data</h3>
+
+          <div className="pitchbook-controls">
+            <div className="control-group">
+              <label htmlFor="pitchbook-asset-class">Asset Class:</label>
+              <select
+                id="pitchbook-asset-class"
+                value={selectedPitchBookAssetClass}
+                onChange={(e) => setSelectedPitchBookAssetClass(e.target.value)}
+                className="dropdown-select"
+              >
+                <option value="">Select Asset Class...</option>
+                {pitchBookAssetClasses.map((assetClass) => (
+                  <option key={assetClass} value={assetClass}>
+                    {assetClass.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {selectedPitchBookAssetClass && (
+            <div className="pitchbook-data-display">
+              <div className="pitchbook-tabs">
+                <button
+                  className={`tab-button ${selectedPitchBookAssetClass ? 'active' : ''}`}
+                  onClick={() => {/* Will implement tab switching */}}
+                >
+                  📊 IRR Performance by Vintage
+                </button>
+                <button
+                  className="tab-button"
+                  onClick={() => {/* Will implement tab switching */}}
+                >
+                  💰 Multiples by Vintage
+                </button>
+                <button
+                  className="tab-button"
+                  onClick={() => {/* Will implement tab switching */}}
+                >
+                  📈 Quarterly Returns
+                </button>
+              </div>
+
+              <div className="pitchbook-content">
+                <div className="chart-placeholder">
+                  <div className="placeholder-icon">📊</div>
+                  <h4>PitchBook Benchmark Visualization</h4>
+                  <p>Selected: {selectedPitchBookAssetClass.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                  <p>Chart implementation coming next...</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

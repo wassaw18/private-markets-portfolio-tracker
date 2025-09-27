@@ -166,18 +166,18 @@ const DocumentCard: React.FC<Props> = ({
         
         <button
           onClick={onEdit}
-          className="action-button edit-button"
+          className="icon-button edit-icon"
           title="Edit Document Details"
         >
-          ✏️ Edit
+          ✏️
         </button>
-        
+
         <button
           onClick={onDelete}
-          className="action-button delete-button"
+          className="icon-button delete-icon"
           title="Archive Document"
         >
-          🗄️ Archive
+          🗄️
         </button>
       </div>
     </div>

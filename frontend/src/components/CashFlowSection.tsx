@@ -243,30 +243,17 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
                       <td>
                         <button
                           onClick={() => handleEdit(cashFlow)}
-                          className="add-button"
+                          className="icon-button edit-icon"
                           title="Edit Cash Flow"
-                          style={{ marginRight: '6px', padding: '3px 6px', fontSize: '0.75rem' }}
                         >
-                          Edit
+                          ✏️
                         </button>
                         <button
                           onClick={() => handleDelete(cashFlow.id)}
-                          className="delete-button"
+                          className="icon-button delete-icon"
                           title="Delete Cash Flow"
-                          style={{ 
-                            padding: '3px 4px', 
-                            fontSize: '0.75rem',
-                            backgroundColor: '#dc3545',
-                            color: 'white',
-                            opacity: 1,
-                            visibility: 'visible',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontWeight: 500
-                          }}
                         >
-                          Delete
+                          🗑️
                         </button>
                       </td>
                     </tr>

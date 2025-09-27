@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+// Chart imports will be added when implementing visualization
 import { AssetAllocationData } from '../types/investment';
 import { dashboardAPI } from '../services/api';
 import './ChartComponents.css';

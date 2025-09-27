@@ -1047,4 +1047,174 @@ export const pmeAPI = {
   },
 };
 
+// PitchBook Benchmark Data Types
+// Original interface for legacy compatibility
+export interface PitchBookIRRData {
+  id: number;
+  asset_class: string;
+  vintage_year: number;
+  pooled_irr?: number;
+  equal_weighted_pooled_irr?: number;
+  top_decile?: number;
+  top_quartile?: number;
+  median_irr?: number;
+  bottom_quartile?: number;
+  bottom_decile?: number;
+  standard_deviation?: number;
+  number_of_funds?: number;
+  import_date: string;
+}
+
+// New interface that matches actual API response
+export interface PitchBookPerformanceData {
+  asset_class: string;
+  metric_code: string;
+  vintage_year: number;
+  top_quartile_value: number;
+  median_value: number;
+  bottom_quartile_value: number;
+  pooled_irr?: number;
+  equal_weighted_pooled_irr?: number;
+  sample_size: number;
+  methodology_notes?: string;
+}
+
+export interface PitchBookMultiplesData {
+  id: number;
+  asset_class: string;
+  vintage_year: number;
+  pooled_tvpi?: number;
+  pooled_dpi?: number;
+  pooled_rvpi?: number;
+  equal_weighted_tvpi?: number;
+  equal_weighted_dpi?: number;
+  equal_weighted_rvpi?: number;
+  number_of_funds?: number;
+  import_date: string;
+}
+
+export interface PitchBookQuantilesData {
+  id: number;
+  asset_class: string;
+  vintage_year: number;
+  tvpi_top_decile?: number;
+  tvpi_top_quartile?: number;
+  tvpi_median?: number;
+  tvpi_bottom_quartile?: number;
+  tvpi_bottom_decile?: number;
+  dpi_top_decile?: number;
+  dpi_top_quartile?: number;
+  dpi_median?: number;
+  dpi_bottom_quartile?: number;
+  dpi_bottom_decile?: number;
+  number_of_funds?: number;
+  import_date: string;
+}
+
+export interface PitchBookQuarterlyData {
+  id: number;
+  asset_class: string;
+  time_period: string;
+  return_value: number;
+  quarter_end_date: string;
+  import_date: string;
+}
+
+// PitchBook API Functions
+export const pitchBookAPI = {
+  // Get IRR performance data
+  getIRRData: async (filters?: {
+    asset_class?: string;
+    vintage_year?: number;
+    start_year?: number;
+    end_year?: number;
+  }): Promise<PitchBookIRRData[]> => {
+    const params = new URLSearchParams();
+    if (filters?.asset_class) params.append('asset_class', filters.asset_class);
+    if (filters?.vintage_year) params.append('vintage_year', filters.vintage_year.toString());
+    if (filters?.start_year) params.append('start_year', filters.start_year.toString());
+    if (filters?.end_year) params.append('end_year', filters.end_year.toString());
+
+    const response = await api.get(`/api/pitchbook/performance-data?${params}`);
+    const rawData: PitchBookPerformanceData[] = response.data;
+
+    // Convert to legacy format for compatibility
+    return rawData
+      .filter(item => item.metric_code === 'IRR')
+      .map(item => ({
+        id: 0, // Legacy field, not used
+        asset_class: item.asset_class,
+        vintage_year: item.vintage_year,
+        top_quartile: item.top_quartile_value,
+        median_irr: item.median_value,
+        bottom_quartile: item.bottom_quartile_value,
+        pooled_irr: item.pooled_irr,
+        equal_weighted_pooled_irr: item.equal_weighted_pooled_irr,
+        number_of_funds: item.sample_size,
+        import_date: new Date().toISOString(), // Legacy field, not used
+      }));
+  },
+
+  // Get multiples data
+  getMultiplesData: async (filters?: {
+    asset_class?: string;
+    vintage_year?: number;
+    start_year?: number;
+    end_year?: number;
+  }): Promise<PitchBookMultiplesData[]> => {
+    const params = new URLSearchParams();
+    if (filters?.asset_class) params.append('asset_class', filters.asset_class);
+    if (filters?.vintage_year) params.append('vintage_year', filters.vintage_year.toString());
+    if (filters?.start_year) params.append('start_year', filters.start_year.toString());
+    if (filters?.end_year) params.append('end_year', filters.end_year.toString());
+
+    const response = await api.get(`/api/pitchbook/multiples-data?${params}`);
+    return response.data;
+  },
+
+  // Get quantiles data
+  getQuantilesData: async (filters?: {
+    asset_class?: string;
+    vintage_year?: number;
+    start_year?: number;
+    end_year?: number;
+  }): Promise<PitchBookQuantilesData[]> => {
+    const params = new URLSearchParams();
+    if (filters?.asset_class) params.append('asset_class', filters.asset_class);
+    if (filters?.vintage_year) params.append('vintage_year', filters.vintage_year.toString());
+    if (filters?.start_year) params.append('start_year', filters.start_year.toString());
+    if (filters?.end_year) params.append('end_year', filters.end_year.toString());
+
+    const response = await api.get(`/api/pitchbook/multiples-data?${params}`);
+    return response.data;
+  },
+
+  // Get quarterly returns data
+  getQuarterlyReturns: async (filters?: {
+    asset_class?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<PitchBookQuarterlyData[]> => {
+    const params = new URLSearchParams();
+    if (filters?.asset_class) params.append('asset_class', filters.asset_class);
+    if (filters?.start_date) params.append('start_date', filters.start_date);
+    if (filters?.end_date) params.append('end_date', filters.end_date);
+
+    const response = await api.get(`/api/pitchbook/quarterly-returns?${params}`);
+    return response.data;
+  },
+
+  // Get available asset classes
+  getAssetClasses: async (): Promise<string[]> => {
+    const response = await api.get('/api/pitchbook/asset-classes');
+    return response.data;
+  },
+
+  // Get available vintage years
+  getVintageYears: async (): Promise<number[]> => {
+    const response = await api.get('/api/pitchbook/vintage-years');
+    return response.data;
+  },
+};
+
 export default api;

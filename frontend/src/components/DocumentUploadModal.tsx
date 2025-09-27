@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DocumentCategory, DocumentStatus, DocumentUploadForm } from '../types/document';
-import { documentAPI, entityAPI, investmentAPI } from '../services/api';
 import { validateDocument, ValidationResult } from '../utils/validation';
 import { useAuth } from '../contexts/AuthContext';
+import { documentAPI } from '../services/api';
 import EntitySelector from './EntitySelector';
 import './DocumentUploadModal.css';
 

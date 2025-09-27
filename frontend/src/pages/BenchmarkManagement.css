@@ -1,23 +1,27 @@
 .benchmark-management {
-  padding: 24px;
+  padding: var(--space-3xl);
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .benchmark-header {
-  margin-bottom: 32px;
+  margin-bottom: var(--space-4xl);
 }
 
 .benchmark-header h2 {
-  margin: 0 0 8px 0;
-  color: #1f2937;
-  font-size: 28px;
-  font-weight: 700;
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--luxury-navy);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
 }
 
 .benchmark-header .subtitle {
-  color: #6b7280;
-  font-size: 16px;
+  color: var(--luxury-medium-gray);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   margin: 0;
 }
 
@@ -30,20 +34,22 @@
 
 /* Benchmarks Sidebar - Minimal */
 .benchmarks-sidebar {
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, var(--luxury-pearl) 0%, var(--luxury-smoke) 100%);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  border: 1px solid var(--luxury-pale-gray);
+  box-shadow: var(--luxury-shadow-subtle);
   max-height: fit-content;
 }
 
 .benchmarks-sidebar h4 {
-  margin: 0 0 12px 0;
-  color: #374151;
-  font-size: 14px;
-  font-weight: 600;
+  margin: 0 0 var(--space-lg) 0;
+  color: var(--luxury-navy);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
 .benchmarks-list {
@@ -1008,4 +1014,99 @@
   color: #1f2937;
   background: white;
   padding: 4px 8px;
+}
+
+/* PitchBook Benchmark Section */
+.pitchbook-benchmark-section {
+  margin-top: var(--space-4xl);
+  border-top: 2px solid var(--luxury-pale-gray);
+  padding-top: var(--space-4xl);
+}
+
+.pitchbook-benchmark-section h3 {
+  margin: 0 0 var(--space-xl) 0;
+  color: var(--luxury-navy);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+}
+
+.pitchbook-controls {
+  margin-bottom: var(--space-xl);
+}
+
+.pitchbook-data-display {
+  background: white;
+  border: 1px solid var(--luxury-pale-gray);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--luxury-shadow-subtle);
+}
+
+.pitchbook-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--space-xl);
+  border-bottom: 2px solid var(--luxury-pale-gray);
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  border-radius: 6px 6px 0 0;
+}
+
+.tab-button:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.tab-button.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.pitchbook-content {
+  min-height: 400px;
+}
+
+.chart-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+  height: 400px;
+  background: #f9fafb;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.chart-placeholder h4 {
+  margin: 0 0 0.5rem 0;
+  color: #374151;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.chart-placeholder p {
+  margin: 0.25rem 0;
+  color: #6b7280;
+  font-size: 0.9rem;
 }

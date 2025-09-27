@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
 import Holdings from './pages/Holdings';
 import InvestmentDetails from './pages/InvestmentDetails';
 import Visuals from './pages/Visuals';
@@ -22,53 +23,47 @@ const Navigation: React.FC = () => {
   return (
     <nav className="main-navigation">
       <div className="nav-links">
-        <Link 
-          to="/holdings" 
+        <Link
+          to="/dashboard"
+          className={`nav-link ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
+        >
+          Dashboard
+        </Link>
+        <Link
+          to="/holdings"
           className={`nav-link ${location.pathname === '/holdings' ? 'active' : ''}`}
         >
           Holdings
         </Link>
-        <Link 
-          to="/visuals" 
+        <Link
+          to="/visuals"
           className={`nav-link ${location.pathname === '/visuals' ? 'active' : ''}`}
         >
-          Visuals
+          Analytics
         </Link>
-        <Link 
-          to="/liquidity" 
-          className={`nav-link ${location.pathname === '/liquidity' ? 'active' : ''}`}
+        <Link
+          to="/liquidity"
+          className={`nav-link ${location.pathname === '/liquidity' || location.pathname === '/calendar' ? 'active' : ''}`}
         >
-          Liquidity
+          Liquidity & Cash Flow
         </Link>
-        <Link 
-          to="/calendar" 
-          className={`nav-link ${location.pathname === '/calendar' ? 'active' : ''}`}
-        >
-          Cash Flow
-        </Link>
-        <Link 
-          to="/entities" 
+        <Link
+          to="/entities"
           className={`nav-link ${location.pathname === '/entities' ? 'active' : ''}`}
         >
-          Entity Mgmt
+          Entities
         </Link>
-        <Link 
-          to="/benchmarks" 
+        <Link
+          to="/benchmarks"
           className={`nav-link ${location.pathname === '/benchmarks' ? 'active' : ''}`}
         >
           Benchmarks
         </Link>
-        <Link 
-          to="/documents" 
-          className={`nav-link ${location.pathname === '/documents' ? 'active' : ''}`}
+        <Link
+          to="/documents"
+          className={`nav-link ${location.pathname === '/documents' || location.pathname === '/bulk-upload' ? 'active' : ''}`}
         >
-          Documents
-        </Link>
-        <Link 
-          to="/bulk-upload" 
-          className={`nav-link ${location.pathname === '/bulk-upload' ? 'active' : ''}`}
-        >
-          Bulk Upload
+          Operations
         </Link>
       </div>
     </nav>
@@ -113,7 +108,12 @@ function AppContent() {
           <Navigation />
           <div className="main-content">
             <Routes>
-              <Route path="/" element={<Navigate to="/holdings" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={
+                <PageErrorBoundary pageName="Dashboard">
+                  <Dashboard />
+                </PageErrorBoundary>
+              } />
               <Route path="/holdings" element={
                 <PageErrorBoundary pageName="Holdings">
                   <Holdings />

@@ -259,30 +259,17 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
                       <td>
                         <button
                           onClick={() => handleEdit(valuation)}
-                          className="add-button"
+                          className="icon-button edit-icon"
                           title="Edit Valuation"
-                          style={{ marginRight: '6px', padding: '3px 6px', fontSize: '0.75rem' }}
                         >
-                          Edit
+                          ✏️
                         </button>
                         <button
                           onClick={() => handleDelete(valuation.id)}
-                          className="delete-button"
+                          className="icon-button delete-icon"
                           title="Delete Valuation"
-                          style={{ 
-                            padding: '3px 4px', 
-                            fontSize: '0.75rem',
-                            backgroundColor: '#dc3545',
-                            color: 'white',
-                            opacity: 1,
-                            visibility: 'visible',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontWeight: 500
-                          }}
                         >
-                          Delete
+                          🗑️
                         </button>
                       </td>
                     </tr>

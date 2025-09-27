@@ -56,7 +56,6 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [tabValidation, setTabValidation] = useState<TabValidation>({
     basic: true,
     financial: true,

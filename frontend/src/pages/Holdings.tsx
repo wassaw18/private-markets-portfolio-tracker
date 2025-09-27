@@ -6,12 +6,17 @@ import CreateEntityModal from '../components/CreateEntityModal';
 import EnhancedInvestmentsTable from '../components/EnhancedInvestmentsTable';
 import PortfolioSummary from '../components/PortfolioSummary';
 import ImportExportModal from '../components/ImportExportModal';
-import FilterPanel from '../components/FilterPanel';
 import UploadWidget from '../components/UploadWidget';
 import SectionErrorBoundary from '../components/SectionErrorBoundary';
-import ComponentErrorBoundary from '../components/ComponentErrorBoundary';
 import '../styles/luxury-design-system.css';
 import './Holdings.css';
+
+interface TableFilters {
+  search: string;
+  assetClass: string;
+  entity: string;
+  vintageYear: string;
+}
 
 const Holdings: React.FC = () => {
   const [investments, setInvestments] = useState<Investment[]>([]);
@@ -22,6 +27,12 @@ const Holdings: React.FC = () => {
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [portfolioUpdateTrigger, setPortfolioUpdateTrigger] = useState(0);
   const [currentFilters, setCurrentFilters] = useState<InvestmentFilters>({});
+  const [tableFilters, setTableFilters] = useState<TableFilters>({
+    search: '',
+    assetClass: '',
+    entity: '',
+    vintageYear: ''
+  });
 
   const fetchInvestments = useCallback(async (filters: InvestmentFilters = {}) => {
     try {
@@ -72,16 +83,6 @@ const Holdings: React.FC = () => {
     }
   }, [fetchInvestments, currentFilters]);
 
-  const handleFiltersChange = useCallback((filters: InvestmentFilters) => {
-    setCurrentFilters(filters);
-    fetchInvestments(filters);
-  }, [fetchInvestments]);
-
-  const handleClearFilters = useCallback(() => {
-    setCurrentFilters({});
-    fetchInvestments({});
-  }, [fetchInvestments]);
-
   const handleEntityCreated = useCallback(() => {
     setShowCreateEntityModal(false);
     // Entity creation doesn't directly affect investments list, but we could trigger a refresh
@@ -95,6 +96,40 @@ const Holdings: React.FC = () => {
     console.log(`Investment upload completed: ${result.success_count} successful, ${result.error_count} errors`);
   }, [fetchInvestments, currentFilters]);
 
+  // Filter handlers
+  const handleFilterChange = useCallback((key: keyof TableFilters, value: string) => {
+    setTableFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setTableFilters({ search: '', assetClass: '', entity: '', vintageYear: '' });
+  }, []);
+
+  // Get unique filter options
+  const filterOptions = useMemo(() => {
+    const assetClasses = Array.from(new Set(investments.map(inv => inv.asset_class))).sort();
+    const entities = Array.from(new Set(investments.map(inv => inv.entity?.name).filter(Boolean))).sort();
+    const vintageYears = Array.from(new Set(investments.map(inv => inv.vintage_year?.toString()).filter(Boolean))).sort();
+
+    return { assetClasses, entities, vintageYears };
+  }, [investments]);
+
+  // Filter investments based on table filters
+  const filteredInvestments = useMemo(() => {
+    return investments.filter(investment => {
+      const matchesSearch = !tableFilters.search ||
+        investment.name.toLowerCase().includes(tableFilters.search.toLowerCase()) ||
+        investment.strategy?.toLowerCase().includes(tableFilters.search.toLowerCase()) ||
+        investment.entity?.name?.toLowerCase().includes(tableFilters.search.toLowerCase());
+
+      const matchesAssetClass = !tableFilters.assetClass || investment.asset_class === tableFilters.assetClass;
+      const matchesEntity = !tableFilters.entity || investment.entity?.name === tableFilters.entity;
+      const matchesVintageYear = !tableFilters.vintageYear || investment.vintage_year?.toString() === tableFilters.vintageYear;
+
+      return matchesSearch && matchesAssetClass && matchesEntity && matchesVintageYear;
+    });
+  }, [investments, tableFilters]);
+
   if (loading) {
     return (
       <div className="luxury-card">
@@ -105,25 +140,27 @@ const Holdings: React.FC = () => {
 
   return (
     <div className="holdings-container">
-      <div className="luxury-card">
+      <div className="luxury-card holdings-header-card">
         <div className="holdings-header">
-          <h1 className="luxury-heading-1">Holdings Management</h1>
-          <p className="luxury-body-large">Comprehensive portfolio oversight and investment management</p>
-          <div className="header-actions">
-            <button 
-              className="luxury-button-secondary"
-              onClick={() => setShowCreateEntityModal(true)}
-              title="Create a new entity (Individual, Trust, LLC, etc.)"
-            >
-              Add New Entity
-            </button>
-            <button 
-              className="luxury-button-primary"
-              onClick={() => setShowAddModal(true)}
-            >
-              Add New Investment
-            </button>
+          <div className="header-main">
+            <h1 className="luxury-heading-1">Portfolio Holdings</h1>
+            <div className="header-actions">
+              <button
+                className="luxury-button-secondary"
+                onClick={() => setShowCreateEntityModal(true)}
+                title="Create a new entity (Individual, Trust, LLC, etc.)"
+              >
+                Add Entity
+              </button>
+              <button
+                className="luxury-button-primary"
+                onClick={() => setShowAddModal(true)}
+              >
+                Add Investment
+              </button>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -133,32 +170,28 @@ const Holdings: React.FC = () => {
         </div>
       )}
 
-      <SectionErrorBoundary sectionName="Portfolio Summary">
-        <PortfolioSummary onUpdate={portfolioUpdateTrigger} />
-      </SectionErrorBoundary>
-
       <div className="investment-upload-section">
-        <UploadWidget 
-          type="investments" 
+        <UploadWidget
+          type="investments"
           onUploadComplete={handleInvestmentUploadComplete}
-          size="medium"
+          size="small"
         />
       </div>
 
-      <AddInvestmentModal 
+      <AddInvestmentModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={handleAddInvestment}
       />
 
-      <ImportExportModal 
+      <ImportExportModal
         isOpen={showImportExportModal}
         onClose={() => setShowImportExportModal(false)}
         onImportComplete={handleImportComplete}
       />
 
       {showCreateEntityModal && (
-        <CreateEntityModal 
+        <CreateEntityModal
           onClose={() => setShowCreateEntityModal(false)}
           onEntityCreated={handleEntityCreated}
         />
@@ -166,11 +199,15 @@ const Holdings: React.FC = () => {
 
       <div className="investments-section">
         <SectionErrorBoundary sectionName="Investments Table">
-          <EnhancedInvestmentsTable 
-            investments={investments}
+          <EnhancedInvestmentsTable
+            investments={filteredInvestments}
             onDelete={handleDeleteInvestment}
             onUpdate={handleUpdateInvestment}
             onToggleImportExport={() => setShowImportExportModal(true)}
+            externalFilters={tableFilters}
+            onExternalFilterChange={handleFilterChange}
+            onClearExternalFilters={clearFilters}
+            filterOptions={filterOptions}
           />
         </SectionErrorBoundary>
       </div>

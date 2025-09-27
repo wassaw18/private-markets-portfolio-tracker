@@ -93,7 +93,7 @@ export const validators = {
   },
 
   phone: (value: string, fieldName: string): FieldValidation => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
     return {
       field: fieldName,
       isValid: !value || phoneRegex.test(value.replace(/\D/g, '')), // Optional field

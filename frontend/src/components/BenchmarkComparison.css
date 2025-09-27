@@ -1,23 +1,27 @@
 .benchmark-comparison {
-  background: white;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 25px;
-  margin-top: 25px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  border: 1px solid var(--luxury-pale-gray);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4xl);
+  margin-top: var(--space-4xl);
+  box-shadow: var(--luxury-shadow-medium);
 }
 
 .benchmark-header h3 {
-  margin: 0 0 8px 0;
-  color: #333;
-  font-size: 1.4rem;
-  font-weight: 600;
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--luxury-navy);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.01em;
 }
 
 .benchmark-subtitle {
-  color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 20px;
+  color: var(--luxury-medium-gray);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-xl);
   font-style: italic;
 }
 
@@ -29,13 +33,15 @@
 
 .summary-badge {
   display: inline-block;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: white;
-  border-radius: 25px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  padding: var(--space-lg) var(--space-3xl);
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 100%);
+  color: var(--luxury-white);
+  border-radius: var(--radius-full);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: var(--luxury-shadow-medium);
+  border: 1px solid var(--luxury-gold);
 }
 
 /* Metrics Grid */
@@ -47,7 +53,10 @@
 }
 
 .metric-card {
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--luxury-pale-gray);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-pearl) 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--luxury-shadow-subtle);
   border-radius: 10px;
   padding: 20px;
   background: #f8f9fa;

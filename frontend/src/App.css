@@ -151,10 +151,10 @@ main {
 
 .nav-link:hover {
   color: white;
-  background: rgba(255,255,255,0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  border-color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  border-color: rgba(255,255,255,0.5);
 }
 
 .nav-link.active {
@@ -178,77 +178,227 @@ main {
   position: relative;
 }
 
-/* Responsive Navigation */
-@media (max-width: 768px) {
+/* ===================================================================
+   RESPONSIVE NAVIGATION & LAYOUT
+   ================================================================== */
+
+/* Mobile-First Responsive Navigation */
+@media (max-width: 1023px) {
   .App-header {
     flex-direction: column;
     text-align: center;
-    gap: 15px;
+    gap: var(--space-lg);
+    padding: var(--space-xl) var(--space-lg);
   }
-  
+
   .main-navigation {
-    padding: 12px 16px;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
   }
-  
+
+  .main-navigation::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
   .nav-links {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: var(--space-xs);
+    min-width: max-content;
+    padding-bottom: var(--space-xs);
   }
-  
+
   .nav-link {
-    min-width: 110px;
+    min-width: 100px;
     text-align: center;
-    padding: 10px 12px;
-    font-size: 0.8rem;
-    margin: 2px;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+    margin: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
-  
+
   .user-controls {
     justify-content: center;
-    gap: 12px;
-  }
-  
-  .user-info {
-    font-size: 0.85rem;
-  }
-  
-  .logout-button {
-    font-size: 0.8rem;
-    padding: 6px 12px;
+    gap: var(--space-md);
+    order: -1; /* Move user controls above navigation */
   }
 }
 
-@media (max-width: 480px) {
+/* Tablet Responsive Design */
+@media (max-width: 768px) {
   .App {
-    padding: 15px;
+    padding: var(--space-lg);
   }
-  
+
+  .App-header {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+  }
+
   .App-header h1 {
-    font-size: 2rem;
+    font-size: var(--font-size-3xl);
   }
-  
-  .main-navigation {
-    padding: 10px 12px;
-  }
-  
+
   .nav-link {
-    padding: 8px 10px;
-    font-size: 0.75rem;
-    min-width: 90px;
-    margin: 1px;
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-size-sm);
+    min-width: 95px;
   }
-  
-  .nav-links {
-    gap: 4px;
-  }
-  
+
   .user-info {
-    font-size: 0.8rem;
+    font-size: var(--font-size-sm);
   }
-  
+
   .logout-button {
-    padding: 6px 10px;
-    font-size: 0.75rem;
+    font-size: var(--font-size-sm);
+    padding: var(--space-sm) var(--space-lg);
   }
+
+  .main-content {
+    border-radius: var(--radius-xl);
+    min-height: 600px;
+  }
+}
+
+/* Mobile Phone Responsive Design */
+@media (max-width: 575px) {
+  .App {
+    padding: var(--space-md);
+  }
+
+  .App-header {
+    padding: var(--space-md);
+    margin-bottom: var(--space-xl);
+    border-radius: var(--radius-lg);
+  }
+
+  .App-header h1 {
+    font-size: var(--font-size-2xl);
+    line-height: 1.2;
+  }
+
+  .main-navigation {
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  .nav-links {
+    gap: var(--space-xs);
+  }
+
+  .nav-link {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-xs);
+    min-width: 80px;
+    letter-spacing: 0;
+  }
+
+  .user-controls {
+    flex-direction: column;
+    gap: var(--space-sm);
+    align-items: center;
+  }
+
+  .user-info {
+    font-size: var(--font-size-xs);
+    text-align: center;
+  }
+
+  .logout-button {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-size-xs);
+    width: auto;
+    min-width: 120px;
+  }
+
+  .main-content {
+    border-radius: var(--radius-lg);
+    min-height: 500px;
+  }
+}
+
+/* Extra Small Phones */
+@media (max-width: 420px) {
+  .App {
+    padding: var(--space-sm);
+  }
+
+  .App-header {
+    padding: var(--space-sm);
+  }
+
+  .App-header h1 {
+    font-size: var(--font-size-xl);
+    text-align: center;
+  }
+
+  .nav-link {
+    min-width: 70px;
+    padding: var(--space-xs);
+    font-size: 10px;
+  }
+
+  .main-navigation {
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .user-controls {
+    padding: var(--space-xs) var(--space-sm);
+  }
+}
+
+/* Landscape Mobile Optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .App-header {
+    padding: var(--space-sm) var(--space-lg);
+    margin-bottom: var(--space-lg);
+  }
+
+  .App-header h1 {
+    font-size: var(--font-size-xl);
+  }
+
+  .main-navigation {
+    padding: var(--space-xs) var(--space-md);
+  }
+
+  .nav-link {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-xs);
+  }
+
+  .main-content {
+    min-height: 300px;
+  }
+}
+
+/* High DPI Display Optimization */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .nav-link,
+  .logout-button {
+    border-width: 0.5px;
+  }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .nav-link,
+  .logout-button,
+  .App-header {
+    transition: none;
+  }
+
+  .nav-link:hover,
+  .logout-button:hover {
+    transform: none;
+  }
+}
+
+/* Dark Mode Support Preparation */
+@media (prefers-color-scheme: dark) {
+  /* Ready for future dark mode implementation */
 }

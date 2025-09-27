@@ -9,30 +9,33 @@
 
 /* File Upload Section */
 .file-drop-zone {
-  border: 2px dashed #dee2e6;
-  border-radius: 8px;
-  padding: 40px 20px;
+  border: 2px dashed var(--luxury-pale-gray);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4xl) var(--space-xl);
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
-  background: #f8f9fa;
+  transition: all var(--transition-medium);
+  background: linear-gradient(135deg, var(--luxury-pearl) 0%, var(--luxury-smoke) 100%);
   position: relative;
 }
 
 .file-drop-zone:hover {
-  border-color: #007bff;
-  background: #f0f8ff;
+  border-color: var(--luxury-gold);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--luxury-shadow-medium);
 }
 
 .file-drop-zone.drag-active {
-  border-color: #007bff;
-  background: #e3f2fd;
+  border-color: var(--luxury-gold);
+  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-white) 100%);
   transform: scale(1.02);
+  box-shadow: var(--luxury-shadow-large);
 }
 
 .file-drop-zone.has-file {
-  border-color: #28a745;
-  background: #f0fff4;
+  border-color: var(--luxury-success);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, rgba(16, 185, 129, 0.05) 100%);
 }
 
 .file-drop-prompt {
@@ -116,12 +119,14 @@
 
 .section-label {
   display: block;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 12px;
-  font-size: 1rem;
-  border-bottom: 1px solid #e9ecef;
-  padding-bottom: 8px;
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-bold);
+  color: var(--luxury-navy);
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-lg);
+  border-bottom: 1px solid var(--luxury-pale-gray);
+  padding-bottom: var(--space-sm);
+  letter-spacing: -0.01em;
 }
 
 .section-help {
@@ -158,20 +163,24 @@
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  font-family: inherit;
+  padding: var(--space-md) var(--space-lg);
+  border: 2px solid var(--luxury-pale-gray);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-primary);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-pearl) 100%);
+  transition: all var(--transition-medium);
+  color: var(--luxury-dark-gray);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  border-color: var(--luxury-gold);
+  background: var(--luxury-white);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15);
+  transform: translateY(-1px);
 }
 
 .form-group textarea {
@@ -212,25 +221,27 @@
   width: 100%;
 }
 
-/* Modal Base Styles */
+/* Modal Base Styles - Luxury Design System */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background: linear-gradient(135deg, rgba(11, 20, 38, 0.85) 0%, rgba(11, 20, 38, 0.95) 100%);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: var(--space-xl);
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--luxury-shadow-large);
+  border: 1px solid var(--luxury-pale-gray);
   max-width: 1000px;
   width: 100%;
   max-height: 95vh;
@@ -244,37 +255,44 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 24px 24px 0;
-  border-bottom: 1px solid #e9ecef;
-  margin-bottom: 24px;
+  padding: var(--space-3xl) var(--space-3xl) 0;
+  border-bottom: 1px solid var(--luxury-pale-gray);
+  margin-bottom: var(--space-3xl);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-pearl) 100%);
 }
 
 .modal-header h3 {
   margin: 0;
-  color: #333;
-  font-size: 1.5rem;
-  font-weight: 600;
+  color: var(--luxury-navy);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
 }
 
 .close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  border: 1px solid var(--luxury-pale-gray);
+  font-size: var(--font-size-xl);
   cursor: pointer;
-  color: #666;
-  width: 32px;
-  height: 32px;
+  color: var(--luxury-medium-gray);
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-  margin-left: 16px;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-medium);
+  margin-left: var(--space-lg);
+  box-shadow: var(--luxury-shadow-subtle);
 }
 
 .close-button:hover {
-  background-color: #f8f9fa;
-  color: #333;
+  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-white) 100%);
+  color: var(--luxury-navy);
+  border-color: var(--luxury-gold);
+  transform: translateY(-1px);
+  box-shadow: var(--luxury-shadow-medium);
 }
 
 /* Upload Form */
@@ -287,13 +305,15 @@
 
 /* Error Message */
 .error-message {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin: 0 24px 20px;
-  border: 1px solid #f5c6cb;
-  font-size: 0.9rem;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(220, 38, 38, 0.1) 100%);
+  color: var(--luxury-error);
+  padding: var(--space-lg) var(--space-xl);
+  border-radius: var(--radius-lg);
+  margin: 0 var(--space-3xl) var(--space-xl);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--luxury-shadow-subtle);
 }
 
 /* Validation error styles */
@@ -332,40 +352,52 @@
 }
 
 .cancel-button {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  color: var(--luxury-dark-gray);
+  border: 2px solid var(--luxury-pale-gray);
+  padding: var(--space-md) var(--space-2xl);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  transition: all var(--transition-medium);
+  box-shadow: var(--luxury-shadow-subtle);
 }
 
 .cancel-button:hover {
-  background-color: #545b62;
+  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-white) 100%);
+  border-color: var(--luxury-medium-gray);
+  transform: translateY(-1px);
+  box-shadow: var(--luxury-shadow-medium);
 }
 
 .submit-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 100%);
+  color: var(--luxury-white);
+  border: 2px solid var(--luxury-navy);
+  padding: var(--space-md) var(--space-2xl);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  transition: all var(--transition-medium);
+  box-shadow: var(--luxury-shadow-medium);
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #0056b3;
+  background: linear-gradient(135deg, var(--luxury-dark-blue) 0%, var(--luxury-navy) 100%);
+  border-color: var(--luxury-gold);
+  transform: translateY(-2px);
+  box-shadow: var(--luxury-shadow-large);
 }
 
 .submit-button:disabled {
-  background-color: #6c757d;
+  background: var(--luxury-medium-gray);
+  border-color: var(--luxury-medium-gray);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* Responsive Design */

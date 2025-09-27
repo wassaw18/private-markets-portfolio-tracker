@@ -16,6 +16,7 @@ from app.calendar_service import create_calendar_service, CashFlowCalendarServic
 from app.document_service import get_document_service
 from app.models import ForecastScenario, DocumentCategory, DocumentStatus, AdvancedRelationshipType, OwnershipType
 from app.entity_relationships import EntityRelationshipService, InvestmentOwnershipService, EntityHierarchyService
+from app.routers.pitchbook_benchmarks import router as pitchbook_router
 from datetime import date, datetime
 import io
 import os
@@ -34,6 +35,9 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_event():
     create_database()
+
+# Include PitchBook benchmarks router
+app.include_router(pitchbook_router)
 
 # Simple user context dependency - can be enhanced later with proper JWT/session handling
 def get_current_user(x_user: Optional[str] = Header(None, alias="X-User")) -> str:

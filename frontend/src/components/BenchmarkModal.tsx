@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MarketBenchmark, BenchmarkReturn, marketBenchmarkAPI } from '../services/api';
 import './BenchmarkModal.css';
 
@@ -14,11 +14,7 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ benchmark, onClose }) =
   const [newReturn, setNewReturn] = useState({ period: '', return_value: '' });
   const [isAdding, setIsAdding] = useState(false);
 
-  useEffect(() => {
-    fetchReturns();
-  }, [benchmark.id]);
-
-  const fetchReturns = async () => {
+  const fetchReturns = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -29,7 +25,11 @@ const BenchmarkModal: React.FC<BenchmarkModalProps> = ({ benchmark, onClose }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [benchmark.id]);
+
+  useEffect(() => {
+    fetchReturns();
+  }, [fetchReturns]);
 
   const handleAddReturn = async () => {
     if (!newReturn.period || !newReturn.return_value) {

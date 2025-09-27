@@ -1,0 +1,11 @@
+report_period,asset_class,metric_code,vintage_year,top_quartile_value,median_value,bottom_quartile_value,sample_size,fund_count,methodology_notes
+Q4-2024,private_equity,IRR,2000,0.1850,0.1420,0.0980,125,125,Net IRR as of Q4 2024
+Q4-2024,private_equity,IRR,2001,0.1790,0.1380,0.0950,142,142,Net IRR as of Q4 2024
+Q4-2024,private_equity,IRR,2002,0.1720,0.1340,0.0920,158,158,Net IRR as of Q4 2024
+Q4-2024,private_equity,TVPI,2000,3.25,2.45,1.85,125,125,Total Value to Paid-In multiple as of Q4 2024
+Q4-2024,private_equity,TVPI,2001,3.15,2.35,1.75,142,142,Total Value to Paid-In multiple as of Q4 2024
+Q4-2024,private_equity,TVPI,2002,3.05,2.25,1.65,158,158,Total Value to Paid-In multiple as of Q4 2024
+Q4-2024,venture_capital,IRR,2000,0.2250,0.1580,0.0850,89,89,Net IRR as of Q4 2024
+Q4-2024,venture_capital,IRR,2001,0.2180,0.1520,0.0820,95,95,Net IRR as of Q4 2024
+Q4-2024,venture_capital,TVPI,2000,4.85,2.85,1.45,89,89,Total Value to Paid-In multiple as of Q4 2024
+Q4-2024,venture_capital,TVPI,2001,4.65,2.75,1.35,95,95,Total Value to Paid-In multiple as of Q4 2024
