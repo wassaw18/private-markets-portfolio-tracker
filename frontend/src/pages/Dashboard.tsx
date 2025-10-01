@@ -160,12 +160,10 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="dashboard-container">
-      <div className="luxury-card">
-        <div className="dashboard-header">
-          <h1 className="luxury-heading-1">Portfolio Dashboard</h1>
-          <p className="luxury-body-large">Executive overview of your private markets portfolio</p>
-        </div>
+    <>
+      <div className="luxury-card page-header">
+        <h1 className="luxury-heading-1">Portfolio Dashboard</h1>
+        <p className="luxury-body-large">Executive overview of your private markets portfolio</p>
       </div>
 
       {error && (
@@ -175,106 +173,75 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Portfolio Performance Summary */}
-      <SectionErrorBoundary sectionName="Portfolio Performance">
-        <PortfolioSummary onUpdate={portfolioUpdateTrigger} />
-      </SectionErrorBoundary>
+      <div style={{marginBottom: '32px'}}>
+        <SectionErrorBoundary sectionName="Portfolio Performance">
+          <PortfolioSummary onUpdate={portfolioUpdateTrigger} />
+        </SectionErrorBoundary>
+      </div>
 
       {/* Asset Class Breakdown */}
-      <div className="luxury-card">
-        <div className="breakdown-section">
-          <h3 className="luxury-heading-3">Asset Class Allocation</h3>
-          <div className="breakdown-grid">
-            {assetClassBreakdown.map((item, index) => (
-              <div key={index} className="breakdown-card">
-                <div className="breakdown-header">
-                  <h4 className="breakdown-title">{item.asset_class.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h4>
-                  <span className="breakdown-percentage">{formatPercentage(item.percentage)}</span>
+      <div className="luxury-card" style={{marginBottom: '32px'}}>
+        <h3 className="luxury-heading-3" style={{marginBottom: '24px'}}>Asset Class Allocation</h3>
+        <div className="breakdown-grid">
+          {assetClassBreakdown.map((item, index) => (
+            <div key={index} className="breakdown-card">
+              <div className="breakdown-header">
+                <h4 className="breakdown-title">{item.asset_class.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h4>
+                <span className="breakdown-percentage">{formatPercentage(item.percentage)}</span>
+              </div>
+              <div className="breakdown-metrics">
+                <div className="breakdown-metric">
+                  <label>Holdings</label>
+                  <span>{item.count}</span>
                 </div>
-                <div className="breakdown-metrics">
-                  <div className="breakdown-metric">
-                    <label>Holdings</label>
-                    <span>{item.count}</span>
-                  </div>
-                  <div className="breakdown-metric">
-                    <label>Commitment</label>
-                    <span>{formatCurrency(item.total_commitment)}</span>
-                  </div>
-                  <div className="breakdown-metric primary">
-                    <label>Current Value</label>
-                    <span>{formatCurrency(item.current_nav)}</span>
-                  </div>
+                <div className="breakdown-metric">
+                  <label>Commitment</label>
+                  <span>{formatCurrency(item.total_commitment)}</span>
                 </div>
-                <div className="breakdown-bar">
-                  <div
-                    className="breakdown-fill"
-                    style={{ width: `${item.percentage}%` }}
-                  ></div>
+                <div className="breakdown-metric primary">
+                  <label>Current Value</label>
+                  <span>{formatCurrency(item.current_nav)}</span>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="breakdown-bar">
+                <div
+                  className="breakdown-fill"
+                  style={{ width: `${item.percentage}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Entity Breakdown */}
       <div className="luxury-card">
-        <div className="breakdown-section">
-          <h3 className="luxury-heading-3">Holdings by Entity</h3>
-          <div className="entity-breakdown-list">
-            {entityBreakdown.slice(0, 8).map((item, index) => (
-              <div key={index} className="entity-breakdown-item">
-                <div className="entity-info">
-                  <div className="entity-name">{item.entity_name}</div>
-                  <div className="entity-stats">
-                    <span className="entity-count">{item.count} holdings</span>
-                    <span className="entity-percentage">{formatPercentage(item.percentage)}</span>
-                  </div>
-                </div>
-                <div className="entity-value">
-                  {formatCurrency(item.total_value)}
-                </div>
-                <div className="entity-bar">
-                  <div
-                    className="entity-fill"
-                    style={{ width: `${Math.min(item.percentage, 100)}%` }}
-                  ></div>
+        <h3 className="luxury-heading-3" style={{marginBottom: '24px'}}>Holdings by Entity</h3>
+        <div className="entity-breakdown-list">
+          {entityBreakdown.slice(0, 8).map((item, index) => (
+            <div key={index} className="entity-breakdown-item">
+              <div className="entity-info">
+                <div className="entity-name">{item.entity_name}</div>
+                <div className="entity-stats">
+                  <span className="entity-count">{item.count} holdings</span>
+                  <span className="entity-percentage">{formatPercentage(item.percentage)}</span>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="entity-value">
+                {formatCurrency(item.total_value)}
+              </div>
+              <div className="entity-bar">
+                <div
+                  className="entity-fill"
+                  style={{ width: `${Math.min(item.percentage, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Quick Stats Grid */}
-      <div className="quick-stats-grid">
-        <div className="luxury-card stat-card">
-          <div className="stat-content">
-            <h3 className="stat-number">{investments.length}</h3>
-            <p className="stat-label">Total Holdings</p>
-          </div>
-        </div>
-        <div className="luxury-card stat-card">
-          <div className="stat-content">
-            <h3 className="stat-number">{assetClassBreakdown.length}</h3>
-            <p className="stat-label">Asset Classes</p>
-          </div>
-        </div>
-        <div className="luxury-card stat-card">
-          <div className="stat-content">
-            <h3 className="stat-number">{entityBreakdown.length}</h3>
-            <p className="stat-label">Entities</p>
-          </div>
-        </div>
-        <div className="luxury-card stat-card">
-          <div className="stat-content">
-            <h3 className="stat-number">
-              {investments.filter(inv => inv.status === InvestmentStatus.ACTIVE).length}
-            </h3>
-            <p className="stat-label">Active Investments</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
 

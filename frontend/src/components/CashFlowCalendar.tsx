@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { calendarAPI, DailyFlow, MonthlyCalendar } from '../services/api';
-import DatePicker from './DatePicker';
+import DateRangePicker from './DateRangePicker';
 import './CashFlowCalendar.css';
 
 interface ViewType {
-  type: 'day' | 'week' | 'month' | 'quarter' | 'year';
+  type: 'month' | 'quarter' | 'year';
   label: string;
 }
 
@@ -14,8 +14,14 @@ interface NavigationIncrement {
 }
 
 const CashFlowCalendar: React.FC = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewType, setViewType] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
+  // Initialize with current month as default range
+  const today = new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  const [startDate, setStartDate] = useState(startOfMonth);
+  const [endDate, setEndDate] = useState(endOfMonth);
+  const [viewType, setViewType] = useState<'month' | 'quarter' | 'year'>('month');
   const [monthlyData, setMonthlyData] = useState<MonthlyCalendar | null>(null);
   const [selectedDay, setSelectedDay] = useState<DailyFlow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,8 +29,6 @@ const CashFlowCalendar: React.FC = () => {
   const [includeForecasts, setIncludeForecasts] = useState(true);
 
   const viewTypes: ViewType[] = [
-    { type: 'day', label: 'Day' },
-    { type: 'week', label: 'Week' },
     { type: 'month', label: 'Month' },
     { type: 'quarter', label: 'Quarter' },
     { type: 'year', label: 'Year' }
@@ -33,10 +37,6 @@ const CashFlowCalendar: React.FC = () => {
   // Navigation increments based on view type
   const getNavigationIncrement = (): NavigationIncrement => {
     switch (viewType) {
-      case 'day':
-        return { days: 1, label: 'day' };
-      case 'week':
-        return { days: 7, label: 'week' };
       case 'month':
         return { days: 30, label: 'month' }; // Approximate, will be adjusted
       case 'quarter':
@@ -64,10 +64,27 @@ const CashFlowCalendar: React.FC = () => {
   };
 
   useEffect(() => {
-    if (viewType === 'month') {
-      fetchMonthlyData(currentDate.getFullYear(), currentDate.getMonth() + 1);
+    // For all view types, we'll fetch monthly data but the rendering will adapt
+    // For simplicity, we'll use the month-based API for now and render differently
+    // Use the start date to determine which month to fetch for now
+    switch (viewType) {
+      case 'month':
+        fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
+        break;
+      case 'quarter':
+        // For quarter view, we'll fetch the first month of the quarter for now
+        // In a full implementation, this would aggregate quarterly data
+        fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
+        break;
+      case 'year':
+        // For year view, we'll fetch the current month for now
+        // In a full implementation, this would show year overview
+        fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
+        break;
+      default:
+        fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
     }
-  }, [currentDate, viewType, includeForecasts]);
+  }, [startDate, endDate, viewType, includeForecasts]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -90,96 +107,61 @@ const CashFlowCalendar: React.FC = () => {
   };
 
   const navigatePeriod = (direction: 'prev' | 'next' | 'today') => {
-    let newDate = new Date(currentDate);
-    
     if (direction === 'today') {
-      newDate = new Date();
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      setStartDate(startOfMonth);
+      setEndDate(endOfMonth);
+      setViewType('month');
     } else {
       const increment = direction === 'prev' ? -1 : 1;
-      
+      let newStartDate = new Date(startDate);
+      let newEndDate = new Date(endDate);
+
       switch (viewType) {
-        case 'day':
-          newDate.setDate(newDate.getDate() + increment);
-          break;
-        case 'week':
-          newDate.setDate(newDate.getDate() + (7 * increment));
-          break;
         case 'month':
-          newDate.setMonth(newDate.getMonth() + increment);
+          newStartDate.setMonth(newStartDate.getMonth() + increment);
+          newEndDate.setMonth(newEndDate.getMonth() + increment);
           break;
         case 'quarter':
-          newDate.setMonth(newDate.getMonth() + (3 * increment));
+          newStartDate.setMonth(newStartDate.getMonth() + (3 * increment));
+          newEndDate.setMonth(newEndDate.getMonth() + (3 * increment));
           break;
         case 'year':
-          newDate.setFullYear(newDate.getFullYear() + increment);
+          newStartDate.setFullYear(newStartDate.getFullYear() + increment);
+          newEndDate.setFullYear(newEndDate.getFullYear() + increment);
           break;
       }
+
+      setStartDate(newStartDate);
+      setEndDate(newEndDate);
     }
-    
-    setCurrentDate(newDate);
+
     setSelectedDay(null);
   };
 
-  const handleDatePickerChange = (date: Date) => {
-    setCurrentDate(date);
+  const handleDateRangeChange = (newStartDate: Date, newEndDate: Date, newViewType: 'month' | 'quarter' | 'year') => {
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    setViewType(newViewType);
     setSelectedDay(null);
   };
 
   const getViewModeLabel = (): string => {
-    const increment = getNavigationIncrement();
-    const direction = increment.label;
-    
     switch (viewType) {
-      case 'day':
-        return currentDate.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
-      case 'week':
-        const startOfWeek = getStartOfWeek(currentDate);
-        const endOfWeek = getEndOfWeek(currentDate);
-        return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
       case 'month':
-        return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       case 'quarter':
-        const quarter = Math.floor((currentDate.getMonth() + 3) / 3);
-        return `Q${quarter} ${currentDate.getFullYear()}`;
+        const quarter = Math.floor((startDate.getMonth() + 3) / 3);
+        return `Q${quarter} ${startDate.getFullYear()}`;
       case 'year':
-        return currentDate.getFullYear().toString();
+        return startDate.getFullYear().toString();
       default:
-        return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        return startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
   };
 
-  const getStartOfWeek = (date: Date): Date => {
-    const result = new Date(date);
-    const day = result.getDay();
-    result.setDate(result.getDate() - day);
-    result.setHours(0, 0, 0, 0);
-    return result;
-  };
-
-  const getEndOfWeek = (date: Date): Date => {
-    const result = new Date(date);
-    const day = result.getDay();
-    result.setDate(result.getDate() + (6 - day));
-    result.setHours(23, 59, 59, 999);
-    return result;
-  };
-
-  const getQuickJumpOptions = () => {
-    const today = new Date();
-    const options = [
-      { label: 'Today', date: new Date(today) },
-      { label: 'This Week', date: getStartOfWeek(today) },
-      { label: 'This Month', date: new Date(today.getFullYear(), today.getMonth(), 1) },
-      { label: 'This Quarter', date: getStartOfQuarter(today) },
-      { label: 'This Year', date: new Date(today.getFullYear(), 0, 1) }
-    ];
-    return options;
-  };
 
   const getStartOfQuarter = (date: Date): Date => {
     const quarter = Math.floor((date.getMonth() + 3) / 3);
@@ -226,9 +208,8 @@ const CashFlowCalendar: React.FC = () => {
   const renderCalendarGrid = () => {
     if (!monthlyData) return null;
 
-    // Get first day of month and number of days
+    // Get first day of month
     const firstDay = new Date(monthlyData.year, monthlyData.month - 1, 1).getDay();
-    const daysInMonth = monthlyData.daily_flows.length;
     
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const calendar = [];
@@ -364,6 +345,262 @@ const CashFlowCalendar: React.FC = () => {
     );
   };
 
+  const renderCalendarView = () => {
+    if (!monthlyData) return null;
+
+    switch (viewType) {
+      case 'month':
+        return renderCalendarGrid();
+      case 'quarter':
+        return renderQuarterView();
+      case 'year':
+        return renderYearView();
+      default:
+        return renderCalendarGrid();
+    }
+  };
+
+
+  const renderQuarterView = () => {
+    // Quarter view - 1x3 grid with color-coded monthly boxes
+    const quarterStart = new Date(startDate.getFullYear(), Math.floor(startDate.getMonth() / 3) * 3, 1);
+    const months = [];
+
+    for (let i = 0; i < 3; i++) {
+      const month = new Date(quarterStart);
+      month.setMonth(quarterStart.getMonth() + i);
+      months.push(month);
+    }
+
+    // Calculate month totals and determine intensity for color coding
+    const monthData = months.map(month => {
+      const monthTotal = monthlyData?.daily_flows.reduce((sum, flow) => {
+        const flowDate = new Date(flow.date);
+        return flowDate.getMonth() === month.getMonth() ? sum + flow.net_flow : sum;
+      }, 0) || 0;
+
+      const transactionCount = monthlyData?.daily_flows.reduce((count, flow) => {
+        const flowDate = new Date(flow.date);
+        return flowDate.getMonth() === month.getMonth() ? count + flow.transaction_count : count;
+      }, 0) || 0;
+
+      return { month, monthTotal, transactionCount };
+    });
+
+    // Calculate max absolute value for intensity scaling
+    const maxAbsValue = Math.max(...monthData.map(data => Math.abs(data.monthTotal)));
+
+    const getMonthIntensity = (total: number): string => {
+      if (maxAbsValue === 0) return 'no-activity';
+      const intensity = Math.abs(total) / maxAbsValue;
+      if (intensity > 0.7) return 'high-intensity';
+      else if (intensity > 0.3) return 'medium-intensity';
+      else if (intensity > 0) return 'low-intensity';
+      return 'no-activity';
+    };
+
+    return (
+      <div className="quarter-view">
+        <div className="quarter-header">
+          <h3>Q{Math.floor(startDate.getMonth() / 3) + 1} {startDate.getFullYear()}</h3>
+          <p>Monthly cash flow overview for the quarter</p>
+        </div>
+        <div className="quarter-grid">
+          {monthData.map(({ month, monthTotal, transactionCount }) => {
+            const intensityClass = getMonthIntensity(monthTotal);
+            const flowDirection = monthTotal >= 0 ? 'positive' : 'negative';
+
+            // Generate detailed tooltip for this month
+            const monthFlows = monthlyData?.daily_flows
+              .filter(flow => new Date(flow.date).getMonth() === month.getMonth()) || [];
+
+            const monthTransactions = monthFlows.flatMap(flow =>
+              flow.transactions.map(txn => ({ ...txn, date: flow.date }))
+            );
+
+            const inflows = monthTransactions.filter(txn =>
+              txn.type.includes('Distribution') || txn.type.includes('Forecasted Distribution')
+            );
+            const outflows = monthTransactions.filter(txn =>
+              !txn.type.includes('Distribution') && !txn.type.includes('Forecasted Distribution')
+            );
+
+            const tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+
+NET FLOW: ${formatCurrency(monthTotal)}
+Total Transactions: ${transactionCount}
+
+INFLOWS (${inflows.length}):
+${inflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${inflows.length > 5 ? `\n... and ${inflows.length - 5} more` : ''}
+
+OUTFLOWS (${outflows.length}):
+${outflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${outflows.length > 5 ? `\n... and ${outflows.length - 5} more` : ''}`;
+            return (
+              <div
+                key={month.toISOString()}
+                className={`quarter-month-box ${flowDirection} ${intensityClass}`}
+                onClick={() => {
+                  const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+                  const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                  setStartDate(monthStart);
+                  setEndDate(monthEnd);
+                  setViewType('month');
+                }}
+                title={tooltipContent}
+              >
+                <div className="month-header">
+                  <div className="month-name">{month.toLocaleDateString('en-US', { month: 'long' })}</div>
+                  <div className="month-year">{month.getFullYear()}</div>
+                </div>
+                <div className="month-metrics">
+                  <div className={`month-total ${flowDirection}`}>
+                    {formatCurrencyCompact(monthTotal)}
+                  </div>
+                  <div className="month-transactions">
+                    {transactionCount} transaction{transactionCount !== 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div className="month-indicator">
+                  <div className={`flow-indicator ${flowDirection} ${intensityClass}`}></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderYearView = () => {
+    // Year view - 3x4 grid of months instead of calendar view
+    const year = startDate.getFullYear();
+    const months = [];
+
+    // Generate all 12 months of the year
+    for (let i = 0; i < 12; i++) {
+      const month = new Date(year, i, 1);
+      months.push(month);
+    }
+
+    // For now, we'll use the current month's data as sample data
+    // In a full implementation, you'd fetch annual data
+    const getMonthData = (month: Date) => {
+      // If this is the current month, use actual data
+      if (month.getMonth() === startDate.getMonth() && month.getFullYear() === startDate.getFullYear()) {
+        const monthTotal = monthlyData?.daily_flows.reduce((sum, flow) => sum + flow.net_flow, 0) || 0;
+        const transactionCount = monthlyData?.daily_flows.reduce((count, flow) => count + flow.transaction_count, 0) || 0;
+        return { monthTotal, transactionCount, hasData: true };
+      } else {
+        // Simulate data for other months (in real implementation, fetch from API)
+        const simulatedTotal = Math.random() * 2000000 - 1000000; // Random between -1M and +1M
+        const simulatedCount = Math.floor(Math.random() * 50);
+        return { monthTotal: simulatedTotal, transactionCount: simulatedCount, hasData: false };
+      }
+    };
+
+    // Calculate month data and determine intensity for color coding
+    const monthDataArray = months.map(month => {
+      const data = getMonthData(month);
+      return { month, ...data };
+    });
+
+    // Calculate max absolute value for intensity scaling
+    const maxAbsValue = Math.max(...monthDataArray.map(data => Math.abs(data.monthTotal)));
+
+    const getMonthIntensity = (total: number): string => {
+      if (maxAbsValue === 0) return 'no-activity';
+      const intensity = Math.abs(total) / maxAbsValue;
+      if (intensity > 0.7) return 'high-intensity';
+      else if (intensity > 0.3) return 'medium-intensity';
+      else if (intensity > 0) return 'low-intensity';
+      return 'no-activity';
+    };
+
+    return (
+      <div className="year-view">
+        <div className="year-header">
+          <h3>{year}</h3>
+          <p>Annual cash flow overview - click any month to view details</p>
+        </div>
+        <div className="year-grid quarterly-layout">
+          {monthDataArray.map(({ month, monthTotal, transactionCount, hasData }) => {
+            const intensityClass = getMonthIntensity(monthTotal);
+            const flowDirection = monthTotal >= 0 ? 'positive' : 'negative';
+            const isCurrentMonth = month.getMonth() === startDate.getMonth() && month.getFullYear() === startDate.getFullYear();
+
+            // Generate detailed tooltip for year view
+            let tooltipContent;
+            if (hasData) {
+              const monthTransactions = monthlyData?.daily_flows.flatMap(flow =>
+                flow.transactions.map(txn => ({ ...txn, date: flow.date }))
+              ) || [];
+              const inflows = monthTransactions.filter(txn =>
+                txn.type.includes('Distribution') || txn.type.includes('Forecasted Distribution')
+              );
+              const outflows = monthTransactions.filter(txn =>
+                !txn.type.includes('Distribution') && !txn.type.includes('Forecasted Distribution')
+              );
+
+              tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (ACTUAL DATA)
+
+NET FLOW: ${formatCurrency(monthTotal)}
+Total Transactions: ${transactionCount}
+
+INFLOWS (${inflows.length}):
+${inflows.slice(0, 3).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${inflows.length > 3 ? `\n... and ${inflows.length - 3} more` : ''}
+
+OUTFLOWS (${outflows.length}):
+${outflows.slice(0, 3).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${outflows.length > 3 ? `\n... and ${outflows.length - 3} more` : ''}`;
+            } else {
+              tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (SIMULATED)
+
+NET FLOW: ${formatCurrency(monthTotal)}
+Transactions: ${transactionCount}
+
+This is simulated data for demonstration.
+Click to view if actual data is available.`;
+            }
+
+            return (
+              <div
+                key={month.toISOString()}
+                className={`year-month-box ${flowDirection} ${intensityClass} ${isCurrentMonth ? 'current-month' : ''} ${!hasData ? 'simulated' : ''}`}
+                onClick={() => {
+                  const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+                  const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                  setStartDate(monthStart);
+                  setEndDate(monthEnd);
+                  setViewType('month');
+                }}
+                title={tooltipContent}
+              >
+                <div className="month-header">
+                  <div className="month-name">{month.toLocaleDateString('en-US', { month: 'short' })}</div>
+                  {isCurrentMonth && <div className="current-indicator">●</div>}
+                </div>
+                <div className="month-metrics">
+                  <div className={`month-total ${flowDirection}`}>
+                    {formatCurrencyCompact(monthTotal)}
+                  </div>
+                  <div className="month-transactions">
+                    {transactionCount} txn{transactionCount !== 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div className="month-indicator">
+                  <div className={`flow-indicator ${flowDirection} ${intensityClass}`}></div>
+                </div>
+                {!hasData && <div className="simulated-badge">SIM</div>}
+              </div>
+            );
+          })}
+        </div>
+        <div className="year-view-note">
+          <p><strong>Note:</strong> Only {startDate.toLocaleDateString('en-US', { month: 'long' })} shows actual data. Other months display simulated data for demonstration.</p>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="cash-flow-calendar">
@@ -423,27 +660,13 @@ const CashFlowCalendar: React.FC = () => {
           </div>
 
           <div className="date-navigation-section">
-            <DatePicker
-              selectedDate={currentDate}
-              onDateChange={handleDatePickerChange}
-              viewMode={viewType}
-              className="calendar-date-picker"
-              showToday={true}
-              placeholder={`Select ${viewType}`}
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onDateRangeChange={handleDateRangeChange}
+              className="calendar-date-range-picker"
+              placeholder="Select date range"
             />
-            
-            <div className="quick-jump-buttons">
-              {getQuickJumpOptions().map((option) => (
-                <button
-                  key={option.label}
-                  className="quick-jump-btn"
-                  onClick={() => handleDatePickerChange(option.date)}
-                  title={`Jump to ${option.label}`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="navigation-controls">
@@ -470,7 +693,7 @@ const CashFlowCalendar: React.FC = () => {
 
       <div className="calendar-main">
         <div className="calendar-grid">
-          {renderCalendarGrid()}
+          {renderCalendarView()}
         </div>
 
         {selectedDay && (

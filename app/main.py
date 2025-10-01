@@ -11,12 +11,14 @@ from app import dashboard
 from app.import_export import import_investments_from_file, export_investments_to_excel, ImportResult
 from app.excel_template_service import excel_template_service, BulkUploadProcessor
 from app.benchmark_service import get_benchmark_comparison
+from app.relative_performance_service import get_relative_performance_service
 from app.pacing_model import create_pacing_model_engine, PacingModelEngine
 from app.calendar_service import create_calendar_service, CashFlowCalendarService
 from app.document_service import get_document_service
 from app.models import ForecastScenario, DocumentCategory, DocumentStatus, AdvancedRelationshipType, OwnershipType
 from app.entity_relationships import EntityRelationshipService, InvestmentOwnershipService, EntityHierarchyService
 from app.routers.pitchbook_benchmarks import router as pitchbook_router
+from app.routers.relative_performance import router as relative_performance_router
 from datetime import date, datetime
 import io
 import os
@@ -38,6 +40,9 @@ def startup_event():
 
 # Include PitchBook benchmarks router
 app.include_router(pitchbook_router)
+
+# Include relative performance router
+app.include_router(relative_performance_router)
 
 # Simple user context dependency - can be enhanced later with proper JWT/session handling
 def get_current_user(x_user: Optional[str] = Header(None, alias="X-User")) -> str:
@@ -2118,6 +2123,100 @@ def get_available_pme_benchmarks(
         })
     
     return results
+
+# =====================================================
+# RELATIVE PERFORMANCE ENDPOINTS
+# =====================================================
+
+@app.get("/api/relative-performance/benchmarks")
+def get_relative_performance_benchmarks(
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get list of available benchmarks for relative performance comparison"""
+    service = get_relative_performance_service(db)
+    return service.get_available_benchmarks()
+
+@app.get("/api/relative-performance/compare")
+def compare_relative_performance(
+    selection_type: str = Query(..., description="Type of selection: investment, asset_class, or portfolio"),
+    selection_value: Optional[str] = Query(None, description="Value for selection (investment_id, asset_class name, or null for portfolio)"),
+    benchmark_ids: str = Query(..., description="Comma-separated list of benchmark IDs"),
+    start_date: Optional[date] = Query(None, description="Start date for comparison (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date for comparison (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Compare investment/portfolio performance against public market benchmarks"""
+
+    try:
+        # Parse benchmark IDs
+        benchmark_id_list = [int(bid.strip()) for bid in benchmark_ids.split(",") if bid.strip()]
+
+        if not benchmark_id_list:
+            raise HTTPException(status_code=400, detail="At least one benchmark ID must be provided")
+
+        # Parse selection value based on type
+        if selection_type == "investment":
+            if not selection_value:
+                raise HTTPException(status_code=400, detail="Investment ID required for investment selection")
+            selection_value = int(selection_value)
+        elif selection_type == "asset_class":
+            if not selection_value:
+                raise HTTPException(status_code=400, detail="Asset class required for asset class selection")
+            # Keep as string for asset class
+        elif selection_type == "portfolio":
+            selection_value = None  # Portfolio doesn't need a value
+        else:
+            raise HTTPException(status_code=400, detail="Invalid selection_type. Must be 'investment', 'asset_class', or 'portfolio'")
+
+        # Get performance comparison
+        service = get_relative_performance_service(db)
+        result = service.compare_performance(
+            selection_type=selection_type,
+            selection_value=selection_value,
+            benchmark_ids=benchmark_id_list,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        return result
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid parameter: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating relative performance: {str(e)}")
+
+@app.get("/api/relative-performance/investments")
+def get_investments_for_selection(
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """Get list of investments and asset classes for selection"""
+
+    try:
+        # Get all investments
+        investments = db.query(models.Investment).all()
+
+        # Get unique asset classes
+        asset_classes = db.query(models.Investment.asset_class).distinct().all()
+
+        return {
+            "investments": [
+                {
+                    "id": inv.id,
+                    "name": inv.name,
+                    "asset_class": inv.asset_class.value,
+                    "vintage_year": inv.vintage_year,
+                    "manager": inv.manager
+                }
+                for inv in investments
+            ],
+            "asset_classes": [ac[0].value for ac in asset_classes if ac[0]]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching investment data: {str(e)}")
 
 # Enable running with basic python command
 if __name__ == "__main__":

@@ -27,7 +27,7 @@
   background-color: #f8f9fa;
 }
 
-.tab-button {
+.entities-page .tab-button {
   padding: 12px 24px;
   border: none;
   background-color: transparent;
@@ -39,12 +39,12 @@
   position: relative;
 }
 
-.tab-button:hover {
+.entities-page .tab-button:hover {
   background-color: #e9ecef;
   color: #212529;
 }
 
-.tab-button.active {
+.entities-page .tab-button.active {
   background-color: #007bff;
   color: white;
 }

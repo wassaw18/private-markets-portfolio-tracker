@@ -74,7 +74,7 @@
   padding: 0 var(--space-4xl);
 }
 
-.tab-button {
+.add-investment-modal .tab-button {
   background: none;
   border: none;
   padding: var(--space-xl) var(--space-3xl);
@@ -91,23 +91,23 @@
   white-space: nowrap;
 }
 
-.tab-button:hover {
+.add-investment-modal .tab-button:hover {
   color: var(--luxury-dark-gray);
   background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-pearl) 100%);
 }
 
-.tab-button.active {
+.add-investment-modal .tab-button.active {
   color: var(--luxury-navy);
   background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
   border-bottom-color: var(--luxury-gold);
   font-weight: var(--font-weight-bold);
 }
 
-.tab-button.valid {
+.add-investment-modal .tab-button.valid {
   color: #059669;
 }
 
-.tab-button.valid .tab-icon {
+.add-investment-modal .tab-button.valid .tab-icon {
   color: #059669;
   font-weight: bold;
 }

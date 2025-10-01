@@ -417,7 +417,7 @@ const BulkUpload: React.FC = () => {
 
     const hasPrerequisites = section.prerequisites && section.prerequisites.length > 0;
     const prerequisitesMet = !hasPrerequisites || section.prerequisites!.every(
-      prereq => uploadResults[prereq]?.success_count && uploadResults[prereq].success_count > 0
+      prereq => uploadResults[prereq]?.success_count && uploadResults[prereq]?.success_count > 0
     );
 
     return (
@@ -554,12 +554,14 @@ const BulkUpload: React.FC = () => {
   return (
     <div className="operations-container">
       {/* Header */}
+      <div className="luxury-card page-header">
+        <h1 className="luxury-heading-1">Operations Center</h1>
+        <p className="luxury-body-large">Streamlined data management and bulk operations for portfolio administration</p>
+      </div>
+
+      {/* Advanced Options Toggle */}
       <div className="luxury-card">
         <div className="operations-header">
-          <div className="header-content">
-            <h1 className="luxury-heading-1">Operations Center</h1>
-            <p className="luxury-body-large">Streamlined data management and bulk operations for portfolio administration</p>
-          </div>
           <div className="header-actions">
             <button
               className="luxury-button-secondary"

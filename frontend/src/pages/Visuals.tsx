@@ -9,10 +9,6 @@ import PortfolioTimelineChart from '../components/PortfolioTimelineChart';
 import JCurveChart from '../components/JCurveChart';
 import PortfolioForecastPanel from '../components/PortfolioForecastPanel';
 import PerformanceBenchmarkingWidget from '../components/PerformanceBenchmarkingWidget';
-// import RiskAnalysisWidget from '../components/RiskAnalysisWidget';
-// import PortfolioOptimizationWidget from '../components/PortfolioOptimizationWidget';
-// import CashFlowForecastWidget from '../components/CashFlowForecastWidget';
-// import ComprehensiveReportingWidget from '../components/ComprehensiveReportingWidget';
 import './Visuals.css';
 
 const Visuals: React.FC = () => {
@@ -21,7 +17,7 @@ const Visuals: React.FC = () => {
   const [performanceData, setPerformanceData] = useState<Map<number, PerformanceMetrics>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeAnalyticsTab, setActiveAnalyticsTab] = useState<'performance' | 'risk' | 'allocation' | 'trends'>('performance');
+  const [activeAnalyticsTab, setActiveAnalyticsTab] = useState<'performance' | 'risk' | 'allocation' | 'trends' | 'liquidity'>('performance');
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['sp500', 'cambridge_pe']);
 
   const fetchComprehensiveData = async () => {
@@ -70,7 +66,10 @@ const Visuals: React.FC = () => {
     fetchComprehensiveData();
   }, []);
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '$0';
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -79,7 +78,10 @@ const Visuals: React.FC = () => {
     }).format(amount);
   };
 
-  const formatCurrencyCompact = (amount: number) => {
+  const formatCurrencyCompact = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '$0';
+    }
     if (amount >= 1e9) {
       return `$${(amount / 1e9).toFixed(1)}B`;
     } else if (amount >= 1e6) {
@@ -213,8 +215,9 @@ const Visuals: React.FC = () => {
   if (loading) {
     return (
       <div className="visuals-container">
-        <div className="visuals-header">
-          <h2>Portfolio Visuals & Analytics</h2>
+        <div className="luxury-card page-header">
+          <h1 className="luxury-heading-1">Portfolio Visuals & Analytics</h1>
+          <p className="luxury-body-large">Institutional-grade portfolio analysis and data visualization</p>
         </div>
         <div className="loading">Loading dashboard...</div>
       </div>
@@ -224,8 +227,9 @@ const Visuals: React.FC = () => {
   if (error || !summaryStats) {
     return (
       <div className="visuals-container">
-        <div className="visuals-header">
-          <h2>Portfolio Visuals & Analytics</h2>
+        <div className="luxury-card page-header">
+          <h1 className="luxury-heading-1">Portfolio Visuals & Analytics</h1>
+          <p className="luxury-body-large">Institutional-grade portfolio analysis and data visualization</p>
         </div>
         <div className="error-message">{error || 'Unable to load dashboard data'}</div>
       </div>
@@ -234,11 +238,9 @@ const Visuals: React.FC = () => {
 
   return (
     <div className="visuals-container">
-      <div className="visuals-header">
-        <h2>Portfolio Visuals & Analytics</h2>
-        <div className="header-subtitle">
-          Institutional-grade portfolio analysis and data visualization
-        </div>
+      <div className="luxury-card page-header">
+        <h1 className="luxury-heading-1">Portfolio Visuals & Analytics</h1>
+        <p className="luxury-body-large">Institutional-grade portfolio analysis and data visualization</p>
       </div>
 
       {/* Summary Statistics Bar */}
@@ -394,6 +396,12 @@ const Visuals: React.FC = () => {
                 onClick={() => setActiveAnalyticsTab('trends')}
               >
                 📈 Trends
+              </button>
+              <button
+                className={`tab-button ${activeAnalyticsTab === 'liquidity' ? 'active' : ''}`}
+                onClick={() => setActiveAnalyticsTab('liquidity')}
+              >
+                💧 Liquidity & Cash Flow
               </button>
             </div>
           </div>
@@ -555,11 +563,6 @@ const Visuals: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Risk Analysis Widget - Temporarily disabled for compilation */}
-                  {/* <RiskAnalysisWidget
-                    investments={investments}
-                    onRiskSettingsChange={(settings) => console.log('Risk settings changed:', settings)}
-                  /> */}
                 </div>
               </div>
             )}
@@ -659,6 +662,21 @@ const Visuals: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Liquidity & Cash Flow Tab */}
+            {activeAnalyticsTab === 'liquidity' && (
+              <div className="analytics-tab-content">
+                <div className="liquidity-overview">
+                  <div className="liquidity-header">
+                    <h4>Portfolio Liquidity & Cash Flow Analysis</h4>
+                    <p>Cash flow calendar has been moved to the main Liquidity & Cash Flow page for better accessibility</p>
+                  </div>
+                  <div className="liquidity-redirect">
+                    <p>📅 Visit the <strong>Liquidity & Cash Flow</strong> page in the main navigation to access the interactive calendar widget.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -666,23 +684,6 @@ const Visuals: React.FC = () => {
       {/* Portfolio Cash Flow Forecast */}
       <PortfolioForecastPanel />
 
-      {/* Advanced Portfolio Management Widgets - Temporarily disabled for compilation */}
-      {/* <div className="advanced-widgets-section">
-        <PortfolioOptimizationWidget
-          investments={investments}
-          onOptimizationChange={(optimization) => console.log('Optimization updated:', optimization)}
-        />
-
-        <CashFlowForecastWidget
-          investments={investments}
-          onForecastChange={(forecast) => console.log('Forecast updated:', forecast)}
-        />
-
-        <ComprehensiveReportingWidget
-          investments={investments}
-          onReportGenerated={(report) => console.log('Report generated:', report)}
-        />
-      </div> */}
     </div>
   );
 };

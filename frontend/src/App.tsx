@@ -9,7 +9,7 @@ import Documents from './pages/Documents';
 import Entities from './pages/Entities';
 import LiquidityForecast from './pages/LiquidityForecast';
 import BulkUpload from './pages/BulkUpload';
-import BenchmarkManagement from './pages/BenchmarkManagement';
+import Benchmarks from './pages/Benchmarks';
 import PageErrorBoundary from './components/PageErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -106,8 +106,7 @@ function AppContent() {
         </header>
         <main>
           <Navigation />
-          <div className="main-content">
-            <Routes>
+          <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={
                 <PageErrorBoundary pageName="Dashboard">
@@ -150,8 +149,8 @@ function AppContent() {
                 </PageErrorBoundary>
               } />
               <Route path="/benchmarks" element={
-                <PageErrorBoundary pageName="Benchmark Management">
-                  <BenchmarkManagement />
+                <PageErrorBoundary pageName="Benchmark Analysis">
+                  <Benchmarks />
                 </PageErrorBoundary>
               } />
               <Route path="/investment/:id" element={
@@ -159,8 +158,7 @@ function AppContent() {
                   <InvestmentDetails />
                 </PageErrorBoundary>
               } />
-            </Routes>
-          </div>
+          </Routes>
         </main>
       </div>
     </ProtectedRoute>

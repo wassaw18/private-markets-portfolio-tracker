@@ -347,7 +347,12 @@
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Specific column widths to optimize space */
+/* Performance tab needs wider table to accommodate all columns */
+.enhanced-investments-table.performance-tab {
+  min-width: 1200px;
+}
+
+/* Specific column widths to optimize space - Basic Tab */
 .enhanced-investments-table th:nth-child(1) { width: 15%; } /* Name */
 .enhanced-investments-table th:nth-child(2) { width: 12%; } /* Asset Class */
 .enhanced-investments-table th:nth-child(3) { width: 10%; } /* Structure */
@@ -357,6 +362,52 @@
 .enhanced-investments-table th:nth-child(7) { width: 10%; } /* Commitment */
 .enhanced-investments-table th:nth-child(8) { width: 10%; } /* Called */
 .enhanced-investments-table th:nth-child(9) { width: 18%; } /* Actions */
+
+/* Performance Tab Column Widths - 10 columns total */
+.enhanced-investments-table.performance-tab th:nth-child(1) { width: 18%; } /* Name */
+.enhanced-investments-table.performance-tab th:nth-child(2) { width: 9%; }  /* Target IRR */
+.enhanced-investments-table.performance-tab th:nth-child(3) { width: 9%; }  /* Actual IRR */
+.enhanced-investments-table.performance-tab th:nth-child(4) { width: 12%; } /* Performance */
+.enhanced-investments-table.performance-tab th:nth-child(5) { width: 8%; }  /* TVPI */
+.enhanced-investments-table.performance-tab th:nth-child(6) { width: 8%; }  /* DPI */
+.enhanced-investments-table.performance-tab th:nth-child(7) { width: 8%; }  /* RVPI */
+.enhanced-investments-table.performance-tab th:nth-child(8) { width: 10%; } /* Current NAV */
+.enhanced-investments-table.performance-tab th:nth-child(9) { width: 9%; }  /* Total Called */
+.enhanced-investments-table.performance-tab th:nth-child(10) { width: 9%; } /* Total Distributions */
+
+/* Performance Tab Cell Constraints */
+.enhanced-investments-table.performance-tab td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 8px 6px !important;
+  /* Override any flex behavior that could interfere */
+  display: table-cell !important;
+}
+
+/* Performance Tab - ensure proper cell content wrapping */
+.enhanced-investments-table.performance-tab td.performance-metric,
+.enhanced-investments-table.performance-tab td.performance-indicator,
+.enhanced-investments-table.performance-tab td.currency {
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
+  /* Force table cell display to override any global flex styles */
+  display: table-cell !important;
+  vertical-align: middle !important;
+}
+
+/* Critical override: Ensure table maintains proper layout */
+.enhanced-investments-table.performance-tab tbody tr,
+.enhanced-investments-table.performance-tab thead tr {
+  display: table-row !important;
+}
+
+.enhanced-investments-table.performance-tab {
+  display: table !important;
+  table-layout: fixed !important;
+}
 
 .enhanced-investments-table th {
   background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 100%);
@@ -402,14 +453,13 @@
   background: linear-gradient(145deg, transparent 0%, var(--luxury-cream) 100%);
 }
 
-/* Strategy column - allow wrapping */
+/* Strategy column - truncate with ellipses (Basic Info tab only) */
 .enhanced-investments-table td:nth-child(5) {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  line-height: 1.1;
-  max-height: 2.2rem;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  max-width: 150px;
 }
 
 .enhanced-investments-table tbody tr:hover {
@@ -458,11 +508,20 @@
   border: 1px solid rgba(212, 175, 55, 0.1);
 }
 
-/* Entity Cell Styles - Professional Display */
+/* Entity Cell Styles - Simplified Display */
 .entity-cell {
   padding: 12px 16px !important;
 }
 
+.entity-name-simple {
+  font-weight: 600 !important;
+  color: #1e293b;
+  font-size: 0.875rem !important;
+  font-family: 'Inter', sans-serif;
+  display: inline-block;
+}
+
+/* Legacy styles for other tabs that might still use entity-info */
 .entity-info {
   display: flex;
   flex-direction: column;
@@ -490,6 +549,31 @@
   letter-spacing: 0.05em;
 }
 
+/* Strategy Cell Styles - Space-saving with ellipses */
+.strategy-cell {
+  max-width: 150px;
+  padding: 12px 16px !important;
+  position: relative;
+  cursor: help;
+}
+
+.strategy-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.strategy-cell:hover .strategy-text {
+  color: #d4af37;
+}
+
 .no-entity {
   color: #dc2626;
   font-style: italic;
@@ -507,8 +591,30 @@
   text-align: center;
   white-space: nowrap;
   padding: 12px 16px !important;
-  min-width: 120px;
-  width: 120px;
+  min-width: 140px;
+  width: 140px;
+  overflow: visible !important;
+  text-overflow: unset !important;
+}
+
+/* Fix icon button visibility in table - Override low opacity from luxury-design-system */
+.enhanced-investments-table .actions .icon-button {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure delete icons are clearly visible */
+.enhanced-investments-table .actions .icon-button.delete-icon {
+  opacity: 1 !important;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.enhanced-investments-table .actions .icon-button.delete-icon:hover {
+  opacity: 1 !important;
+  transform: scale(1.1);
+  background-color: rgba(231, 76, 60, 0.1);
+  border-radius: 4px;
 }
 
 .details-button, .edit-button, .delete-button {
@@ -569,110 +675,139 @@
 
 
 /* Performance-Specific Styles - Institutional Grade */
-.performance-metric {
-  text-align: right;
+/* Use more specific selectors to override global conflicts */
+.enhanced-investments-table .performance-metric,
+.enhanced-investments-table td.performance-metric {
+  text-align: right !important;
   font-family: 'SF Mono', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
   font-weight: 700;
   font-size: 0.875rem;
-  padding: 10px 14px !important;
-  border-radius: 10px;
+  padding: 8px 10px !important;
+  border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.025em;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 2px solid transparent;
+  display: inline-block !important;
+  min-width: 80px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  /* Override any flex display from other components */
+  flex-direction: initial !important;
+  align-items: initial !important;
+  gap: initial !important;
 }
 
-.performance-metric.outperform {
+.enhanced-investments-table .performance-metric.outperform,
+.enhanced-investments-table td.performance-metric.outperform {
   color: #065f46 !important;
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
   border: 2px solid #10b981;
   box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
+  display: inline-block !important;
 }
 
-.performance-metric.underperform {
+.enhanced-investments-table .performance-metric.underperform,
+.enhanced-investments-table td.performance-metric.underperform {
   color: #7f1d1d !important;
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
   border: 2px solid #ef4444;
   box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+  display: inline-block !important;
 }
 
-.performance-metric.ontrack {
+.enhanced-investments-table .performance-metric.ontrack,
+.enhanced-investments-table td.performance-metric.ontrack {
   color: #92400e !important;
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
   border: 2px solid #f59e0b;
   box-shadow: 0 4px 8px rgba(245, 158, 11, 0.2);
+  display: inline-block !important;
 }
 
-.performance-metric.unknown {
+.enhanced-investments-table .performance-metric.unknown,
+.enhanced-investments-table td.performance-metric.unknown {
   color: #6c757d !important;
   background-color: #f8f9fa !important;
   font-style: italic;
+  display: inline-block !important;
 }
 
-.performance-indicator {
-  text-align: center;
+.enhanced-investments-table .performance-indicator,
+.enhanced-investments-table td.performance-indicator {
+  text-align: center !important;
+  display: table-cell !important;
+  vertical-align: middle !important;
 }
 
-.performance-badge {
-  display: inline-flex;
+.enhanced-investments-table .performance-badge,
+.enhanced-investments-table td .performance-badge {
+  display: inline-flex !important;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
   font-weight: 700;
   font-family: 'Inter', sans-serif;
   text-align: center;
   white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border: 2px solid transparent;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Ensure proper table cell behavior */
+  vertical-align: middle;
+  flex-direction: row !important;
 }
 
-.performance-badge.outperform {
+.enhanced-investments-table .performance-badge.outperform,
+.enhanced-investments-table td .performance-badge.outperform {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: 2px solid #065f46;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  display: inline-flex !important;
 }
 
-.performance-badge.underperform {
+.enhanced-investments-table .performance-badge.underperform,
+.enhanced-investments-table td .performance-badge.underperform {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: 2px solid #7f1d1d;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  display: inline-flex !important;
 }
 
-.performance-badge.ontrack {
+.enhanced-investments-table .performance-badge.ontrack,
+.enhanced-investments-table td .performance-badge.ontrack {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
   border: 2px solid #92400e;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  display: inline-flex !important;
 }
 
 /* Hover effects for performance metrics */
-.performance-metric:hover {
+.enhanced-investments-table .performance-metric:hover,
+.enhanced-investments-table td.performance-metric:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.performance-badge:hover {
+.enhanced-investments-table .performance-badge:hover,
+.enhanced-investments-table td .performance-badge:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* Enhanced styling for performance table headers */
-.enhanced-investments-table thead th:nth-child(3),
-.enhanced-investments-table thead th:nth-child(4),
-.enhanced-investments-table thead th:nth-child(5),
-.enhanced-investments-table thead th:nth-child(6),
-.enhanced-investments-table thead th:nth-child(7) {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 3px solid #007bff;
-}
+/* Remove conflicting header styles to ensure consistent navy/dark blue headers across all tabs */
 
 /* Risk Rating Badges - Institutional Grade */
 .risk-badge {
@@ -869,6 +1004,12 @@
     padding: 6px 12px;
     font-size: 0.8rem;
     min-width: 60px;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure icon buttons are visible on mobile too */
+  .enhanced-investments-table .actions .icon-button {
     opacity: 1 !important;
     visibility: visible !important;
   }

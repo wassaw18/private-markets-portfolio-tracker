@@ -850,30 +850,46 @@ async def get_quarterly_returns(
         List of quarterly returns data
     """
 
-    # Query the quarterly_benchmarks table for real data
-    from app.models import QuarterlyBenchmark
-
+    # Query the PitchBookQuarterlyReturns table which contains 665 records
     try:
-        results = db.query(QuarterlyBenchmark).all()
+        query = db.query(PitchBookQuarterlyReturns)
+
+        # Apply filters
+        if asset_class:
+            query = query.filter(PitchBookQuarterlyReturns.asset_class == asset_class)
+        if start_date:
+            query = query.filter(PitchBookQuarterlyReturns.quarter_end_date >= start_date)
+        if end_date:
+            query = query.filter(PitchBookQuarterlyReturns.quarter_end_date <= end_date)
+
+        # Order by date and asset class for consistent results
+        query = query.order_by(
+            PitchBookQuarterlyReturns.quarter_end_date.desc(),
+            PitchBookQuarterlyReturns.asset_class
+        )
+
+        results = query.all()
 
         quarterly_returns = []
         for record in results:
             quarterly_returns.append(QuarterlyReturn(
                 asset_class=record.asset_class,
-                quarter_year=record.quarter_year,
-                quarter_date=record.quarter_date,
-                top_quartile_return=record.return_value,  # Using single return value for now
-                median_return=record.return_value,        # Could be enhanced with separate fields
-                bottom_quartile_return=record.return_value,
-                sample_size=100  # Placeholder - could be added to model later
+                quarter_year=record.time_period,  # Use time_period field (e.g., "2024-Q1")
+                quarter_date=record.quarter_end_date,
+                # Since PitchBookQuarterlyReturns stores single return values, not quartiles,
+                # we'll put the single return value in the median field and leave quartiles as null
+                top_quartile_return=None,
+                median_return=float(record.return_value) if record.return_value else None,
+                bottom_quartile_return=None,
+                sample_size=None  # Not available in this table
             ))
 
+        logger.info(f"Returning {len(quarterly_returns)} quarterly return records")
         return quarterly_returns
 
     except Exception as e:
-        # Fallback to empty list if query fails
-        logger.error(f"Failed to query quarterly benchmarks: {e}")
-        return []
+        logger.error(f"Failed to query quarterly returns: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 # =====================================================
 # COMPREHENSIVE IMPORT FUNCTIONS

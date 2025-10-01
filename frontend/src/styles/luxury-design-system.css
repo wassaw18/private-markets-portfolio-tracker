@@ -40,6 +40,27 @@
   --luxury-warning: #F39C12;
   --luxury-error: #E74C3C;
   --luxury-info: #3498DB;
+
+  /* Text Colors */
+  --luxury-text-primary: #1d2129;
+  --luxury-text-secondary: #65676b;
+  --luxury-text-tertiary: #8a8d91;
+  --luxury-text-disabled: #bdc1c6;
+
+  /* Surface & Interface Colors */
+  --luxury-surface: #ffffff;
+  --luxury-border: #e1e8ed;
+  --luxury-primary: #2563eb;
+  --luxury-primary-light: #3b82f6;
+  --luxury-primary-background: #e3f2fd;
+
+  /* Background Variations */
+  --luxury-background-subtle: #f8f9fa;
+  --luxury-background-muted: #f8f9fa;
+  --luxury-background-hover: #f0f2f5;
+
+  /* Transition */
+  --luxury-transition: all 0.3s ease;
   
   /* Shadows & Depth */
   --luxury-shadow-subtle: 0 2px 12px rgba(11, 20, 38, 0.04);
@@ -245,13 +266,7 @@ body {
   border: 1px solid var(--luxury-pale-gray);
   border-radius: var(--radius-xl);
   box-shadow: var(--luxury-shadow-subtle);
-  transition: all var(--transition-medium);
   overflow: hidden;
-}
-
-.luxury-card:hover {
-  box-shadow: var(--luxury-shadow-medium);
-  transform: translateY(-2px);
 }
 
 .luxury-card-premium {
@@ -268,6 +283,23 @@ body {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, var(--luxury-gold), var(--luxury-bronze));
+}
+
+/* Page Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 0;
+  padding: var(--space-xl) var(--space-xxl);
+}
+
+.page-header .luxury-heading-1 {
+  margin-bottom: var(--space-sm);
+  color: var(--luxury-text-primary);
+}
+
+.page-header .luxury-body-large {
+  color: var(--luxury-text-secondary);
+  margin: 0;
 }
 
 /* Luxury Buttons */

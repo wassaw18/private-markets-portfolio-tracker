@@ -2,7 +2,7 @@
   text-align: center;
   max-width: 1400px;
   margin: 0 auto;
-  padding: var(--space-2xl);
+  padding: var(--space-md);
   min-height: 100vh;
   background: linear-gradient(135deg, var(--luxury-pearl) 0%, var(--luxury-smoke) 100%);
 }

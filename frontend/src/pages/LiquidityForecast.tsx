@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Investment } from '../types/investment';
 import { investmentAPI, InvestmentFilters } from '../services/api';
+import CashFlowCalendar from '../components/CashFlowCalendar';
 import LiquidityForecastDashboard from '../components/LiquidityForecastDashboard';
 import PageErrorBoundary from '../components/PageErrorBoundary';
 import './LiquidityForecast.css';
@@ -47,7 +48,22 @@ const LiquidityForecast: React.FC = () => {
   return (
     <PageErrorBoundary>
       <div className="liquidity-forecast-page">
-        <LiquidityForecastDashboard investments={investments} currentCashBalance={5000000} />
+        <div className="luxury-card page-header">
+          <h1 className="luxury-heading-1">Liquidity Forecast</h1>
+          <p className="luxury-body-large">Portfolio cash flow analysis and liquidity planning</p>
+        </div>
+
+        <div className="cash-flow-calendar-section">
+          <div className="section-header">
+            <h2>Portfolio Cash Flow Calendar</h2>
+            <p>Interactive calendar view of your portfolio's cash flow timing and patterns</p>
+          </div>
+          <CashFlowCalendar />
+        </div>
+
+        <div className="liquidity-dashboard-section">
+          <LiquidityForecastDashboard investments={investments} currentCashBalance={5000000} />
+        </div>
       </div>
     </PageErrorBoundary>
   );

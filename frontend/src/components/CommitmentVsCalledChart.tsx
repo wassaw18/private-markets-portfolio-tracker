@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { CommitmentVsCalledData } from '../types/investment';
 import { dashboardAPI } from '../services/api';
 import './ChartComponents.css';
@@ -8,7 +8,7 @@ const CommitmentVsCalledChart: React.FC = () => {
   const [data, setData] = useState<CommitmentVsCalledData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewType, setViewType] = useState<'stacked' | 'pie' | 'liability'>('pie');
+  const [viewType, setViewType] = useState<'stacked' | 'liability'>('stacked');
 
   const fetchData = async () => {
     try {
@@ -28,7 +28,10 @@ const CommitmentVsCalledChart: React.FC = () => {
     fetchData();
   }, []);
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '$0';
+    }
     if (value >= 1e9) {
       return `$${(value / 1e9).toFixed(1)}B`;
     } else if (value >= 1e6) {
@@ -77,19 +80,6 @@ const CommitmentVsCalledChart: React.FC = () => {
     }
   ];
 
-  // Prepare data for pie chart with luxury colors
-  const pieData = [
-    {
-      name: 'Called Capital',
-      value: data.called_amount,
-      color: '#2ECC71' // Luxury Success Green
-    },
-    {
-      name: 'Uncalled Capital',
-      value: data.uncalled_amount,
-      color: '#C9A96E' // Luxury Gold
-    }
-  ];
 
   const deploymentPercentage = data.commitment_amount > 0 ? 
     ((data.called_amount / data.commitment_amount) * 100).toFixed(1) : '0';
@@ -99,23 +89,17 @@ const CommitmentVsCalledChart: React.FC = () => {
       <div className="chart-header">
         <h3>Commitment vs Called Capital</h3>
         <div className="chart-controls">
-          <button 
+          <button
             className={`control-button ${viewType === 'stacked' ? 'active' : ''}`}
             onClick={() => setViewType('stacked')}
           >
             Stacked Bar
           </button>
-          <button 
+          <button
             className={`control-button ${viewType === 'liability' ? 'active' : ''}`}
             onClick={() => setViewType('liability')}
           >
             Liability View
-          </button>
-          <button 
-            className={`control-button ${viewType === 'pie' ? 'active' : ''}`}
-            onClick={() => setViewType('pie')}
-          >
-            Pie Chart
           </button>
         </div>
       </div>
@@ -125,19 +109,19 @@ const CommitmentVsCalledChart: React.FC = () => {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={barData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 stroke="#666"
                 fontSize={12}
                 tick={{ fill: '#666' }}
               />
-              <YAxis 
+              <YAxis
                 stroke="#666"
                 fontSize={12}
                 tick={{ fill: '#666' }}
                 tickFormatter={formatCurrency}
               />
-              <Tooltip 
+              <Tooltip
                 formatter={formatTooltip}
                 contentStyle={{
                   backgroundColor: '#fff',
@@ -150,7 +134,7 @@ const CommitmentVsCalledChart: React.FC = () => {
               <Bar dataKey="uncalled_amount" stackId="commitment" fill="#C9A96E" name="Uncalled Capital" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        ) : viewType === 'liability' ? (
+        ) : (
           <div className="liability-visualizer">
             <div className="liability-header">
               <h4>Outstanding Commitment Liability</h4>
@@ -158,14 +142,14 @@ const CommitmentVsCalledChart: React.FC = () => {
             </div>
             <div className="liability-bar-container">
               <div className="liability-bar">
-                <div 
+                <div
                   className="called-portion"
                   style={{ width: `${(data.called_amount / data.commitment_amount) * 100}%` }}
                   title={`Called Capital: ${formatCurrency(data.called_amount)}`}
                 >
                   <span className="portion-label">Called</span>
                 </div>
-                <div 
+                <div
                   className="uncalled-portion"
                   style={{ width: `${(data.uncalled_amount / data.commitment_amount) * 100}%` }}
                   title={`Uncalled Capital: ${formatCurrency(data.uncalled_amount)}`}
@@ -188,34 +172,6 @@ const CommitmentVsCalledChart: React.FC = () => {
               <p>💡 Outstanding commitments represent future capital calls that may be requested by fund managers.</p>
             </div>
           </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value: number) => [formatCurrency(value), '']}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e9ecef',
-                  borderRadius: '6px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
         )}
       </div>
 

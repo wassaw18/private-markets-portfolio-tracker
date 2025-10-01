@@ -108,7 +108,7 @@ const Holdings: React.FC = () => {
   // Get unique filter options
   const filterOptions = useMemo(() => {
     const assetClasses = Array.from(new Set(investments.map(inv => inv.asset_class))).sort();
-    const entities = Array.from(new Set(investments.map(inv => inv.entity?.name).filter(Boolean))).sort();
+    const entities = Array.from(new Set(investments.map(inv => inv.entity?.name).filter(Boolean))).sort() as string[];
     const vintageYears = Array.from(new Set(investments.map(inv => inv.vintage_year?.toString()).filter(Boolean))).sort();
 
     return { assetClasses, entities, vintageYears };
@@ -140,27 +140,28 @@ const Holdings: React.FC = () => {
 
   return (
     <div className="holdings-container">
+      <div className="luxury-card page-header">
+        <h1 className="luxury-heading-1">Portfolio Holdings</h1>
+        <p className="luxury-body-large">Manage and analyze your investment portfolio holdings</p>
+      </div>
+
       <div className="luxury-card holdings-header-card">
         <div className="holdings-header">
-          <div className="header-main">
-            <h1 className="luxury-heading-1">Portfolio Holdings</h1>
-            <div className="header-actions">
-              <button
-                className="luxury-button-secondary"
-                onClick={() => setShowCreateEntityModal(true)}
-                title="Create a new entity (Individual, Trust, LLC, etc.)"
-              >
-                Add Entity
-              </button>
-              <button
-                className="luxury-button-primary"
-                onClick={() => setShowAddModal(true)}
-              >
-                Add Investment
-              </button>
-            </div>
+          <div className="header-actions">
+            <button
+              className="luxury-button-secondary"
+              onClick={() => setShowCreateEntityModal(true)}
+              title="Create a new entity (Individual, Trust, LLC, etc.)"
+            >
+              Add Entity
+            </button>
+            <button
+              className="luxury-button-primary"
+              onClick={() => setShowAddModal(true)}
+            >
+              Add Investment
+            </button>
           </div>
-
         </div>
       </div>
 

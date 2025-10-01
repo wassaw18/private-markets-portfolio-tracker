@@ -277,15 +277,14 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.investment_structure}</td>
               <td className="entity-cell">
                 {investment.entity ? (
-                  <div className="entity-info">
-                    <span className="entity-name">{investment.entity.name}</span>
-                    <span className="entity-type">({investment.entity.entity_type})</span>
-                  </div>
+                  <span className="entity-name-simple">{investment.entity.name}</span>
                 ) : (
                   <span className="no-entity">No entity assigned</span>
                 )}
               </td>
-              <td>{investment.strategy}</td>
+              <td className="strategy-cell" title={investment.strategy || ''}>
+                <span className="strategy-text">{investment.strategy}</span>
+              </td>
               <td>{investment.vintage_year}</td>
               <td className="status-cell">
                 <span className={`status-badge ${investment.status.toLowerCase()}`}>
@@ -302,13 +301,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                   className="icon-button edit-icon"
                 >
                   ✏️
-                </button>
-                <button
-                  onClick={() => handleStatusManagement(investment)}
-                  title="Manage Investment Status"
-                  className="status-button"
-                >
-                  Status
                 </button>
                 <button
                   onClick={() => handleDelete(investment.id, investment.name)}
@@ -345,7 +337,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
             <th>Perf Fee</th>
             <th>Hurdle Rate</th>
             <th>Other Fees</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -367,29 +358,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.performance_fee ? formatPercentage(investment.performance_fee) : '-'}</td>
               <td>{investment.hurdle_rate ? formatPercentage(investment.hurdle_rate) : '-'}</td>
               <td className="currency">{formatCurrency(investment.fees)}</td>
-              <td className="actions">
-                <button
-                  onClick={() => handleEdit(investment)}
-                  title="Edit Investment"
-                  className="icon-button edit-icon"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => handleStatusManagement(investment)}
-                  title="Manage Investment Status"
-                  className="status-button"
-                >
-                  Status
-                </button>
-                <button
-                  onClick={() => handleDelete(investment.id, investment.name)}
-                  title="Delete Investment"
-                  className="icon-button delete-icon"
-                >
-                  🗑️
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>
@@ -413,7 +381,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
             <th>Investment Period</th>
             <th>Fund Life</th>
             <th>Reporting Freq</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -435,29 +402,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.investment_period ? `${investment.investment_period}y` : '-'}</td>
               <td>{investment.fund_life ? `${investment.fund_life}y` : '-'}</td>
               <td>{investment.reporting_frequency || '-'}</td>
-              <td className="actions">
-                <button
-                  onClick={() => handleEdit(investment)}
-                  title="Edit Investment"
-                  className="icon-button edit-icon"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => handleStatusManagement(investment)}
-                  title="Manage Investment Status"
-                  className="status-button"
-                >
-                  Status
-                </button>
-                <button
-                  onClick={() => handleDelete(investment.id, investment.name)}
-                  title="Delete Investment"
-                  className="icon-button delete-icon"
-                >
-                  🗑️
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>
@@ -479,7 +423,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
             <th>Tax Classification</th>
             <th>Due Diligence Date</th>
             <th>IC Approval Date</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -505,29 +448,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td>{investment.tax_classification || '-'}</td>
               <td>{investment.due_diligence_date || '-'}</td>
               <td>{investment.ic_approval_date || '-'}</td>
-              <td className="actions">
-                <button
-                  onClick={() => handleEdit(investment)}
-                  title="Edit Investment"
-                  className="icon-button edit-icon"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => handleStatusManagement(investment)}
-                  title="Manage Investment Status"
-                  className="status-button"
-                >
-                  Status
-                </button>
-                <button
-                  onClick={() => handleDelete(investment.id, investment.name)}
-                  title="Delete Investment"
-                  className="icon-button delete-icon"
-                >
-                  🗑️
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>
@@ -548,7 +468,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
 
     return (
       <div className="table-container">
-        <table className="enhanced-investments-table">
+        <table className="enhanced-investments-table performance-tab">
           <thead>
             <tr>
               <th className="sortable" onClick={() => handleSort('name')}>
@@ -563,7 +483,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <th>Current NAV</th>
               <th>Total Called</th>
               <th>Total Distributions</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -572,11 +491,11 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               const actualIRR = performance?.irr;
               const targetIRR = investment.target_irr;
               const performanceStatus = getPerformanceStatus(actualIRR, targetIRR);
-              
+
               return (
                 <tr key={investment.id}>
                   <td className="investment-name">
-                    <span 
+                    <span
                       onClick={() => handleViewDetails(investment.id)}
                       style={{
                         color: '#007bff',
@@ -631,22 +550,6 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                   </td>
                   <td className="currency">
                     {performance?.total_distributions ? formatCurrency(performance.total_distributions) : '$0'}
-                  </td>
-                  <td className="actions">
-                    <span
-                      onClick={() => handleEdit(investment)}
-                      title="Edit Investment"
-                      className="icon-button edit-icon"
-                    >
-                      ✏️
-                    </span>
-                    <span
-                      onClick={() => handleDelete(investment.id, investment.name)}
-                      title="Delete Investment"
-                      className="icon-button delete-icon"
-                    >
-                      🗑️
-                    </span>
                   </td>
                 </tr>
               );
