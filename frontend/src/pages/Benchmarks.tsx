@@ -9,6 +9,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import { jwtAPI } from '../services/api-jwt';
 import './Benchmarks.css';
 
 interface Benchmark {
@@ -83,6 +84,12 @@ interface PitchBookQuarterlyReturns {
   median_return: number | null;
   bottom_quartile_return: number | null;
   sample_size: number | null;
+}
+
+interface InvestmentsResponse {
+  investments: Investment[];
+  asset_classes: string[];
+  earliest_portfolio_date: string;
 }
 
 // Helper functions for chart data preparation and styling
@@ -218,14 +225,16 @@ const Benchmarks: React.FC = () => {
       setError(null);
 
       // Fetch benchmarks
-      const benchmarksResponse = await fetch('/api/relative-performance/benchmarks');
-      if (!benchmarksResponse.ok) throw new Error('Failed to fetch benchmarks');
-      const benchmarksData = await benchmarksResponse.json();
+      const benchmarksData = await jwtAPI.request({
+        url: '/api/relative-performance/benchmarks',
+        method: 'GET'
+      }) as Benchmark[];
 
       // Fetch investments and asset classes
-      const investmentsResponse = await fetch('/api/relative-performance/investments');
-      if (!investmentsResponse.ok) throw new Error('Failed to fetch investments');
-      const investmentsData = await investmentsResponse.json();
+      const investmentsData = await jwtAPI.request({
+        url: '/api/relative-performance/investments',
+        method: 'GET'
+      }) as InvestmentsResponse;
 
       setBenchmarks(benchmarksData);
       setInvestments(investmentsData.investments);
@@ -487,13 +496,10 @@ const Benchmarks: React.FC = () => {
         params.append('selection_value', selectedValue);
       }
 
-      const response = await fetch(`/api/relative-performance/compare?${params}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to run comparison');
-      }
-
-      const result = await response.json();
+      const result = await jwtAPI.request({
+        url: `/api/relative-performance/compare?${params}`,
+        method: 'GET'
+      }) as ComparisonResult;
       setComparisonResult(result);
 
     } catch (err: any) {

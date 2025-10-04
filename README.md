@@ -1,8 +1,16 @@
 # Private Markets Portfolio Tracker
 
-A comprehensive, institutional-grade portfolio management system designed for family offices and private markets investors. Built with React (TypeScript) frontend and FastAPI (Python) backend.
+A comprehensive, institutional-grade portfolio management system designed for family offices and private markets investors. Built with React (TypeScript) frontend and FastAPI (Python) backend with multi-tenant architecture and JWT authentication.
 
 ## 🎯 **Key Features**
+
+### **🏛️ Multi-Tenant Architecture & Security**
+- **JWT Authentication System** with secure token-based authentication and automatic refresh
+- **Role-Based Access Control** with Admin, Manager, and Viewer permission levels
+- **Tenant Data Isolation** ensuring complete data segregation between organizations
+- **User Management System** with tenant-specific user accounts and permissions
+- **Secure Session Management** with token expiration and renewal mechanisms
+- **Production-Ready Authentication** supporting multiple organizations and users
 
 ### **📊 Investment Management & Performance**
 - **Professional Investment Dashboard** with clean, family-office-grade UI design  
@@ -52,11 +60,15 @@ A comprehensive, institutional-grade portfolio management system designed for fa
 - **Reference Data Tables** with filterable market benchmark datasets
 
 ### **📄 Document Management**
-- **Secure Document Upload System** with drag-and-drop interface
-- **Document Categorization** with Investment Reports, Legal Documents, etc.
-- **Document Status Tracking** (Pending, Received, Processed, Archived)
-- **Document Search and Filtering** with advanced filter options
-- **Investment-Linked Documents** for organized document management
+- **Enterprise Document Management System** with full tenant isolation
+- **Advanced Document Upload** with drag-and-drop interface and file validation
+- **Comprehensive Categorization** (Capital Calls, K-1 Forms, Quarterly Reports, GP Correspondence, etc.)
+- **Document Status Workflow** (Pending Review, Approved, Archived, etc.)
+- **Powerful Search & Filtering** with full-text search and metadata filtering
+- **Investment & Entity Linking** for organized document relationships
+- **Document Statistics Dashboard** with analytics and reporting
+- **Tag Management System** for flexible document organization
+- **Secure File Storage** with access control and audit trails
 
 ## 🚀 **Quick Start**
 
@@ -96,19 +108,23 @@ npm install
 
 #### **4. Start Application**
 ```bash
-# Terminal 1: Backend (from project root)
+# Terminal 1: Multi-Tenant Backend (from project root)
 source venv/bin/activate
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app.main_tenant:app --host 0.0.0.0 --port 8000 --reload
 
 # Terminal 2: Frontend (from frontend/ directory)
 cd frontend
 npm start
+
+# Alternative: Legacy Single-Tenant Backend
+# python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 #### **5. Access Application**
 - **Application**: http://localhost:3000
-- **API Documentation**: http://localhost:8000/docs  
-- **Default Login**: admin / password
+- **API Documentation**: http://localhost:8000/docs
+- **Default Admin Login**: admin / admin
+- **Default Manager Login**: manager / manager
 
 ## 📁 **Project Structure**
 
@@ -119,20 +135,26 @@ private-markets-tracker/
 ├── requirements.txt              # Python dependencies
 ├── portfolio_tracker.db         # SQLite database (created on first run)
 ├── app/                          # FastAPI Backend
-│   ├── main.py                   # API endpoints and application setup
-│   ├── models.py                 # SQLAlchemy database models
+│   ├── main_tenant.py            # Multi-tenant API with JWT authentication
+│   ├── main.py                   # Legacy single-tenant API
+│   ├── models.py                 # SQLAlchemy database models with tenant support
 │   ├── schemas.py                # Pydantic request/response schemas
-│   ├── crud.py                   # Database operations
+│   ├── auth.py                   # JWT authentication and authorization
+│   ├── crud_tenant.py            # Tenant-aware database operations
+│   ├── crud.py                   # Legacy database operations
 │   ├── database.py               # Database configuration
 │   ├── performance.py            # Portfolio performance calculations
+│   ├── document_service.py       # Document management system
 │   ├── excel_template_service.py # Excel template & bulk upload system
 │   ├── entity_relationships.py   # Entity hierarchy management
-│   ├── document_service.py       # Document management system
 │   ├── calendar_service.py       # Cash flow calendar functionality
 │   ├── dashboard.py              # Dashboard analytics
 │   ├── benchmark_service.py      # Benchmark data management
 │   ├── pme_service.py            # PME analysis and calculation engine
+│   ├── migration_utility.py      # Database migration utilities
 │   └── routers/                  # API route modules
+│       ├── auth.py               # Authentication endpoints
+│       ├── tenant_api.py         # Tenant-aware API endpoints
 │       ├── pitchbook_benchmarks.py  # PitchBook benchmark endpoints
 │       └── relative_performance.py  # Relative performance analysis
 ├── frontend/                     # React TypeScript Frontend
@@ -173,12 +195,15 @@ private-markets-tracker/
 ## 🔧 **Architecture**
 
 ### **Backend (FastAPI + SQLAlchemy)**
+- **Multi-Tenant Architecture** with complete data isolation between organizations
+- **JWT Authentication** with role-based access control and automatic token refresh
 - **RESTful API** with automatic OpenAPI documentation at `/docs`
-- **SQLite Database** with comprehensive schema for private markets data
-- **Pydantic Validation** for type safety and data integrity  
+- **SQLite Database** with comprehensive schema for private markets data and tenant support
+- **Pydantic Validation** for type safety and data integrity
 - **Advanced Performance Calculations** with true portfolio-level IRR
 - **Bulk Upload System** with Excel template generation and validation
 - **Entity Relationship Management** with complex hierarchy support
+- **Secure Document Management** with tenant-aware file storage and metadata
 
 ### **Frontend (React + TypeScript)**
 - **Modern React** with hooks and functional components
@@ -237,10 +262,12 @@ private-markets-tracker/
 - **Database Constraints**: Foreign key relationships and data consistency enforcement
 
 ### **Authentication & Access**
-- **Development Authentication**: Basic admin/password system for development
-- **Session Management**: Secure session handling with proper logout
-- **Production Ready**: Easily configurable for JWT/OAuth integration
+- **Production JWT Authentication**: Secure token-based authentication with automatic refresh
+- **Role-Based Access Control**: Admin, Manager, and Viewer permission levels
+- **Multi-Tenant Security**: Complete data isolation between organizations
+- **Session Management**: Secure token handling with expiration and renewal
 - **User Context Tracking**: Request-level user identification for audit trails
+- **OAuth Ready**: Extensible authentication system for enterprise integration
 
 ### **Development Security Notes**
 - ✅ **No Personal Data**: All sample data is generic and fictional
@@ -274,12 +301,13 @@ curl "http://localhost:8000/api/portfolio/performance"
 ## 📚 **Key Features Status**
 
 ### **✅ Fully Implemented**
+- **Multi-Tenant Architecture**: Complete JWT authentication with role-based access control
+- **Enterprise Document Management**: Full document lifecycle with tenant isolation and search
 - **Investment Management**: Complete CRUD with professional modal interface
 - **Portfolio Performance**: True IRR calculations with 12-month NAV windows
 - **Cash Flow Management**: Full cash flow tracking with negative amount support
 - **Bulk Upload System**: Excel templates with validation for investments, entities, NAVs, cash flows
 - **Entity Management**: Complete entity and family member management
-- **Document Management**: File upload, categorization, and search functionality
 - **Executive Dashboard**: Clean portfolio summary with asset class breakdown and entity analysis
 - **Individual Investment Views**: Detailed investment pages with performance data
 - **Comprehensive Benchmark Management**: Dedicated Benchmarks page with PME analysis
@@ -292,8 +320,8 @@ curl "http://localhost:8000/api/portfolio/performance"
 ### **🏗️ In Development**
 - **Advanced Forecasting**: J-curve modeling and scenario analysis
 - **Liquidity Management**: 12-month liquidity forecasting dashboard
-- **Multi-User Architecture**: Authentication system and data segregation
 - **Enhanced PME Features**: Multi-period analysis and risk metrics integration
+- **Advanced Analytics**: Portfolio optimization and stress testing
 
 ### **🔮 Planned Features**
 - **Banking Integration**: Real-time cash position connectivity
@@ -302,6 +330,14 @@ curl "http://localhost:8000/api/portfolio/performance"
 - **API Integrations**: Third-party data feeds and reporting systems
 
 ## 🆕 **Recent Improvements**
+
+### **October 2024 Release - Multi-Tenant Architecture**
+- **🏛️ Multi-Tenant Architecture**: Complete implementation of JWT authentication with role-based access control
+- **📄 Enterprise Document Management**: Full document lifecycle management with tenant isolation and comprehensive search
+- **🔐 Production Security**: JWT tokens with automatic refresh, role-based permissions (Admin/Manager/Viewer)
+- **🎯 Tenant Data Isolation**: Complete data segregation ensuring organizations can't access each other's data
+- **🔧 Authentication Integration**: Frontend JWT interceptors with automatic token renewal and error handling
+- **📊 Enhanced Performance Analytics**: Fixed authentication issues in benchmark comparisons and relative performance
 
 ### **December 2024 Release**
 - **🎯 Comprehensive Benchmark Management**: New dedicated Benchmarks page with PME analysis, relative performance comparison, and reference data management
@@ -321,16 +357,17 @@ curl "http://localhost:8000/api/portfolio/performance"
 ### **Development Setup**
 - **Database**: SQLite (portfolio_tracker.db) created automatically
 - **Ports**: Backend on 8000, Frontend on 3000
-- **Authentication**: admin/password (configurable in production)
+- **Authentication**: JWT-based with admin/admin and manager/manager default credentials
 - **File Storage**: Local uploads/ directory for documents
 
-### **Production Considerations**  
+### **Production Considerations**
 - **Database**: Upgrade to PostgreSQL for production use
-- **Authentication**: Implement JWT/OAuth2 authentication system
+- **Authentication**: Production JWT keys and OAuth2 integration
 - **File Storage**: Configure cloud storage (AWS S3, Azure Blob, etc.)
 - **SSL/TLS**: Enable HTTPS for secure communications
 - **Environment Variables**: Configure production settings via .env
 - **Backup Strategy**: Implement regular database backups
+- **Multi-Tenant Setup**: Configure tenant provisioning and user management
 
 ## 🤝 **Contributing**
 
