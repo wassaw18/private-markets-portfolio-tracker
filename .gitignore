@@ -20,6 +20,7 @@ pip-delete-this-directory.txt
 
 # Database files
 *.db
+*.db-journal
 *.sqlite
 *.sqlite3
 portfolio_backup_*.db
@@ -55,6 +56,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+server.log
 
 # Runtime data
 pids/
@@ -103,6 +105,14 @@ test_*.db
 # Backup files
 *.bak
 *.backup
+
+# Data artifacts (generated at runtime)
+data/backups/
+data/exports/
+data/archives/
+
+# Uploads (runtime generated)
+uploads/documents/
 
 # Documentation build
 docs/_build/
