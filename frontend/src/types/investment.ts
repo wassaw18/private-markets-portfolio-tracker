@@ -77,6 +77,7 @@ export enum CashFlowType {
 
 export interface CashFlow {
   id: number;
+  uuid: string;
   investment_id: number;
   date: string;
   type: CashFlowType;
@@ -97,6 +98,7 @@ export interface CashFlowUpdate {
 
 export interface Valuation {
   id: number;
+  uuid: string;
   investment_id: number;
   date: string;
   nav_value: number;
@@ -114,12 +116,14 @@ export interface ValuationUpdate {
 
 export interface Investment {
   id: number;
+  uuid: string;
   name: string;
   asset_class: AssetClass;
   investment_structure: InvestmentStructure;
   entity_id: number;
   entity?: {
     id: number;
+    uuid: string;
     name: string;
     entity_type: string;
   };

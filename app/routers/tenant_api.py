@@ -9,7 +9,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
+from uuid import UUID
 
 from ..database import get_db
 from ..auth import get_current_active_user, get_tenant_context, require_contributor
@@ -18,9 +19,10 @@ from .. import models
 from ..schemas import (
     Entity, EntityCreate, EntityUpdate, EntityWithMembers,
     Investment, InvestmentCreate, InvestmentUpdate,
-    CashFlow, CashFlowCreate, Valuation, ValuationCreate,
+    CashFlow, CashFlowCreate, CashFlowUpdate, Valuation, ValuationCreate, ValuationUpdate,
     PortfolioPerformance, InvestmentPerformance, CommitmentVsCalledData, AssetAllocationData,
-    VintageAllocationData, TimelineDataPoint, JCurveDataPoint, DashboardSummaryStats
+    VintageAllocationData, TimelineDataPoint, JCurveDataPoint, DashboardSummaryStats,
+    EntityRelationship, EntityRelationshipCreate, EntityRelationshipUpdate, EntityRelationshipWithEntities
 )
 from .. import crud_tenant
 from .. import dashboard
@@ -102,11 +104,11 @@ def read_entities(
 
 @router.get("/entities/{entity_id}", response_model=EntityWithMembers)
 def read_entity(
-    entity_id: int,
+    entity_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get a specific entity"""
+    """Get a specific entity by ID or UUID"""
     entity = crud_tenant.get_entity(db, entity_id, current_user.tenant_id)
     if entity is None:
         raise HTTPException(status_code=404, detail="Entity not found")
@@ -128,7 +130,7 @@ def read_entity(
 
 @router.put("/entities/{entity_id}", response_model=Entity)
 def update_entity(
-    entity_id: int,
+    entity_id: str,
     entity_update: EntityUpdate,
     current_user: User = Depends(require_contributor),
     db: Session = Depends(get_db)
@@ -187,11 +189,11 @@ def read_investments(
 
 @router.get("/investments/{investment_id}", response_model=Investment)
 def read_investment(
-    investment_id: int,
+    investment_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get a specific investment"""
+    """Get a specific investment by ID or UUID"""
     investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
     if investment is None:
         raise HTTPException(status_code=404, detail="Investment not found")
@@ -199,12 +201,12 @@ def read_investment(
 
 @router.put("/investments/{investment_id}", response_model=Investment)
 def update_investment(
-    investment_id: int,
+    investment_id: str,
     investment_update: InvestmentUpdate,
     current_user: User = Depends(require_contributor),
     db: Session = Depends(get_db)
 ):
-    """Update an investment"""
+    """Update an investment by ID or UUID"""
     # If entity_id is being updated, verify the new entity belongs to the same tenant
     if hasattr(investment_update, 'entity_id') and investment_update.entity_id:
         entity = crud_tenant.get_entity(db, investment_update.entity_id, current_user.tenant_id)
@@ -226,11 +228,11 @@ def update_investment(
 
 @router.get("/investments/entity/{entity_id}", response_model=List[Investment])
 def read_investments_by_entity(
-    entity_id: int,
+    entity_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get investments for a specific entity"""
+    """Get investments for a specific entity by ID or UUID"""
     # Verify entity belongs to the same tenant
     entity = crud_tenant.get_entity(db, entity_id, current_user.tenant_id)
     if not entity:
@@ -242,11 +244,11 @@ def read_investments_by_entity(
 
 @router.get("/investments/{investment_id}/performance", response_model=InvestmentPerformance)
 def get_investment_performance(
-    investment_id: int,
+    investment_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get performance metrics for a specific investment"""
+    """Get performance metrics for a specific investment by ID or UUID"""
     try:
         performance = crud_tenant.get_investment_performance(
             db=db, tenant_id=current_user.tenant_id, investment_id=investment_id
@@ -265,11 +267,11 @@ def get_investment_performance(
 
 @router.get("/investments/{investment_id}/cashflows", response_model=List[CashFlow])
 def get_investment_cashflows(
-    investment_id: int,
+    investment_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get cash flows for a specific investment"""
+    """Get cash flows for a specific investment by ID or UUID"""
     # First verify the investment exists and belongs to the user's tenant
     investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
     if not investment:
@@ -282,13 +284,94 @@ def get_investment_cashflows(
 
     return cashflows
 
+@router.post("/investments/{investment_id}/cashflows", response_model=CashFlow)
+def create_investment_cashflow(
+    investment_id: str,
+    cashflow: CashFlowCreate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Create a new cash flow for a specific investment by ID or UUID"""
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    # Create cashflow data dict and add investment_id (use integer ID from resolved investment)
+    cashflow_data = cashflow.model_dump()
+    cashflow_data.update({
+        "investment_id": investment.id,
+        "tenant_id": current_user.tenant_id,
+        "created_by_user_id": current_user.id,
+        "updated_by_user_id": current_user.id,
+        "created_date": datetime.utcnow(),
+        "updated_date": datetime.utcnow()
+    })
+
+    db_cashflow = models.CashFlow(**cashflow_data)
+    db.add(db_cashflow)
+    db.commit()
+    db.refresh(db_cashflow)
+    return db_cashflow
+
+@router.put("/investments/{investment_id}/cashflows/{cashflow_id}", response_model=CashFlow)
+def update_investment_cashflow(
+    investment_id: str,
+    cashflow_id: str,
+    cashflow_update: CashFlowUpdate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Update a cash flow for a specific investment by ID or UUID"""
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    updated_cashflow = crud_tenant.update_cashflow(
+        db=db,
+        cashflow_id=cashflow_id,
+        tenant_id=current_user.tenant_id,
+        cashflow_update=cashflow_update,
+        updated_by_user_id=current_user.id
+    )
+
+    if not updated_cashflow:
+        raise HTTPException(status_code=404, detail="Cash flow not found")
+
+    return updated_cashflow
+
+@router.delete("/investments/{investment_id}/cashflows/{cashflow_id}")
+def delete_investment_cashflow(
+    investment_id: str,
+    cashflow_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Delete a cash flow for a specific investment by ID or UUID"""
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    success = crud_tenant.delete_cashflow(
+        db=db,
+        cashflow_id=cashflow_id,
+        tenant_id=current_user.tenant_id
+    )
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Cash flow not found")
+
+    return {"message": "Cash flow deleted successfully"}
+
 @router.get("/investments/{investment_id}/valuations", response_model=List[Valuation])
 def get_investment_valuations(
-    investment_id: int,
+    investment_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get valuations for a specific investment"""
+    """Get valuations for a specific investment by ID or UUID"""
     # First verify the investment exists and belongs to the user's tenant
     investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
     if not investment:
@@ -300,6 +383,87 @@ def get_investment_valuations(
     ).all()
 
     return valuations
+
+@router.post("/investments/{investment_id}/valuations", response_model=Valuation)
+def create_investment_valuation(
+    investment_id: str,
+    valuation: ValuationCreate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Create a new valuation for a specific investment by ID or UUID"""
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    # Create valuation data dict and add investment_id (use integer ID from resolved investment)
+    valuation_data = valuation.model_dump()
+    valuation_data.update({
+        "investment_id": investment.id,
+        "tenant_id": current_user.tenant_id,
+        "created_by_user_id": current_user.id,
+        "updated_by_user_id": current_user.id,
+        "created_date": datetime.utcnow(),
+        "updated_date": datetime.utcnow()
+    })
+
+    db_valuation = models.Valuation(**valuation_data)
+    db.add(db_valuation)
+    db.commit()
+    db.refresh(db_valuation)
+    return db_valuation
+
+@router.put("/investments/{investment_id}/valuations/{valuation_id}", response_model=Valuation)
+def update_investment_valuation(
+    investment_id: str,
+    valuation_id: str,
+    valuation_update: ValuationUpdate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Update a valuation for a specific investment by ID or UUID"""
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    updated_valuation = crud_tenant.update_valuation(
+        db=db,
+        valuation_id=valuation_id,
+        tenant_id=current_user.tenant_id,
+        valuation_update=valuation_update,
+        updated_by_user_id=current_user.id
+    )
+
+    if not updated_valuation:
+        raise HTTPException(status_code=404, detail="Valuation not found")
+
+    return updated_valuation
+
+@router.delete("/investments/{investment_id}/valuations/{valuation_id}")
+def delete_investment_valuation(
+    investment_id: str,
+    valuation_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Delete a valuation for a specific investment by ID or UUID"""
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    success = crud_tenant.delete_valuation(
+        db=db,
+        valuation_id=valuation_id,
+        tenant_id=current_user.tenant_id
+    )
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Valuation not found")
+
+    return {"message": "Valuation deleted successfully"}
 
 # =============================================================================
 # Cash Flow Management Endpoints
@@ -815,3 +979,342 @@ def get_calendar_heatmap(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving heatmap data: {str(e)}")
+
+# =============================================================================
+# Additional CRUD Endpoints for Cash Flows and Valuations
+# =============================================================================
+
+@router.get("/cashflows/{cashflow_id}", response_model=CashFlow)
+def get_cashflow(
+    cashflow_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific cash flow by ID or UUID with tenant isolation"""
+    cashflow = crud_tenant.get_cashflow(db, cashflow_id, current_user.tenant_id)
+    if not cashflow:
+        raise HTTPException(status_code=404, detail="Cash flow not found")
+    return cashflow
+
+
+@router.put("/cashflows/{cashflow_id}", response_model=CashFlow)
+def update_cashflow(
+    cashflow_id: str,
+    cashflow_update: CashFlowUpdate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Update a cash flow by ID or UUID with tenant isolation (Contributor+ required)"""
+    updated_cashflow = crud_tenant.update_cashflow(
+        db=db,
+        cashflow_id=cashflow_id,
+        tenant_id=current_user.tenant_id,
+        cashflow_update=cashflow_update,
+        updated_by_user_id=current_user.id
+    )
+    
+    if not updated_cashflow:
+        raise HTTPException(status_code=404, detail="Cash flow not found")
+    
+    return updated_cashflow
+
+
+@router.delete("/cashflows/{cashflow_id}")
+def delete_cashflow(
+    cashflow_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Delete a cash flow by ID or UUID with tenant isolation (Contributor+ required)"""
+    success = crud_tenant.delete_cashflow(
+        db=db,
+        cashflow_id=cashflow_id,
+        tenant_id=current_user.tenant_id
+    )
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Cash flow not found")
+    
+    return {"message": "Cash flow deleted successfully"}
+
+
+@router.get("/valuations/{valuation_id}", response_model=Valuation)
+def get_valuation(
+    valuation_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific valuation by ID or UUID with tenant isolation"""
+    valuation = crud_tenant.get_valuation(db, valuation_id, current_user.tenant_id)
+    if not valuation:
+        raise HTTPException(status_code=404, detail="Valuation not found")
+    return valuation
+
+
+@router.put("/valuations/{valuation_id}", response_model=Valuation)
+def update_valuation(
+    valuation_id: str,
+    valuation_update: ValuationUpdate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Update a valuation by ID or UUID with tenant isolation (Contributor+ required)"""
+    updated_valuation = crud_tenant.update_valuation(
+        db=db,
+        valuation_id=valuation_id,
+        tenant_id=current_user.tenant_id,
+        valuation_update=valuation_update,
+        updated_by_user_id=current_user.id
+    )
+    
+    if not updated_valuation:
+        raise HTTPException(status_code=404, detail="Valuation not found")
+    
+    return updated_valuation
+
+
+@router.delete("/valuations/{valuation_id}")
+def delete_valuation(
+    valuation_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Delete a valuation by ID or UUID with tenant isolation (Contributor+ required)"""
+    success = crud_tenant.delete_valuation(
+        db=db,
+        valuation_id=valuation_id,
+        tenant_id=current_user.tenant_id
+    )
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Valuation not found")
+    
+    return {"message": "Valuation deleted successfully"}
+
+
+@router.delete("/investments/{investment_id}")
+def delete_investment(
+    investment_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Delete an investment with tenant isolation (Contributor+ required)"""
+    success = crud_tenant.delete_investment(
+        db=db,
+        investment_id=investment_id,
+        tenant_id=current_user.tenant_id
+    )
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Investment not found")
+    
+    return {"message": "Investment deleted successfully"}
+
+# =============================================================================
+# Entity Relationship Management Endpoints
+# =============================================================================
+
+@router.post("/entity-relationships", response_model=EntityRelationship)
+def create_entity_relationship(
+    relationship: EntityRelationshipCreate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Create a new entity relationship"""
+    # Validate that both entities belong to the user's tenant
+    from_entity = db.query(models.Entity).filter(
+        models.Entity.id == relationship.from_entity_id,
+        models.Entity.tenant_id == current_user.tenant_id
+    ).first()
+
+    to_entity = db.query(models.Entity).filter(
+        models.Entity.id == relationship.to_entity_id,
+        models.Entity.tenant_id == current_user.tenant_id
+    ).first()
+
+    if not from_entity:
+        raise HTTPException(status_code=404, detail="From entity not found")
+    if not to_entity:
+        raise HTTPException(status_code=404, detail="To entity not found")
+
+    # Prevent self-relationships
+    if relationship.from_entity_id == relationship.to_entity_id:
+        raise HTTPException(status_code=400, detail="Entity cannot have relationship with itself")
+
+    # Check for duplicate active relationships of the same type
+    existing = db.query(models.EntityRelationship).filter(
+        models.EntityRelationship.from_entity_id == relationship.from_entity_id,
+        models.EntityRelationship.to_entity_id == relationship.to_entity_id,
+        models.EntityRelationship.relationship_category == relationship.relationship_category,
+        models.EntityRelationship.relationship_type == relationship.relationship_type,
+        models.EntityRelationship.is_active == True
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Active relationship of this type already exists between these entities"
+        )
+
+    # Create the relationship
+    db_relationship = models.EntityRelationship(
+        from_entity_id=relationship.from_entity_id,
+        to_entity_id=relationship.to_entity_id,
+        relationship_category=relationship.relationship_category,
+        relationship_type=relationship.relationship_type,
+        relationship_subtype=relationship.relationship_subtype,
+        percentage_ownership=relationship.percentage_ownership or 0,
+        is_voting_interest=relationship.is_voting_interest,
+        effective_date=relationship.effective_date,
+        end_date=relationship.end_date,
+        is_active=relationship.is_active,
+        notes=relationship.notes,
+        created_by=current_user.username
+    )
+
+    db.add(db_relationship)
+    db.commit()
+    db.refresh(db_relationship)
+
+    return db_relationship
+
+@router.get("/entity-relationships", response_model=List[EntityRelationshipWithEntities])
+def get_entity_relationships(
+    entity_id: Optional[int] = Query(None, description="Filter by entity ID (from or to)"),
+    include_inactive: bool = Query(False, description="Include inactive relationships"),
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Get entity relationships with filtering options and tenant isolation"""
+    query = db.query(models.EntityRelationship).join(
+        models.Entity, models.EntityRelationship.from_entity_id == models.Entity.id
+    ).filter(
+        models.Entity.tenant_id == current_user.tenant_id
+    )
+
+    # Filter by entity ID if provided
+    if entity_id:
+        # Verify the entity belongs to the user's tenant
+        entity = db.query(models.Entity).filter(
+            models.Entity.id == entity_id,
+            models.Entity.tenant_id == current_user.tenant_id
+        ).first()
+
+        if not entity:
+            raise HTTPException(status_code=404, detail="Entity not found")
+
+        query = query.filter(
+            (models.EntityRelationship.from_entity_id == entity_id) |
+            (models.EntityRelationship.to_entity_id == entity_id)
+        )
+
+    # Filter by active status
+    if not include_inactive:
+        query = query.filter(models.EntityRelationship.is_active == True)
+
+    relationships = query.all()
+
+    # Convert to response format with entity names
+    result = []
+    for rel in relationships:
+        # Get entity details
+        from_entity = db.query(models.Entity).filter(models.Entity.id == rel.from_entity_id).first()
+        to_entity = db.query(models.Entity).filter(models.Entity.id == rel.to_entity_id).first()
+
+        # Manually build response dict with correct field names
+        rel_with_entities = {
+            "id": rel.id,
+            "from_entity_id": rel.from_entity_id,
+            "to_entity_id": rel.to_entity_id,
+            "relationship_category": rel.relationship_category,
+            "relationship_type": rel.relationship_type,
+            "relationship_subtype": rel.relationship_subtype,
+            "percentage_ownership": rel.percentage_ownership,
+            "is_voting_interest": rel.is_voting_interest,
+            "effective_date": rel.effective_date,
+            "end_date": rel.end_date,
+            "is_active": rel.is_active,
+            "notes": rel.notes,
+            "created_date": rel.created_date,
+            "updated_date": rel.updated_date,
+            "from_entity_name": from_entity.name if from_entity else "",
+            "to_entity_name": to_entity.name if to_entity else "",
+            "from_entity_type": from_entity.entity_type if from_entity else "",
+            "to_entity_type": to_entity.entity_type if to_entity else ""
+        }
+        result.append(rel_with_entities)
+
+    return result
+
+@router.put("/entity-relationships/{relationship_id}", response_model=EntityRelationship)
+def update_entity_relationship(
+    relationship_id: str,
+    relationship_update: EntityRelationshipUpdate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Update an entity relationship by ID or UUID"""
+    # Parse the relationship_id to support both int and UUID
+    from app.crud_tenant import parse_id_or_uuid
+    parsed_id = parse_id_or_uuid(relationship_id)
+
+    # Get the relationship and verify tenant access
+    query = db.query(models.EntityRelationship).join(
+        models.Entity, models.EntityRelationship.from_entity_id == models.Entity.id
+    )
+
+    if isinstance(parsed_id, UUID):
+        query = query.filter(models.EntityRelationship.uuid == parsed_id)
+    else:
+        query = query.filter(models.EntityRelationship.id == parsed_id)
+
+    relationship = query.filter(
+        models.Entity.tenant_id == current_user.tenant_id
+    ).first()
+
+    if not relationship:
+        raise HTTPException(status_code=404, detail="Relationship not found")
+
+    # Update fields
+    update_data = relationship_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(relationship, field, value)
+
+    db.commit()
+    db.refresh(relationship)
+
+    return relationship
+
+@router.delete("/entity-relationships/{relationship_id}")
+def delete_entity_relationship(
+    relationship_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Delete an entity relationship by ID or UUID"""
+    # Parse the relationship_id to support both int and UUID
+    from app.crud_tenant import parse_id_or_uuid
+    parsed_id = parse_id_or_uuid(relationship_id)
+
+    # Get the relationship and verify tenant access
+    query = db.query(models.EntityRelationship).join(
+        models.Entity, models.EntityRelationship.from_entity_id == models.Entity.id
+    )
+
+    if isinstance(parsed_id, UUID):
+        query = query.filter(models.EntityRelationship.uuid == parsed_id)
+    else:
+        query = query.filter(models.EntityRelationship.id == parsed_id)
+
+    relationship = query.filter(
+        models.Entity.tenant_id == current_user.tenant_id
+    ).first()
+
+    if not relationship:
+        raise HTTPException(status_code=404, detail="Relationship not found")
+
+    db.delete(relationship)
+    db.commit()
+
+    return {"message": "Relationship deleted successfully"}
+

@@ -7,8 +7,9 @@ and include proper user audit trails.
 
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc, func
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 from datetime import datetime
+from uuid import UUID
 
 from . import models
 from . import schemas  # Import the main schemas module
@@ -23,6 +24,25 @@ from .models import (
     User, Tenant, Entity, Investment, CashFlow, Valuation,
     Document, FamilyMember, UserRole, TenantStatus, CashFlowType
 )
+
+# =============================================================================
+# Helper Functions for UUID/ID Lookups
+# =============================================================================
+
+def parse_id_or_uuid(id_value: str) -> Union[int, UUID]:
+    """
+    Parse a string that could be either an integer ID or a UUID.
+    Returns the appropriate type for database lookup.
+    """
+    try:
+        # Try parsing as UUID first
+        return UUID(id_value)
+    except (ValueError, AttributeError):
+        # If that fails, try parsing as integer
+        try:
+            return int(id_value)
+        except ValueError:
+            raise ValueError(f"Invalid ID format: {id_value}. Must be integer or UUID.")
 
 # =============================================================================
 # Tenant CRUD Operations
@@ -183,14 +203,25 @@ def update_user(
 # Entity CRUD Operations (Tenant-Aware)
 # =============================================================================
 
-def get_entity(db: Session, entity_id: int, tenant_id: int) -> Optional[Entity]:
-    """Get a single entity by ID within a tenant"""
-    return db.query(Entity).options(
+def get_entity(db: Session, entity_id: Union[int, str, UUID], tenant_id: int) -> Optional[Entity]:
+    """Get a single entity by ID or UUID within a tenant"""
+    query = db.query(Entity).options(
         joinedload(Entity.family_members)
-    ).filter(
-        Entity.id == entity_id,
-        Entity.tenant_id == tenant_id
-    ).first()
+    )
+
+    # Handle UUID or int lookup
+    if isinstance(entity_id, str):
+        parsed_id = parse_id_or_uuid(entity_id)
+        if isinstance(parsed_id, UUID):
+            query = query.filter(Entity.uuid == parsed_id)
+        else:
+            query = query.filter(Entity.id == parsed_id)
+    elif isinstance(entity_id, UUID):
+        query = query.filter(Entity.uuid == entity_id)
+    else:
+        query = query.filter(Entity.id == entity_id)
+
+    return query.filter(Entity.tenant_id == tenant_id).first()
 
 def get_entities(
     db: Session,
@@ -292,16 +323,27 @@ def update_entity(
 # Investment CRUD Operations (Tenant-Aware)
 # =============================================================================
 
-def get_investment(db: Session, investment_id: int, tenant_id: int) -> Optional[Investment]:
-    """Get a single investment by ID within a tenant"""
-    return db.query(Investment).options(
+def get_investment(db: Session, investment_id: Union[int, str, UUID], tenant_id: int) -> Optional[Investment]:
+    """Get a single investment by ID or UUID within a tenant"""
+    query = db.query(Investment).options(
         joinedload(Investment.entity),
         joinedload(Investment.cashflows),
         joinedload(Investment.valuations)
-    ).filter(
-        Investment.id == investment_id,
-        Investment.tenant_id == tenant_id
-    ).first()
+    )
+
+    # Handle UUID or int lookup
+    if isinstance(investment_id, str):
+        parsed_id = parse_id_or_uuid(investment_id)
+        if isinstance(parsed_id, UUID):
+            query = query.filter(Investment.uuid == parsed_id)
+        else:
+            query = query.filter(Investment.id == parsed_id)
+    elif isinstance(investment_id, UUID):
+        query = query.filter(Investment.uuid == investment_id)
+    else:
+        query = query.filter(Investment.id == investment_id)
+
+    return query.filter(Investment.tenant_id == tenant_id).first()
 
 def get_investments(
     db: Session,
@@ -408,6 +450,39 @@ def get_cashflows(
 
     return query.order_by(CashFlow.date.desc()).all()
 
+def _apply_cash_flow_sign_convention(amount: float, cash_flow_type: CashFlowType) -> float:
+    """
+    Apply proper sign convention for cash flows:
+    - Outflows (Capital Call, Contribution, Fees) should be negative
+    - Inflows (Distribution, Yield, Return of Principal) should be positive
+
+    Users input positive amounts, this function applies the correct sign.
+    """
+    # Always work with absolute value first
+    amount = abs(amount)
+
+    # Outflow types (money going out, should be negative)
+    outflow_types = {
+        CashFlowType.CAPITAL_CALL,
+        CashFlowType.CONTRIBUTION,
+        CashFlowType.FEES
+    }
+
+    # Inflow types (money coming in, should be positive)
+    inflow_types = {
+        CashFlowType.DISTRIBUTION,
+        CashFlowType.YIELD,
+        CashFlowType.RETURN_OF_PRINCIPAL
+    }
+
+    if cash_flow_type in outflow_types:
+        return -amount
+    elif cash_flow_type in inflow_types:
+        return amount
+    else:
+        # Default: return as-is if type is unknown
+        return amount
+
 def create_cashflow(
     db: Session,
     cashflow: schemas.CashFlowCreate,
@@ -416,6 +491,14 @@ def create_cashflow(
 ) -> CashFlow:
     """Create a new cash flow within a tenant"""
     cashflow_data = cashflow.model_dump()
+
+    # Apply sign convention to the amount based on cash flow type
+    if 'amount' in cashflow_data and 'type' in cashflow_data:
+        cashflow_data['amount'] = _apply_cash_flow_sign_convention(
+            cashflow_data['amount'],
+            CashFlowType(cashflow_data['type'])
+        )
+
     cashflow_data.update({
         "tenant_id": tenant_id,
         "created_by_user_id": created_by_user_id,
@@ -575,15 +658,15 @@ def get_portfolio_performance(db: Session, tenant_id: int) -> schemas.PortfolioP
 # Investment Performance CRUD Operations
 # =============================================================================
 
-def get_investment_performance(db: Session, tenant_id: int, investment_id: int) -> Optional[schemas.InvestmentPerformance]:
+def get_investment_performance(db: Session, tenant_id: int, investment_id: Union[int, str, UUID]) -> Optional[schemas.InvestmentPerformance]:
     """Calculate and return performance metrics for a specific investment with tenant isolation"""
     investment = get_investment(db, investment_id, tenant_id)
     if not investment:
         return None
 
     # Get cash flows separated by type - include ALL relevant types
-    # Contributions (outflows): CAPITAL_CALL and CONTRIBUTION
-    contributions = [cf for cf in investment.cashflows if cf.type in [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION]]
+    # Contributions (outflows): CAPITAL_CALL, CONTRIBUTION, and FEES
+    contributions = [cf for cf in investment.cashflows if cf.type in [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION, CashFlowType.FEES]]
     # Distributions (inflows): DISTRIBUTION, YIELD, and RETURN_OF_PRINCIPAL
     distributions = [cf for cf in investment.cashflows if cf.type in [CashFlowType.DISTRIBUTION, CashFlowType.YIELD, CashFlowType.RETURN_OF_PRINCIPAL]]
     valuations = investment.valuations
@@ -1057,3 +1140,191 @@ def get_documents_by_entity(db: Session, tenant_id: int, entity_id: int, include
         query = query.filter(models.Document.is_archived == False)
 
     return query.order_by(models.Document.created_date.desc()).all()
+
+
+def delete_entity(db: Session, entity_id: int, tenant_id: int) -> bool:
+    """Delete an entity (soft delete by setting is_active to False)"""
+    db_entity = db.query(models.Entity).filter(
+        models.Entity.id == entity_id,
+        models.Entity.tenant_id == tenant_id
+    ).first()
+
+    if db_entity:
+        db_entity.is_active = False
+        db_entity.updated_at = datetime.utcnow()
+        db.commit()
+        return True
+    return False
+
+
+def search_entities(db: Session, tenant_id: int, search_term: str, skip: int = 0, limit: int = 100) -> List[models.Entity]:
+    """Search entities by name within a tenant"""
+    query = db.query(models.Entity).filter(
+        models.Entity.tenant_id == tenant_id,
+        models.Entity.is_active == True,
+        models.Entity.name.ilike(f"%{search_term}%")
+    )
+
+    return query.offset(skip).limit(limit).all()
+
+
+# =============================================================================
+# Cash Flow CRUD Operations
+# =============================================================================
+
+def get_cashflow(db: Session, cashflow_id: Union[int, str, UUID], tenant_id: int) -> Optional[models.CashFlow]:
+    """Get a specific cash flow by ID or UUID with tenant isolation"""
+    query = db.query(models.CashFlow).join(models.Investment)
+
+    # Handle UUID or int lookup
+    if isinstance(cashflow_id, str):
+        parsed_id = parse_id_or_uuid(cashflow_id)
+        if isinstance(parsed_id, UUID):
+            query = query.filter(models.CashFlow.uuid == parsed_id)
+        else:
+            query = query.filter(models.CashFlow.id == parsed_id)
+    elif isinstance(cashflow_id, UUID):
+        query = query.filter(models.CashFlow.uuid == cashflow_id)
+    else:
+        query = query.filter(models.CashFlow.id == cashflow_id)
+
+    return query.filter(models.Investment.tenant_id == tenant_id).first()
+
+
+def update_cashflow(
+    db: Session,
+    cashflow_id: int,
+    tenant_id: int,
+    cashflow_update: schemas.CashFlowUpdate,
+    updated_by_user_id: int
+) -> Optional[models.CashFlow]:
+    """Update a cash flow with tenant isolation"""
+    db_cashflow = get_cashflow(db, cashflow_id, tenant_id)
+
+    if not db_cashflow:
+        return None
+
+    update_data = cashflow_update.model_dump(exclude_unset=True)
+
+    # Handle amount and cash flow type updates
+    if 'amount' in update_data and 'type' in update_data:
+        # Both amount and type are being updated - apply sign convention if amount is positive
+        if update_data['amount'] > 0:
+            update_data['amount'] = _apply_cash_flow_sign_convention(
+                update_data['amount'],
+                CashFlowType(update_data['type'])
+            )
+    elif 'amount' in update_data:
+        # Only amount is being updated - apply sign convention if amount is positive
+        if update_data['amount'] > 0:
+            update_data['amount'] = _apply_cash_flow_sign_convention(
+                update_data['amount'],
+                db_cashflow.type
+            )
+    elif 'type' in update_data:
+        # If only changing the type, re-apply sign convention to existing amount
+        update_data['amount'] = _apply_cash_flow_sign_convention(
+            abs(db_cashflow.amount),
+            CashFlowType(update_data['type'])
+        )
+
+    update_data["updated_by_user_id"] = updated_by_user_id
+    update_data["updated_date"] = datetime.utcnow()
+
+    for key, value in update_data.items():
+        setattr(db_cashflow, key, value)
+
+    db.commit()
+    db.refresh(db_cashflow)
+    return db_cashflow
+
+
+def delete_cashflow(db: Session, cashflow_id: int, tenant_id: int) -> bool:
+    """Delete a cash flow with tenant isolation"""
+    db_cashflow = get_cashflow(db, cashflow_id, tenant_id)
+    
+    if not db_cashflow:
+        return False
+    
+    db.delete(db_cashflow)
+    db.commit()
+    return True
+
+
+# =============================================================================
+# Valuation CRUD Operations
+# =============================================================================
+
+def get_valuation(db: Session, valuation_id: Union[int, str, UUID], tenant_id: int) -> Optional[models.Valuation]:
+    """Get a specific valuation by ID or UUID with tenant isolation"""
+    query = db.query(models.Valuation).join(models.Investment)
+
+    # Handle UUID or int lookup
+    if isinstance(valuation_id, str):
+        parsed_id = parse_id_or_uuid(valuation_id)
+        if isinstance(parsed_id, UUID):
+            query = query.filter(models.Valuation.uuid == parsed_id)
+        else:
+            query = query.filter(models.Valuation.id == parsed_id)
+    elif isinstance(valuation_id, UUID):
+        query = query.filter(models.Valuation.uuid == valuation_id)
+    else:
+        query = query.filter(models.Valuation.id == valuation_id)
+
+    return query.filter(models.Investment.tenant_id == tenant_id).first()
+
+
+def update_valuation(
+    db: Session,
+    valuation_id: int,
+    tenant_id: int,
+    valuation_update: schemas.ValuationUpdate,
+    updated_by_user_id: int
+) -> Optional[models.Valuation]:
+    """Update a valuation with tenant isolation"""
+    db_valuation = get_valuation(db, valuation_id, tenant_id)
+    
+    if not db_valuation:
+        return None
+    
+    update_data = valuation_update.model_dump(exclude_unset=True)
+    update_data["updated_by"] = updated_by_user_id
+    update_data["updated_at"] = datetime.utcnow()
+    
+    for key, value in update_data.items():
+        setattr(db_valuation, key, value)
+    
+    db.commit()
+    db.refresh(db_valuation)
+    return db_valuation
+
+
+def delete_valuation(db: Session, valuation_id: int, tenant_id: int) -> bool:
+    """Delete a valuation with tenant isolation"""
+    db_valuation = get_valuation(db, valuation_id, tenant_id)
+    
+    if not db_valuation:
+        return False
+    
+    db.delete(db_valuation)
+    db.commit()
+    return True
+
+
+# =============================================================================
+# Investment CRUD Operations (DELETE missing)
+# =============================================================================
+
+def delete_investment(db: Session, investment_id: int, tenant_id: int) -> bool:
+    """Delete an investment (soft delete by setting status to DORMANT)"""
+    db_investment = get_investment(db, investment_id, tenant_id)
+
+    if not db_investment:
+        return False
+
+    # Set status to DORMANT to indicate soft deletion
+    db_investment.status = models.InvestmentStatus.DORMANT
+    db_investment.updated_at = datetime.utcnow()
+    db.commit()
+    return True
+

@@ -69,6 +69,7 @@ export interface DocumentUpdate {
 
 export interface Document extends DocumentBase {
   id: number;
+  uuid: string;
   filename: string;
   original_filename: string;
   file_size: number;
@@ -78,15 +79,17 @@ export interface Document extends DocumentBase {
   uploaded_by?: string;
   created_date?: string;
   updated_date?: string;
-  
+
   // Relationships
   investment?: {
     id: number;
+    uuid: string;
     name: string;
     asset_class: string;
   };
   entity?: {
     id: number;
+    uuid: string;
     name: string;
     entity_type: string;
   };

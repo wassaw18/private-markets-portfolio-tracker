@@ -6,8 +6,9 @@ A comprehensive, institutional-grade portfolio management system designed for fa
 
 ### **🏛️ Multi-Tenant Architecture & Security**
 - **JWT Authentication System** with secure token-based authentication and automatic refresh
-- **Role-Based Access Control** with Admin, Manager, and Viewer permission levels
+- **Role-Based Access Control** with Admin, Manager, Contributor, and Viewer permission levels
 - **Tenant Data Isolation** ensuring complete data segregation between organizations
+- **UUID-Based Resource Identification** for enhanced security and scalability
 - **User Management System** with tenant-specific user accounts and permissions
 - **Secure Session Management** with token expiration and renewal mechanisms
 - **Production-Ready Authentication** supporting multiple organizations and users
@@ -123,8 +124,11 @@ npm start
 #### **5. Access Application**
 - **Application**: http://localhost:3000
 - **API Documentation**: http://localhost:8000/docs
-- **Default Admin Login**: admin / admin
-- **Default Manager Login**: manager / manager
+- **Default Test Accounts**:
+  - Admin: `admin` / `admin123` (tenant: Default Organization)
+  - Manager: `manager` / `manager123` (tenant: Default Organization)
+  - Contributor: `testuser` / `testuser123` (tenant: Default Organization)
+  - Will (Admin): `will` / `will123` (tenant: Test Tenant - Will)
 
 ## 📁 **Project Structure**
 
@@ -133,7 +137,7 @@ private-markets-tracker/
 ├── README.md                     # This file
 ├── PRODUCT_ROADMAP.md            # Enterprise development roadmap
 ├── requirements.txt              # Python dependencies
-├── portfolio_tracker.db         # SQLite database (created on first run)
+├── .env                          # Environment configuration (PostgreSQL credentials)
 ├── app/                          # FastAPI Backend
 │   ├── main_tenant.py            # Multi-tenant API with JWT authentication
 │   ├── main.py                   # Legacy single-tenant API
@@ -197,12 +201,13 @@ private-markets-tracker/
 ### **Backend (FastAPI + SQLAlchemy)**
 - **Multi-Tenant Architecture** with complete data isolation between organizations
 - **JWT Authentication** with role-based access control and automatic token refresh
+- **UUID-Based Identification** for all resources with dual int/UUID support during migration
 - **RESTful API** with automatic OpenAPI documentation at `/docs`
-- **SQLite Database** with comprehensive schema for private markets data and tenant support
+- **PostgreSQL Database** with comprehensive schema for private markets data and tenant support
 - **Pydantic Validation** for type safety and data integrity
-- **Advanced Performance Calculations** with true portfolio-level IRR
+- **Advanced Performance Calculations** with true portfolio-level IRR and cash flow sign conventions
 - **Bulk Upload System** with Excel template generation and validation
-- **Entity Relationship Management** with complex hierarchy support
+- **Entity Relationship Management** with categorized relationships (Family, Business, Trust, Professional, Other)
 - **Secure Document Management** with tenant-aware file storage and metadata
 
 ### **Frontend (React + TypeScript)**
@@ -271,7 +276,7 @@ private-markets-tracker/
 
 ### **Development Security Notes**
 - ✅ **No Personal Data**: All sample data is generic and fictional
-- ✅ **Configurable Database**: SQLite for development, PostgreSQL-ready for production  
+- ✅ **PostgreSQL Database**: Production-ready database with proper connection pooling
 - ✅ **Environment Variables**: Configurable settings via .env files
 - ✅ **Professional Naming**: No personal identifiers in codebase
 - ✅ **Clean Repository**: No machine-specific paths or sensitive data
@@ -324,6 +329,10 @@ curl "http://localhost:8000/api/portfolio/performance"
 - **Advanced Analytics**: Portfolio optimization and stress testing
 
 ### **🔮 Planned Features**
+- **UUID Migration**: Convert integer IDs to UUIDs for enhanced security and privacy
+  - Prevents information leakage about system size and growth
+  - Eliminates enumeration attack vectors
+  - Provides globally unique identifiers suitable for distributed systems
 - **Banking Integration**: Real-time cash position connectivity
 - **Mobile Application**: Native mobile interface for key features
 - **ESG Integration**: Impact and sustainability metrics
@@ -331,15 +340,18 @@ curl "http://localhost:8000/api/portfolio/performance"
 
 ## 🆕 **Recent Improvements**
 
-### **October 2024 Release - Multi-Tenant Architecture**
-- **🏛️ Multi-Tenant Architecture**: Complete implementation of JWT authentication with role-based access control
+### **October 2025 Release - Multi-Tenant Migration Complete**
+- **🏛️ Multi-Tenant Architecture**: Complete implementation of JWT authentication with role-based access control (Admin/Manager/Contributor/Viewer)
 - **📄 Enterprise Document Management**: Full document lifecycle management with tenant isolation and comprehensive search
-- **🔐 Production Security**: JWT tokens with automatic refresh, role-based permissions (Admin/Manager/Viewer)
-- **🎯 Tenant Data Isolation**: Complete data segregation ensuring organizations can't access each other's data
+- **🔐 Production Security**: JWT tokens with automatic refresh, row-level tenant isolation via PostgreSQL
+- **🎯 Tenant Data Isolation**: Complete data segregation with `tenant_id` filtering on all queries
 - **🔧 Authentication Integration**: Frontend JWT interceptors with automatic token renewal and error handling
-- **📊 Enhanced Performance Analytics**: Fixed authentication issues in benchmark comparisons and relative performance
+- **📊 Performance Calculations**: Migrated IRR calculations with proper cash flow sign conventions
+- **💰 Investment CRUD Migration**: All investment-specific endpoints (cashflows, valuations) migrated to multi-tenant system
+- **🏗️ Entity Relationships**: Added categorized relationships (Family, Business, Trust, Professional, Other)
+- **🗄️ PostgreSQL Migration**: Full migration from SQLite to PostgreSQL with sequence management
 
-### **December 2024 Release**
+### **September 2025 Release - Professional UI & Benchmarks**
 - **🎯 Comprehensive Benchmark Management**: New dedicated Benchmarks page with PME analysis, relative performance comparison, and reference data management
 - **🎨 Professional UI Enhancement**: Implemented static design by removing hover animations, simplified grid layouts from 8 complex variants to responsive auto-fit grid
 - **🔧 Chart & Interface Fixes**: Resolved pie chart tooltip display issues, optimized space usage across pages, improved tab styling consistency
@@ -355,19 +367,21 @@ curl "http://localhost:8000/api/portfolio/performance"
 ## 🔧 **Configuration & Deployment**
 
 ### **Development Setup**
-- **Database**: SQLite (portfolio_tracker.db) created automatically
+- **Database**: PostgreSQL (portfolio_tracker_db) with connection pooling
 - **Ports**: Backend on 8000, Frontend on 3000
-- **Authentication**: JWT-based with admin/admin and manager/manager default credentials
+- **Authentication**: JWT-based with test accounts (see Access Application section above)
 - **File Storage**: Local uploads/ directory for documents
+- **Environment**: Configure via .env file (DATABASE_URL, JWT_SECRET, etc.)
 
 ### **Production Considerations**
-- **Database**: Upgrade to PostgreSQL for production use
-- **Authentication**: Production JWT keys and OAuth2 integration
+- **Database**: Already using PostgreSQL - configure production credentials and connection pooling
+- **Authentication**: Production JWT secret keys and OAuth2 integration
 - **File Storage**: Configure cloud storage (AWS S3, Azure Blob, etc.)
 - **SSL/TLS**: Enable HTTPS for secure communications
 - **Environment Variables**: Configure production settings via .env
-- **Backup Strategy**: Implement regular database backups
-- **Multi-Tenant Setup**: Configure tenant provisioning and user management
+- **Backup Strategy**: Implement regular PostgreSQL backups and point-in-time recovery
+- **Multi-Tenant Setup**: Configure tenant provisioning, user management, and SSO integration
+- **Security Hardening**: Implement UUID-based IDs to prevent information leakage
 
 ## 🤝 **Contributing**
 

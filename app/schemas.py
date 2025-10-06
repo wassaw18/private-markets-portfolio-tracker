@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import date, datetime
-from app.models import AssetClass, InvestmentStructure, InvestmentStatus, CashFlowType, CallScheduleType, DistributionTimingType, ForecastScenario, EntityType, RelationshipType, AdvancedRelationshipType, OwnershipType, DocumentCategory, DocumentStatus, LiquidityProfile, ReportingFrequency, RiskRating
+from uuid import UUID
+from app.models import AssetClass, InvestmentStructure, InvestmentStatus, CashFlowType, CallScheduleType, DistributionTimingType, ForecastScenario, EntityType, RelationshipType, AdvancedRelationshipType, OwnershipType, DocumentCategory, DocumentStatus, LiquidityProfile, ReportingFrequency, RiskRating, RelationshipCategory, FamilyRelationshipType, BusinessRelationshipType, TrustRelationshipType, ProfessionalRelationshipType, OtherRelationshipType
 
 class CashFlowBase(BaseModel):
     date: date
@@ -18,6 +19,7 @@ class CashFlowUpdate(BaseModel):
 
 class CashFlow(CashFlowBase):
     id: int
+    uuid: UUID
     investment_id: int
     
     class Config:
@@ -36,8 +38,9 @@ class ValuationUpdate(BaseModel):
 
 class Valuation(ValuationBase):
     id: int
+    uuid: UUID
     investment_id: int
-    
+
     class Config:
         from_attributes = True
 
@@ -66,9 +69,10 @@ class EntityUpdate(BaseModel):
 
 class Entity(EntityBase):
     id: int
+    uuid: UUID
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -220,10 +224,11 @@ class InvestmentUpdate(BaseModel):
 
 class Investment(InvestmentBase):
     id: int
+    uuid: UUID
     entity: Optional[Entity] = None
     cashflows: List[CashFlow] = []
     valuations: List[Valuation] = []
-    
+
     class Config:
         from_attributes = True
 
@@ -545,6 +550,7 @@ class DocumentUpdate(BaseModel):
 
 class Document(DocumentBase):
     id: int
+    uuid: UUID
     filename: str
     original_filename: str
     file_size: int
@@ -554,12 +560,12 @@ class Document(DocumentBase):
     uploaded_by: Optional[str] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
-    
+
     # Relationships
     investment: Optional[Investment] = None
     entity: Optional[Entity] = None
     tags: List[DocumentTag] = []
-    
+
     class Config:
         from_attributes = True
 
@@ -613,7 +619,8 @@ class EntityRelationshipBase(BaseModel):
     """Base schema for entity relationships"""
     from_entity_id: int
     to_entity_id: int
-    relationship_type: AdvancedRelationshipType
+    relationship_category: RelationshipCategory
+    relationship_type: str  # The specific relationship type from the appropriate enum
     relationship_subtype: Optional[str] = None
     percentage_ownership: float = Field(0.0, ge=0, le=100)
     is_voting_interest: bool = True
@@ -626,7 +633,8 @@ class EntityRelationshipCreate(EntityRelationshipBase):
     pass
 
 class EntityRelationshipUpdate(BaseModel):
-    relationship_type: Optional[AdvancedRelationshipType] = None
+    relationship_category: Optional[RelationshipCategory] = None
+    relationship_type: Optional[str] = None  # The specific relationship type from the appropriate enum
     relationship_subtype: Optional[str] = None
     percentage_ownership: Optional[float] = Field(None, ge=0, le=100)
     is_voting_interest: Optional[bool] = None
@@ -637,9 +645,10 @@ class EntityRelationshipUpdate(BaseModel):
 
 class EntityRelationship(EntityRelationshipBase):
     id: int
+    uuid: UUID
     created_date: datetime
     updated_date: datetime
-    
+
     class Config:
         from_attributes = True
 

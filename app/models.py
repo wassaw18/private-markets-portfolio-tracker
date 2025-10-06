@@ -1,7 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Enum, Boolean, Text, DateTime, Index, Numeric, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import enum
+import uuid
 from datetime import datetime
 
 Base = declarative_base()
@@ -102,6 +104,136 @@ class EntityType(str, enum.Enum):
     FOUNDATION = "Foundation"
     OTHER = "Other"
 
+class RelationshipCategory(str, enum.Enum):
+    """Categories for organizing relationship types"""
+    FAMILY = "Family"
+    BUSINESS = "Business"
+    TRUST = "Trust"
+    PROFESSIONAL = "Professional"
+    OTHER = "Other"
+
+class FamilyRelationshipType(str, enum.Enum):
+    """Family relationship types"""
+    SELF = "Self"
+    SPOUSE = "Spouse"
+    DOMESTIC_PARTNER = "Domestic Partner"
+    CHILD = "Child"
+    STEPCHILD = "Stepchild"
+    ADOPTED_CHILD = "Adopted Child"
+    PARENT = "Parent"
+    STEPPARENT = "Stepparent"
+    ADOPTIVE_PARENT = "Adoptive Parent"
+    SIBLING = "Sibling"
+    HALF_SIBLING = "Half Sibling"
+    STEP_SIBLING = "Step Sibling"
+    GRANDPARENT = "Grandparent"
+    GRANDCHILD = "Grandchild"
+    AUNT_UNCLE = "Aunt/Uncle"
+    NIECE_NEPHEW = "Niece/Nephew"
+    COUSIN = "Cousin"
+    IN_LAW = "In-Law"
+    GUARDIAN = "Guardian"
+    WARD = "Ward"
+    OTHER_RELATIVE = "Other Relative"
+
+class BusinessRelationshipType(str, enum.Enum):
+    """Business relationship types"""
+    OWNER = "Owner"
+    CO_OWNER = "Co-Owner"
+    SHAREHOLDER = "Shareholder"
+    MAJORITY_SHAREHOLDER = "Majority Shareholder"
+    MINORITY_SHAREHOLDER = "Minority Shareholder"
+    FOUNDER = "Founder"
+    CO_FOUNDER = "Co-Founder"
+    PARTNER = "Partner"
+    GENERAL_PARTNER = "General Partner"
+    LIMITED_PARTNER = "Limited Partner"
+    MANAGING_PARTNER = "Managing Partner"
+    MEMBER = "Member"
+    MANAGING_MEMBER = "Managing Member"
+    NON_MANAGING_MEMBER = "Non-Managing Member"
+    MANAGER = "Manager"
+    BOARD_MEMBER = "Board Member"
+    BOARD_CHAIR = "Board Chair"
+    INDEPENDENT_DIRECTOR = "Independent Director"
+    OFFICER = "Officer"
+    CEO = "CEO"
+    PRESIDENT = "President"
+    CFO = "CFO"
+    COO = "COO"
+    SECRETARY = "Secretary"
+    TREASURER = "Treasurer"
+    VICE_PRESIDENT = "Vice President"
+    EMPLOYEE = "Employee"
+    CONSULTANT = "Consultant"
+    CONTRACTOR = "Contractor"
+    VENDOR = "Vendor"
+    CUSTOMER = "Customer"
+    INVESTOR = "Investor"
+    CREDITOR = "Creditor"
+
+class TrustRelationshipType(str, enum.Enum):
+    """Trust relationship types"""
+    GRANTOR = "Grantor"
+    SETTLOR = "Settlor"
+    TRUSTOR = "Trustor"
+    TRUSTEE = "Trustee"
+    CO_TRUSTEE = "Co-Trustee"
+    SUCCESSOR_TRUSTEE = "Successor Trustee"
+    CONTINGENT_TRUSTEE = "Contingent Trustee"
+    CORPORATE_TRUSTEE = "Corporate Trustee"
+    INDIVIDUAL_TRUSTEE = "Individual Trustee"
+    BENEFICIARY = "Beneficiary"
+    PRIMARY_BENEFICIARY = "Primary Beneficiary"
+    CONTINGENT_BENEFICIARY = "Contingent Beneficiary"
+    INCOME_BENEFICIARY = "Income Beneficiary"
+    REMAINDER_BENEFICIARY = "Remainder Beneficiary"
+    REMAINDERMAN = "Remainderman"
+    CURRENT_BENEFICIARY = "Current Beneficiary"
+    FUTURE_BENEFICIARY = "Future Beneficiary"
+    DISCRETIONARY_BENEFICIARY = "Discretionary Beneficiary"
+    MANDATORY_BENEFICIARY = "Mandatory Beneficiary"
+    TRUST_PROTECTOR = "Trust Protector"
+    TRUST_ADVISOR = "Trust Advisor"
+    DISTRIBUTION_COMMITTEE = "Distribution Committee"
+    INVESTMENT_COMMITTEE = "Investment Committee"
+
+class ProfessionalRelationshipType(str, enum.Enum):
+    """Professional service relationship types"""
+    ATTORNEY = "Attorney"
+    CPA = "CPA"
+    ACCOUNTANT = "Accountant"
+    FINANCIAL_ADVISOR = "Financial Advisor"
+    INVESTMENT_ADVISOR = "Investment Advisor"
+    WEALTH_MANAGER = "Wealth Manager"
+    BANK_RELATIONSHIP_MANAGER = "Bank Relationship Manager"
+    INSURANCE_AGENT = "Insurance Agent"
+    REAL_ESTATE_AGENT = "Real Estate Agent"
+    APPRAISER = "Appraiser"
+    CONSULTANT = "Consultant"
+    ADVISOR = "Advisor"
+    POWER_OF_ATTORNEY = "Power of Attorney"
+    HEALTHCARE_PROXY = "Healthcare Proxy"
+    EXECUTOR = "Executor"
+    ADMINISTRATOR = "Administrator"
+    CUSTODIAN = "Custodian"
+
+class OtherRelationshipType(str, enum.Enum):
+    """Other relationship types that don't fit standard categories"""
+    FRIEND = "Friend"
+    BUSINESS_ASSOCIATE = "Business Associate"
+    NEIGHBOR = "Neighbor"
+    CAREGIVER = "Caregiver"
+    NOMINEE = "Nominee"
+    AGENT = "Agent"
+    PROXY = "Proxy"
+    REPRESENTATIVE = "Representative"
+    CONTACT = "Contact"
+    EMERGENCY_CONTACT = "Emergency Contact"
+    OTHER = "Other"
+    UNKNOWN = "Unknown"
+
+# Legacy relationship type for FamilyMember (backward compatibility)
 class RelationshipType(str, enum.Enum):
     SELF = "Self"
     SPOUSE = "Spouse"
@@ -115,6 +247,7 @@ class RelationshipType(str, enum.Enum):
     PARTNER = "Partner"
     OTHER = "Other"
 
+# Legacy advanced relationship type (backward compatibility)
 class AdvancedRelationshipType(str, enum.Enum):
     # Trust relationships
     TRUST_RELATIONSHIP = "Trust Relationship"
@@ -123,37 +256,37 @@ class AdvancedRelationshipType(str, enum.Enum):
     REMAINDERMAN = "Remainderman"
     PRIMARY_BENEFICIARY = "Primary Beneficiary"
     CONTINGENT_BENEFICIARY = "Contingent Beneficiary"
-    
+
     # Corporate relationships
     CORPORATE_RELATIONSHIP = "Corporate Relationship"
     SHAREHOLDER = "Shareholder"
     BOARD_MEMBER = "Board Member"
     OFFICER = "Officer"
     MANAGING_MEMBER = "Managing Member"
-    
+
     # Family relationships
     FAMILY_RELATIONSHIP = "Family Relationship"
     GUARDIAN = "Guardian"
     POWER_OF_ATTORNEY = "Power of Attorney"
-    
+
     # Ownership relationships
     OWNERSHIP_RELATIONSHIP = "Ownership Relationship"
     VOTING_INTEREST = "Voting Interest"
     NON_VOTING_INTEREST = "Non-Voting Interest"
-    
+
     # Professional relationships
     PROFESSIONAL_RELATIONSHIP = "Professional Relationship"
     ADVISOR = "Advisor"
     ACCOUNTANT = "Accountant"
     ATTORNEY = "Attorney"
-    
+
     # Legacy support
-    TRUSTEE = "Trustee"  # Kept for backward compatibility
-    BENEFICIARY = "Beneficiary"  # Kept for backward compatibility
-    MANAGER = "Manager"  # Kept for backward compatibility
-    MEMBER = "Member"  # Kept for backward compatibility
-    PARTNER = "Partner"  # Kept for backward compatibility
-    OTHER = "Other"
+    TRUSTEE = "Trustee"
+    BENEFICIARY = "Beneficiary"
+    MANAGER = "Manager"
+    MEMBER = "Member"
+    PARTNER = "Partner"
+    LEGACY_OTHER = "Other"
 
 class OwnershipType(str, enum.Enum):
     DIRECT = "Direct"
@@ -161,6 +294,18 @@ class OwnershipType(str, enum.Enum):
     BENEFICIAL = "Beneficial"
     FIDUCIARY = "Fiduciary"
     NOMINEE = "Nominee"
+
+class UserRole(str, enum.Enum):
+    ADMIN = "Admin"              # Full access to tenant management and user administration
+    MANAGER = "Manager"          # Full access to investment data and reporting
+    CONTRIBUTOR = "Contributor"  # Can add/edit investments and data
+    VIEWER = "Viewer"           # Read-only access to reports and data
+
+class TenantStatus(str, enum.Enum):
+    ACTIVE = "Active"
+    SUSPENDED = "Suspended"
+    TRIAL = "Trial"
+    PENDING = "Pending"
 
 class LiquidityProfile(str, enum.Enum):
     ILLIQUID = "Illiquid"
@@ -191,50 +336,107 @@ class ActivityClassification(str, enum.Enum):
     PASSIVE = "Passive"
     PORTFOLIO = "Portfolio"
 
+class Tenant(Base):
+    """
+    Represents an organization/family office using the platform.
+    Provides data isolation between different client organizations.
+    """
+    __tablename__ = "tenants"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)  # Organization name
+    subdomain = Column(String, unique=True, nullable=True, index=True)  # For custom domains
+    status = Column(Enum(TenantStatus), default=TenantStatus.ACTIVE, nullable=False)
+    settings = Column(Text, nullable=True)  # JSON settings for tenant configuration
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
+    entities = relationship("Entity", back_populates="tenant", cascade="all, delete-orphan")
+    investments = relationship("Investment", back_populates="tenant", cascade="all, delete-orphan")
+
+class User(Base):
+    """
+    Represents users who can access the platform.
+    Each user belongs to a tenant and has specific roles and permissions.
+    """
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    hashed_password = Column(String, nullable=False)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    role = Column(Enum(UserRole), default=UserRole.VIEWER, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    last_login = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Foreign keys
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+
+    # Relationships
+    tenant = relationship("Tenant", back_populates="users")
+
+    # Unique constraint: username must be unique within a tenant
+    __table_args__ = (UniqueConstraint('username', 'tenant_id', name='unique_username_per_tenant'),)
+
 class Entity(Base):
     """
     Represents legal entities that can own investments (Individuals, Trusts, LLCs, etc.)
     """
     __tablename__ = "entities"
-    
+
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
     name = Column(String, nullable=False, index=True)
     entity_type = Column(Enum(EntityType), nullable=False)
-    
+
+    # Multi-tenancy
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    updated_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     # Legal and tax information
-    tax_id = Column(String, nullable=True, unique=True)  # SSN/EIN/TIN
+    tax_id = Column(String, nullable=True)  # SSN/EIN/TIN (removed unique constraint for multi-tenancy)
     legal_address = Column(Text, nullable=True)
     formation_date = Column(Date, nullable=True)  # For legal entities
-    
+
     # Entity status and metadata
     is_active = Column(Boolean, default=True)
     notes = Column(Text, nullable=True)
-    
+
     # Audit trail
     created_date = Column(DateTime, default=datetime.utcnow)
     updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(String, nullable=True)  # Username who created the record
-    updated_by = Column(String, nullable=True)  # Username who last updated the record
+    created_by = Column(String, nullable=True)  # Username who created the record (kept for backward compatibility)
+    updated_by = Column(String, nullable=True)  # Username who last updated the record (kept for backward compatibility)
     
     # Relationships
+    tenant = relationship("Tenant", back_populates="entities")
+    created_by_user = relationship("User", foreign_keys=[created_by_user_id])
+    updated_by_user = relationship("User", foreign_keys=[updated_by_user_id])
     investments = relationship("Investment", back_populates="entity", cascade="all, delete-orphan")
     family_members = relationship("FamilyMember", back_populates="entity")
-    
+
     # New relationship fields
     entity_relationships_from = relationship(
-        "EntityRelationship", 
+        "EntityRelationship",
         foreign_keys="EntityRelationship.from_entity_id",
         back_populates="from_entity",
         cascade="all, delete-orphan"
     )
     entity_relationships_to = relationship(
-        "EntityRelationship", 
-        foreign_keys="EntityRelationship.to_entity_id", 
+        "EntityRelationship",
+        foreign_keys="EntityRelationship.to_entity_id",
         back_populates="to_entity",
         cascade="all, delete-orphan"
     )
     investment_ownerships = relationship(
-        "InvestmentOwnership", 
+        "InvestmentOwnership",
         back_populates="entity",
         cascade="all, delete-orphan"
     )
@@ -244,9 +446,12 @@ class Entity(Base):
         back_populates="entity",
         cascade="all, delete-orphan"
     )
-    
+
     __table_args__ = (
         Index('ix_entity_name_type', 'name', 'entity_type'),
+        Index('ix_entity_tenant', 'tenant_id'),
+        UniqueConstraint('name', 'tenant_id', name='unique_entity_name_per_tenant'),
+        UniqueConstraint('tax_id', 'tenant_id', name='unique_tax_id_per_tenant'),
     )
 
 class FamilyMember(Base):
@@ -254,54 +459,71 @@ class FamilyMember(Base):
     Represents individual family members and their relationships to entities
     """
     __tablename__ = "family_members"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     entity_id = Column(Integer, ForeignKey("entities.id"), nullable=False)
-    
+
+    # Multi-tenancy
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    updated_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     # Personal information
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     date_of_birth = Column(Date, nullable=True)
-    
+
     # Relationship information
     relationship_type = Column(Enum(RelationshipType), nullable=False)
     primary_contact = Column(Boolean, default=False)  # Is this the primary contact for the entity?
-    
+
     # Contact information
     email = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     address = Column(Text, nullable=True)
-    
+
     # Status and metadata
     is_active = Column(Boolean, default=True)
     notes = Column(Text, nullable=True)
-    
+
     # Audit trail
     created_date = Column(DateTime, default=datetime.utcnow)
     updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(String, nullable=True)  # Username who created the record
-    updated_by = Column(String, nullable=True)  # Username who last updated the record
-    
+    created_by = Column(String, nullable=True)  # Username who created the record (kept for backward compatibility)
+    updated_by = Column(String, nullable=True)  # Username who last updated the record (kept for backward compatibility)
+
     # Relationships
+    tenant = relationship("Tenant")
+    created_by_user = relationship("User", foreign_keys=[created_by_user_id])
+    updated_by_user = relationship("User", foreign_keys=[updated_by_user_id])
     entity = relationship("Entity", back_populates="family_members")
-    
+
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
-    
+
     __table_args__ = (
+        Index('ix_family_member_tenant', 'tenant_id'),
         Index('ix_family_member_name', 'last_name', 'first_name'),
         Index('ix_family_member_entity', 'entity_id', 'relationship_type'),
+        Index('ix_family_member_entity_tenant', 'entity_id', 'tenant_id'),
     )
 
 class Investment(Base):
     __tablename__ = "investments"
-    
+
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
     name = Column(String, nullable=False, index=True)
     asset_class = Column(Enum(AssetClass), nullable=False)
     investment_structure = Column(Enum(InvestmentStructure), nullable=False)
     entity_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
+
+    # Multi-tenancy
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    updated_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     strategy = Column(String, nullable=False)
     vintage_year = Column(Integer, nullable=False)
     commitment_amount = Column(Float, nullable=False)
@@ -365,6 +587,10 @@ class Investment(Base):
     created_by = Column(String, nullable=True)  # Username who created the record
     updated_by = Column(String, nullable=True)  # Username who last updated the record
     
+    # Relationships
+    tenant = relationship("Tenant", back_populates="investments")
+    created_by_user = relationship("User", foreign_keys=[created_by_user_id])
+    updated_by_user = relationship("User", foreign_keys=[updated_by_user_id])
     entity = relationship("Entity", back_populates="investments")
     ownership_records = relationship("InvestmentOwnership", back_populates="investment", cascade="all, delete-orphan")
     cashflows = relationship("CashFlow", back_populates="investment", cascade="all, delete-orphan")
@@ -373,44 +599,84 @@ class Investment(Base):
     forecast_adjustments = relationship("ForecastAdjustment", back_populates="investment", cascade="all, delete-orphan")
     tax_documents = relationship("TaxDocument", back_populates="investment", cascade="all, delete-orphan")
 
+    __table_args__ = (
+        Index('ix_investment_tenant', 'tenant_id'),
+        Index('ix_investment_entity_tenant', 'entity_id', 'tenant_id'),
+        UniqueConstraint('name', 'tenant_id', name='unique_investment_name_per_tenant'),
+    )
+
 class CashFlow(Base):
     __tablename__ = "cashflows"
-    
+
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
     investment_id = Column(Integer, ForeignKey("investments.id"), nullable=False)
+
+    # Multi-tenancy
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    updated_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     date = Column(Date, nullable=False)
     type = Column(Enum(CashFlowType), nullable=False)
     amount = Column(Float, nullable=False)
-    
+
     # K-1 Tax Tracking Fields
     distribution_type = Column(Enum(DistributionType), nullable=True)  # Only for distributions
     tax_year = Column(Integer, nullable=True)  # Tax year for K-1 reporting
     k1_reportable = Column(Boolean, default=True)  # Whether included in K-1
     notes = Column(Text, nullable=True)  # Additional tax notes
-    
+
     # Audit trail
     created_date = Column(DateTime, default=datetime.utcnow)
     updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(String, nullable=True)  # Username who created the record
-    updated_by = Column(String, nullable=True)  # Username who last updated the record
-    
+    created_by = Column(String, nullable=True)  # Username who created the record (kept for backward compatibility)
+    updated_by = Column(String, nullable=True)  # Username who last updated the record (kept for backward compatibility)
+
+    # Relationships
+    tenant = relationship("Tenant")
+    created_by_user = relationship("User", foreign_keys=[created_by_user_id])
+    updated_by_user = relationship("User", foreign_keys=[updated_by_user_id])
     investment = relationship("Investment", back_populates="cashflows")
+
+    __table_args__ = (
+        Index('ix_cashflow_tenant', 'tenant_id'),
+        Index('ix_cashflow_investment_tenant', 'investment_id', 'tenant_id'),
+        Index('ix_cashflow_date_tenant', 'date', 'tenant_id'),
+    )
 
 class Valuation(Base):
     __tablename__ = "valuations"
-    
+
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
     investment_id = Column(Integer, ForeignKey("investments.id"), nullable=False)
+
+    # Multi-tenancy
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    updated_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     date = Column(Date, nullable=False)
     nav_value = Column(Float, nullable=False)
-    
+
     # Audit trail
     created_date = Column(DateTime, default=datetime.utcnow)
     updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(String, nullable=True)  # Username who created the record
-    updated_by = Column(String, nullable=True)  # Username who last updated the record
-    
+    created_by = Column(String, nullable=True)  # Username who created the record (kept for backward compatibility)
+    updated_by = Column(String, nullable=True)  # Username who last updated the record (kept for backward compatibility)
+
+    # Relationships
+    tenant = relationship("Tenant")
+    created_by_user = relationship("User", foreign_keys=[created_by_user_id])
+    updated_by_user = relationship("User", foreign_keys=[updated_by_user_id])
     investment = relationship("Investment", back_populates="valuations")
+
+    __table_args__ = (
+        Index('ix_valuation_tenant', 'tenant_id'),
+        Index('ix_valuation_investment_tenant', 'investment_id', 'tenant_id'),
+        Index('ix_valuation_date_tenant', 'date', 'tenant_id'),
+    )
 
 class PerformanceBenchmark(Base):
     """Static benchmark data for performance comparison"""
@@ -656,15 +922,20 @@ class TaxDocument(Base):
 class Document(Base):
     """Document management system for family office documents"""
     __tablename__ = "documents"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    
+    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
+
+    # Multi-tenancy
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    uploaded_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     # Basic document information
     title = Column(String, nullable=False, index=True)
     description = Column(Text, nullable=True)
     category = Column(Enum(DocumentCategory), nullable=False, index=True)
     status = Column(Enum(DocumentStatus), nullable=False, default=DocumentStatus.PENDING_REVIEW)
-    
+
     # File information
     filename = Column(String, nullable=False)
     original_filename = Column(String, nullable=False)
@@ -672,11 +943,11 @@ class Document(Base):
     file_size = Column(Integer, nullable=False)  # Size in bytes
     mime_type = Column(String, nullable=False)  # MIME type
     file_hash = Column(String, nullable=False, index=True)  # SHA-256 hash for deduplication
-    
+
     # Document dates
     document_date = Column(Date, nullable=True)  # Date on the document itself
     due_date = Column(Date, nullable=True)  # Due date for action (if applicable)
-    
+
     # Relationships
     investment_id = Column(Integer, ForeignKey("investments.id"), nullable=True, index=True)
     entity_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
@@ -690,20 +961,25 @@ class Document(Base):
     notes = Column(Text, nullable=True)
     
     # Audit trail
-    uploaded_by = Column(String, nullable=True)  # User who uploaded the document
+    uploaded_by = Column(String, nullable=True)  # User who uploaded the document (kept for backward compatibility)
     created_date = Column(DateTime, default=datetime.utcnow, index=True)
     updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
+    tenant = relationship("Tenant")
+    uploaded_by_user = relationship("User", foreign_keys=[uploaded_by_user_id])
     investment = relationship("Investment", backref="documents")
     entity = relationship("Entity", backref="documents")
     tags = relationship("DocumentTag", back_populates="document", cascade="all, delete-orphan")
-    
+
     __table_args__ = (
+        Index('ix_document_tenant', 'tenant_id'),
         Index('ix_document_category_date', 'category', 'document_date'),
         Index('ix_document_investment_category', 'investment_id', 'category'),
         Index('ix_document_entity_category', 'entity_id', 'category'),
         Index('ix_document_search', 'title', 'searchable_content'),
+        Index('ix_document_tenant_category', 'tenant_id', 'category'),
+        UniqueConstraint('file_hash', 'tenant_id', name='unique_file_hash_per_tenant'),
     )
 
 class DocumentTag(Base):
@@ -730,14 +1006,16 @@ class DocumentTag(Base):
 class EntityRelationship(Base):
     """Advanced entity relationships for family office structures"""
     __tablename__ = "entity_relationships"
-    
+
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4, index=True)
     from_entity_id = Column(Integer, ForeignKey("entities.id"), nullable=False)
     to_entity_id = Column(Integer, ForeignKey("entities.id"), nullable=False)
     
-    # Relationship details
-    relationship_type = Column(Enum(AdvancedRelationshipType), nullable=False)
-    relationship_subtype = Column(String, nullable=True)
+    # Relationship details - categorized system
+    relationship_category = Column(String, nullable=False)  # Stores category as string (Family, Business, Trust, etc.)
+    relationship_type = Column(String, nullable=False)  # Stores the specific relationship type as string
+    relationship_subtype = Column(String, nullable=True)  # Additional details if needed
     
     # Ownership and control
     percentage_ownership = Column(Float, default=0.0)
