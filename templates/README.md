@@ -1,11 +1,30 @@
-# Sample Data Templates
+# Templates Directory
 
-This folder contains comprehensive sample data for testing the Private Markets Portfolio Tracker bulk upload functionality.
+Data templates and sample generators for bulk upload and testing.
 
-## 📁 Files Overview
+This folder contains comprehensive sample data templates for the Private Markets Portfolio Tracker bulk upload functionality.
+
+## Directory Structure
+
+### `bulk-upload/`
+Excel templates for bulk data import:
+- `investment_template.xlsx` - Investment data bulk upload template
+- `entity_template.xlsx` - Entity/family member bulk upload template
+- `cashflow_template.xlsx` - Cash flow data bulk upload template
+- `nav_template.xlsx` - NAV valuation bulk upload template
+
+### `sample-csv/`
+CSV sample data and templates for testing and reference.
+
+### `generators/`
+Python scripts to generate sample/test data:
+- `create_sample_data.py` - Generate comprehensive sample data
+- `sample_holdings_data.py` - Generate sample holdings data
+
+## 📁 Sample Data Files Overview
 
 ### **Entity Data**
-- **File**: `entity_sample_template.csv`
+- **File**: `sample-csv/entity_sample_template.csv`
 - **Records**: 3 entities representing realistic family office structure
 - **Entity Types**: Trust, LLC, Individual
 - **Use Case**: Upload entities first to establish ownership structure
