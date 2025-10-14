@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Entity, EntityRelationshipWithEntities, AdvancedRelationshipType } from '../types/entity';
+import { Entity, EntityRelationshipWithEntities, RelationshipCategory } from '../types/entity';
 import { api } from '../services/api';
 import './EntityRelationshipVisualization.css';
 
@@ -15,7 +15,8 @@ interface EntityNode {
 interface RelationshipEdge {
   from: number;
   to: number;
-  type: AdvancedRelationshipType;
+  category: RelationshipCategory;
+  type: string;
   ownership: number;
   label: string;
 }
@@ -26,6 +27,9 @@ const EntityRelationshipVisualization: React.FC = () => {
   const [nodes, setNodes] = useState<EntityNode[]>([]);
   const [edges, setEdges] = useState<RelationshipEdge[]>([]);
   const [selectedEntity, setSelectedEntity] = useState<number | null>(null);
+  const [hoveredEntity, setHoveredEntity] = useState<number | null>(null);
+  const [filteredEntityTypes, setFilteredEntityTypes] = useState<string[]>([]);
+  const [filteredRelationshipCategories, setFilteredRelationshipCategories] = useState<RelationshipCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,6 +81,7 @@ const EntityRelationshipVisualization: React.FC = () => {
     const relationshipEdges: RelationshipEdge[] = relationshipsData.map(rel => ({
       from: rel.from_entity_id,
       to: rel.to_entity_id,
+      category: rel.relationship_category,
       type: rel.relationship_type,
       ownership: rel.percentage_ownership || 0,
       label: `${rel.relationship_type}${rel.percentage_ownership ? ` (${rel.percentage_ownership}%)` : ''}`
@@ -97,23 +102,13 @@ const EntityRelationshipVisualization: React.FC = () => {
     }
   };
 
-  const getRelationshipColor = (type: AdvancedRelationshipType): string => {
-    switch (type) {
-      case AdvancedRelationshipType.TRUST_RELATIONSHIP: return '#e74c3c';
-      case AdvancedRelationshipType.GRANTOR: return '#e74c3c';
-      case AdvancedRelationshipType.SHAREHOLDER: return '#3498db';
-      case AdvancedRelationshipType.VOTING_INTEREST: return '#3498db';
-      case AdvancedRelationshipType.NON_VOTING_INTEREST: return '#5dade2';
-      case AdvancedRelationshipType.FAMILY_RELATIONSHIP: return '#2ecc71';
-      case AdvancedRelationshipType.BENEFICIARY: return '#f39c12';
-      case AdvancedRelationshipType.PRIMARY_BENEFICIARY: return '#f39c12';
-      case AdvancedRelationshipType.CONTINGENT_BENEFICIARY: return '#f8c471';
-      case AdvancedRelationshipType.TRUSTEE: return '#9b59b6';
-      case AdvancedRelationshipType.SUCCESSOR_TRUSTEE: return '#bb6bd9';
-      case AdvancedRelationshipType.MANAGER: return '#34495e';
-      case AdvancedRelationshipType.MANAGING_MEMBER: return '#34495e';
-      case AdvancedRelationshipType.BOARD_MEMBER: return '#7f8c8d';
-      case AdvancedRelationshipType.OFFICER: return '#566573';
+  const getRelationshipColor = (category: RelationshipCategory): string => {
+    switch (category) {
+      case RelationshipCategory.FAMILY: return '#2ecc71';
+      case RelationshipCategory.BUSINESS: return '#3498db';
+      case RelationshipCategory.TRUST: return '#e74c3c';
+      case RelationshipCategory.PROFESSIONAL: return '#9b59b6';
+      case RelationshipCategory.OTHER: return '#95a5a6';
       default: return '#95a5a6';
     }
   };
@@ -121,6 +116,29 @@ const EntityRelationshipVisualization: React.FC = () => {
   const handleNodeClick = (entityId: number) => {
     setSelectedEntity(selectedEntity === entityId ? null : entityId);
   };
+
+  const toggleEntityTypeFilter = (entityType: string) => {
+    setFilteredEntityTypes(prev =>
+      prev.includes(entityType)
+        ? prev.filter(t => t !== entityType)
+        : [...prev, entityType]
+    );
+  };
+
+  const toggleRelationshipCategoryFilter = (category: RelationshipCategory) => {
+    setFilteredRelationshipCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setFilteredEntityTypes([]);
+    setFilteredRelationshipCategories([]);
+  };
+
+  const hasActiveFilters = filteredEntityTypes.length > 0 || filteredRelationshipCategories.length > 0;
 
   if (loading) {
     return <div className="visualization-loading">Loading relationship visualization...</div>;
@@ -138,26 +156,50 @@ const EntityRelationshipVisualization: React.FC = () => {
       </div>
 
       <div className="visualization-controls">
+        {hasActiveFilters && (
+          <button className="reset-filters-button" onClick={clearAllFilters}>
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+            Clear All Filters
+          </button>
+        )}
         <div className="legend">
-          <h4>Entity Types</h4>
+          <h4>Entity Types (click to highlight)</h4>
           <div className="legend-items">
-            <div className="legend-item">
+            <div
+              className={`legend-item ${filteredEntityTypes.includes('INDIVIDUAL') ? 'legend-item-active' : ''}`}
+              onClick={() => toggleEntityTypeFilter('INDIVIDUAL')}
+            >
               <div className="legend-color" style={{ backgroundColor: '#4CAF50' }}></div>
               <span>Individual</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${filteredEntityTypes.includes('TRUST') ? 'legend-item-active' : ''}`}
+              onClick={() => toggleEntityTypeFilter('TRUST')}
+            >
               <div className="legend-color" style={{ backgroundColor: '#2196F3' }}></div>
               <span>Trust</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${filteredEntityTypes.includes('LLC') ? 'legend-item-active' : ''}`}
+              onClick={() => toggleEntityTypeFilter('LLC')}
+            >
               <div className="legend-color" style={{ backgroundColor: '#FF9800' }}></div>
               <span>LLC</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${filteredEntityTypes.includes('CORPORATION') ? 'legend-item-active' : ''}`}
+              onClick={() => toggleEntityTypeFilter('CORPORATION')}
+            >
               <div className="legend-color" style={{ backgroundColor: '#9C27B0' }}></div>
               <span>Corporation</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${filteredEntityTypes.includes('PARTNERSHIP') ? 'legend-item-active' : ''}`}
+              onClick={() => toggleEntityTypeFilter('PARTNERSHIP')}
+            >
               <div className="legend-color" style={{ backgroundColor: '#F44336' }}></div>
               <span>Partnership</span>
             </div>
@@ -165,31 +207,42 @@ const EntityRelationshipVisualization: React.FC = () => {
         </div>
 
         <div className="relationship-legend">
-          <h4>Relationship Types</h4>
+          <h4>Relationship Types (click to highlight)</h4>
           <div className="legend-items">
-            <div className="legend-item">
-              <div className="legend-line" style={{ backgroundColor: '#e74c3c' }}></div>
-              <span>Trust Relationships</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-line" style={{ backgroundColor: '#3498db' }}></div>
-              <span>Ownership/Voting</span>
-            </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${filteredRelationshipCategories.includes(RelationshipCategory.FAMILY) ? 'legend-item-active' : ''}`}
+              onClick={() => toggleRelationshipCategoryFilter(RelationshipCategory.FAMILY)}
+            >
               <div className="legend-line" style={{ backgroundColor: '#2ecc71' }}></div>
-              <span>Family Relationships</span>
+              <span>Family</span>
             </div>
-            <div className="legend-item">
-              <div className="legend-line" style={{ backgroundColor: '#f39c12' }}></div>
-              <span>Beneficiaries</span>
+            <div
+              className={`legend-item ${filteredRelationshipCategories.includes(RelationshipCategory.BUSINESS) ? 'legend-item-active' : ''}`}
+              onClick={() => toggleRelationshipCategoryFilter(RelationshipCategory.BUSINESS)}
+            >
+              <div className="legend-line" style={{ backgroundColor: '#3498db' }}></div>
+              <span>Business</span>
             </div>
-            <div className="legend-item">
+            <div
+              className={`legend-item ${filteredRelationshipCategories.includes(RelationshipCategory.TRUST) ? 'legend-item-active' : ''}`}
+              onClick={() => toggleRelationshipCategoryFilter(RelationshipCategory.TRUST)}
+            >
+              <div className="legend-line" style={{ backgroundColor: '#e74c3c' }}></div>
+              <span>Trust</span>
+            </div>
+            <div
+              className={`legend-item ${filteredRelationshipCategories.includes(RelationshipCategory.PROFESSIONAL) ? 'legend-item-active' : ''}`}
+              onClick={() => toggleRelationshipCategoryFilter(RelationshipCategory.PROFESSIONAL)}
+            >
               <div className="legend-line" style={{ backgroundColor: '#9b59b6' }}></div>
-              <span>Trustees</span>
+              <span>Professional</span>
             </div>
-            <div className="legend-item">
-              <div className="legend-line" style={{ backgroundColor: '#34495e' }}></div>
-              <span>Management</span>
+            <div
+              className={`legend-item ${filteredRelationshipCategories.includes(RelationshipCategory.OTHER) ? 'legend-item-active' : ''}`}
+              onClick={() => toggleRelationshipCategoryFilter(RelationshipCategory.OTHER)}
+            >
+              <div className="legend-line" style={{ backgroundColor: '#95a5a6' }}></div>
+              <span>Other</span>
             </div>
           </div>
         </div>
@@ -201,9 +254,20 @@ const EntityRelationshipVisualization: React.FC = () => {
           {edges.map((edge, index) => {
             const fromNode = nodes.find(n => n.id === edge.from);
             const toNode = nodes.find(n => n.id === edge.to);
-            
+
             if (!fromNode || !toNode) return null;
-            
+
+            // Check if this edge is connected to the hovered node
+            const isHighlighted = hoveredEntity !== null &&
+              (edge.from === hoveredEntity || edge.to === hoveredEntity);
+
+            // Check if this edge matches the relationship filter
+            const isFiltered = filteredRelationshipCategories.length > 0 &&
+              filteredRelationshipCategories.includes(edge.category);
+
+            // Dimmed if filters are active and this edge doesn't match
+            const isDimmed = filteredRelationshipCategories.length > 0 && !isFiltered;
+
             return (
               <g key={index}>
                 <line
@@ -211,9 +275,11 @@ const EntityRelationshipVisualization: React.FC = () => {
                   y1={fromNode.y}
                   x2={toNode.x}
                   y2={toNode.y}
-                  stroke={getRelationshipColor(edge.type)}
-                  strokeWidth="2"
+                  stroke={getRelationshipColor(edge.category)}
+                  strokeWidth={isHighlighted || isFiltered ? "4" : "2"}
+                  strokeOpacity={isDimmed ? "0.15" : (isHighlighted || isFiltered ? "1" : "0.6")}
                   markerEnd="url(#arrowhead)"
+                  className={isHighlighted || isFiltered ? "relationship-line-highlighted" : "relationship-line"}
                 />
                 {/* Relationship label */}
                 <text
@@ -224,7 +290,7 @@ const EntityRelationshipVisualization: React.FC = () => {
                   fill="#666"
                   className="relationship-label"
                 >
-                  {edge.ownership > 0 ? `${edge.ownership}%` : edge.type.replace('_', ' ')}
+                  {edge.ownership > 0 ? `${edge.ownership}%` : edge.type}
                 </text>
               </g>
             );
@@ -248,41 +314,57 @@ const EntityRelationshipVisualization: React.FC = () => {
           </defs>
           
           {/* Render nodes (entities) */}
-          {nodes.map(node => (
-            <g key={node.id}>
-              <circle
-                cx={node.x}
-                cy={node.y}
-                r="25"
-                fill={getNodeColor(node.type)}
-                stroke={selectedEntity === node.id ? "#000" : "#fff"}
-                strokeWidth={selectedEntity === node.id ? "3" : "2"}
-                className="entity-node"
-                onClick={() => handleNodeClick(node.id)}
-                style={{ cursor: 'pointer' }}
-              />
-              <text
-                x={node.x}
-                y={node.y + 35}
-                textAnchor="middle"
-                fontSize="12"
-                fill="#333"
-                className="entity-label"
-              >
-                {node.name.length > 15 ? `${node.name.substring(0, 12)}...` : node.name}
-              </text>
-              <text
-                x={node.x}
-                y={node.y + 50}
-                textAnchor="middle"
-                fontSize="10"
-                fill="#666"
-                className="entity-type-label"
-              >
-                {node.type.replace('_', ' ')}
-              </text>
-            </g>
-          ))}
+          {nodes.map(node => {
+            const isHovered = hoveredEntity === node.id;
+            const isSelected = selectedEntity === node.id;
+
+            // Check if this node matches the entity type filter
+            const isFiltered = filteredEntityTypes.length > 0 &&
+              filteredEntityTypes.includes(node.type);
+
+            // Dimmed if filters are active and this node doesn't match
+            const isDimmed = filteredEntityTypes.length > 0 && !isFiltered;
+
+            return (
+              <g key={node.id}>
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r="25"
+                  fill={getNodeColor(node.type)}
+                  fillOpacity={isDimmed ? "0.2" : "1"}
+                  stroke={isSelected ? "#000" : "#fff"}
+                  strokeWidth={isSelected ? "3" : "2"}
+                  strokeOpacity={isDimmed ? "0.3" : "1"}
+                  className={isHovered || isFiltered ? "entity-node entity-node-hovered" : "entity-node"}
+                  onClick={() => handleNodeClick(node.id)}
+                  onMouseEnter={() => setHoveredEntity(node.id)}
+                  onMouseLeave={() => setHoveredEntity(null)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <text
+                  x={node.x}
+                  y={node.y + 35}
+                  textAnchor="middle"
+                  fontSize="12"
+                  fill="#333"
+                  className="entity-label"
+                >
+                  {node.name.length > 15 ? `${node.name.substring(0, 12)}...` : node.name}
+                </text>
+                <text
+                  x={node.x}
+                  y={node.y + 50}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fill="#666"
+                  className="entity-type-label"
+                >
+                  {node.type.replace('_', ' ')}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </div>
 
@@ -305,7 +387,8 @@ const EntityRelationshipVisualization: React.FC = () => {
                 <h6>Relationships ({entityRelationships.length})</h6>
                 {entityRelationships.map(rel => (
                   <div key={rel.id} className="relationship-item">
-                    <span className="relationship-type">{rel.relationship_type.replace('_', ' ')}</span>
+                    <span className="relationship-category">[{rel.relationship_category}]</span>
+                    <span className="relationship-type">{rel.relationship_type}</span>
                     {rel.from_entity_id === selectedEntity ? (
                       <span> → {entities.find(e => e.id === rel.to_entity_id)?.name}</span>
                     ) : (
@@ -333,7 +416,7 @@ const EntityRelationshipVisualization: React.FC = () => {
         </div>
         <div className="stat-item">
           <span className="stat-value">
-            {relationships.filter(r => r.relationship_type === AdvancedRelationshipType.FAMILY_RELATIONSHIP).length}
+            {relationships.filter(r => r.relationship_category === RelationshipCategory.FAMILY).length}
           </span>
           <span className="stat-label">Family Links</span>
         </div>

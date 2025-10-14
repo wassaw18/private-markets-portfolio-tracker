@@ -49,20 +49,48 @@ const LiquidityForecast: React.FC = () => {
     <PageErrorBoundary>
       <div className="liquidity-forecast-page">
         <div className="luxury-card page-header">
-          <h1 className="luxury-heading-1">Liquidity Forecast</h1>
+          <h1 className="luxury-heading-1">Cash Flows</h1>
           <p className="luxury-body-large">Portfolio cash flow analysis and liquidity planning</p>
         </div>
 
         <div className="cash-flow-calendar-section">
-          <div className="section-header">
-            <h2>Portfolio Cash Flow Calendar</h2>
-            <p>Interactive calendar view of your portfolio's cash flow timing and patterns</p>
+          <div className="luxury-card">
+            <CashFlowCalendar />
           </div>
-          <CashFlowCalendar />
         </div>
 
         <div className="liquidity-dashboard-section">
-          <LiquidityForecastDashboard investments={investments} currentCashBalance={5000000} />
+          <div className="luxury-card">
+            {investments.length > 0 ? (
+              <LiquidityForecastDashboard
+                investments={investments}
+                currentCashBalance={0}
+              />
+            ) : (
+              <div className="empty-state">
+                <div className="empty-state-content">
+                  <h3>📊 Liquidity Forecast Dashboard</h3>
+                  <p className="empty-message">
+                    No investments found. Add investments to see cash flow projections and liquidity analysis.
+                  </p>
+                  <div className="empty-stats">
+                    <div className="empty-stat">
+                      <span className="stat-label">Expected Capital Calls</span>
+                      <span className="stat-value">$0</span>
+                    </div>
+                    <div className="empty-stat">
+                      <span className="stat-label">Expected Distributions</span>
+                      <span className="stat-value">$0</span>
+                    </div>
+                    <div className="empty-stat">
+                      <span className="stat-label">Net Cash Flow</span>
+                      <span className="stat-value">$0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </PageErrorBoundary>

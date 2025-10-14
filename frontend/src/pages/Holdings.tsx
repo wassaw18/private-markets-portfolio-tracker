@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Investment } from '../types/investment';
-import { investmentAPI, ImportResult, InvestmentFilters } from '../services/api';
+import { investmentAPI, InvestmentFilters } from '../services/api';
 import AddInvestmentModal from '../components/AddInvestmentModal';
 import CreateEntityModal from '../components/CreateEntityModal';
 import EnhancedInvestmentsTable from '../components/EnhancedInvestmentsTable';
-import PortfolioSummary from '../components/PortfolioSummary';
-import ImportExportModal from '../components/ImportExportModal';
-import UploadWidget from '../components/UploadWidget';
 import SectionErrorBoundary from '../components/SectionErrorBoundary';
 import '../styles/luxury-design-system.css';
 import './Holdings.css';
@@ -24,9 +21,7 @@ const Holdings: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCreateEntityModal, setShowCreateEntityModal] = useState(false);
-  const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [portfolioUpdateTrigger, setPortfolioUpdateTrigger] = useState(0);
-  const [currentFilters, setCurrentFilters] = useState<InvestmentFilters>({});
   const [tableFilters, setTableFilters] = useState<TableFilters>({
     search: '',
     assetClass: '',
@@ -53,48 +48,60 @@ const Holdings: React.FC = () => {
     fetchInvestments();
   }, [fetchInvestments]);
 
+  // Refresh investments when the page becomes visible (e.g., navigating back from details page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchInvestments();
+      }
+    };
+
+    const handleFocus = () => {
+      fetchInvestments();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchInvestments]);
+
   const handleAddInvestment = useCallback(() => {
     setShowAddModal(false);
-    fetchInvestments(currentFilters); // Refresh the list with current filters
+    fetchInvestments(); // Refresh the list
     setPortfolioUpdateTrigger(prev => prev + 1); // Trigger portfolio update
-  }, [fetchInvestments, currentFilters]);
+  }, [fetchInvestments]);
 
   const handleDeleteInvestment = useCallback(async (id: number) => {
+    // Show confirmation dialog
+    if (!window.confirm('Archive this investment? It will be hidden from this list but can be restored later if needed.')) {
+      return;
+    }
+
     try {
       await investmentAPI.deleteInvestment(id);
-      fetchInvestments(currentFilters); // Refresh the list with current filters
+      fetchInvestments(); // Refresh the list
       setPortfolioUpdateTrigger(prev => prev + 1); // Trigger portfolio update
     } catch (err) {
-      setError('Failed to delete investment');
-      console.error('Error deleting investment:', err);
+      setError('Failed to archive investment');
+      console.error('Error archiving investment:', err);
     }
-  }, [fetchInvestments, currentFilters]);
+  }, [fetchInvestments]);
 
   const handleUpdateInvestment = useCallback(() => {
-    fetchInvestments(currentFilters); // Refresh the list with current filters
+    fetchInvestments(); // Refresh the list
     setPortfolioUpdateTrigger(prev => prev + 1); // Trigger portfolio update
-  }, [fetchInvestments, currentFilters]);
+  }, [fetchInvestments]);
 
-  const handleImportComplete = useCallback((result: ImportResult) => {
-    if (result.success_count > 0) {
-      // Refresh investments list after successful import
-      fetchInvestments(currentFilters);
-      setPortfolioUpdateTrigger(prev => prev + 1);
-    }
-  }, [fetchInvestments, currentFilters]);
 
   const handleEntityCreated = useCallback(() => {
     setShowCreateEntityModal(false);
     // Entity creation doesn't directly affect investments list, but we could trigger a refresh
     // if the investments depend on entities (which they do for entity filtering)
   }, []);
-
-  const handleInvestmentUploadComplete = useCallback((result: ImportResult) => {
-    // Refresh investments list after successful upload
-    fetchInvestments(currentFilters);
-    setPortfolioUpdateTrigger(prev => prev + 1);
-    console.log(`Investment upload completed: ${result.success_count} successful, ${result.error_count} errors`);
-  }, [fetchInvestments, currentFilters]);
 
   // Filter handlers
   const handleFilterChange = useCallback((key: keyof TableFilters, value: string) => {
@@ -130,6 +137,73 @@ const Holdings: React.FC = () => {
     });
   }, [investments, tableFilters]);
 
+  const handleExportData = useCallback(async () => {
+    try {
+      // Convert investments to CSV format
+      const csvHeaders = [
+        'Name', 'Asset Class', 'Structure', 'Entity', 'Strategy', 'Vintage Year',
+        'Status', 'Commitment Amount', 'Called Amount', 'Commitment Date', 'Currency',
+        'Management Fee', 'Performance Fee', 'Hurdle Rate', 'Fees', 'Contact Person',
+        'Email', 'Portal Link', 'Target Raise', 'Target IRR', 'Investment Period',
+        'Fund Life', 'Reporting Frequency', 'Geography Focus', 'Fund Domicile',
+        'Risk Rating', 'Tax Classification', 'Due Diligence Date', 'IC Approval Date'
+      ];
+
+      const csvRows = filteredInvestments.map(investment => [
+        investment.name,
+        investment.asset_class,
+        investment.investment_structure || '',
+        investment.entity?.name || '',
+        investment.strategy || '',
+        investment.vintage_year || '',
+        investment.status,
+        investment.commitment_amount || '',
+        investment.called_amount || '',
+        investment.commitment_date || '',
+        investment.currency || 'USD',
+        investment.management_fee || '',
+        investment.performance_fee || '',
+        investment.hurdle_rate || '',
+        investment.fees || '',
+        investment.contact_person || '',
+        investment.email || '',
+        investment.portal_link || '',
+        investment.target_raise || '',
+        investment.target_irr || '',
+        investment.investment_period || '',
+        investment.fund_life || '',
+        investment.reporting_frequency || '',
+        investment.geography_focus || '',
+        investment.fund_domicile || '',
+        investment.risk_rating || '',
+        investment.tax_classification || '',
+        investment.due_diligence_date || '',
+        investment.ic_approval_date || ''
+      ]);
+
+      // Create CSV content
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => row.map(field => `"${field}"`).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `portfolio-holdings-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      setError('Failed to export data');
+    }
+  }, [filteredInvestments]);
+
   if (loading) {
     return (
       <div className="luxury-card">
@@ -145,50 +219,16 @@ const Holdings: React.FC = () => {
         <p className="luxury-body-large">Manage and analyze your investment portfolio holdings</p>
       </div>
 
-      <div className="luxury-card holdings-header-card">
-        <div className="holdings-header">
-          <div className="header-actions">
-            <button
-              className="luxury-button-secondary"
-              onClick={() => setShowCreateEntityModal(true)}
-              title="Create a new entity (Individual, Trust, LLC, etc.)"
-            >
-              Add Entity
-            </button>
-            <button
-              className="luxury-button-primary"
-              onClick={() => setShowAddModal(true)}
-            >
-              Add Investment
-            </button>
-          </div>
-        </div>
-      </div>
-
       {error && (
         <div className="luxury-card" style={{borderColor: 'var(--luxury-error)', backgroundColor: 'rgba(231, 76, 60, 0.05)'}}>
           <p className="luxury-body" style={{color: 'var(--luxury-error)', margin: 0}}>{error}</p>
         </div>
       )}
 
-      <div className="investment-upload-section">
-        <UploadWidget
-          type="investments"
-          onUploadComplete={handleInvestmentUploadComplete}
-          size="small"
-        />
-      </div>
-
       <AddInvestmentModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSuccess={handleAddInvestment}
-      />
-
-      <ImportExportModal
-        isOpen={showImportExportModal}
-        onClose={() => setShowImportExportModal(false)}
-        onImportComplete={handleImportComplete}
       />
 
       {showCreateEntityModal && (
@@ -204,7 +244,8 @@ const Holdings: React.FC = () => {
             investments={filteredInvestments}
             onDelete={handleDeleteInvestment}
             onUpdate={handleUpdateInvestment}
-            onToggleImportExport={() => setShowImportExportModal(true)}
+            onAddInvestment={() => setShowAddModal(true)}
+            onExportData={handleExportData}
             externalFilters={tableFilters}
             onExternalFilterChange={handleFilterChange}
             onClearExternalFilters={clearFilters}

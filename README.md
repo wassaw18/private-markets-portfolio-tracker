@@ -351,6 +351,13 @@ curl "http://localhost:8000/api/portfolio/performance"
 - **🏗️ Entity Relationships**: Added categorized relationships (Family, Business, Trust, Professional, Other)
 - **🗄️ PostgreSQL Migration**: Full migration from SQLite to PostgreSQL with sequence management
 
+### **Investment Status & Navigation Enhancements (October 2025)**
+- **📊 Accurate Investment Counting**: Fixed dashboard to properly count investments by status (Active, Dormant, Realized) based on actual investment status field rather than presence of NAV/cash flows
+- **🧭 Investment Detail Navigation**: Added dropdown selector on investment detail pages to quickly navigate between investments without returning to Holdings table
+- **🔄 Status-Based Organization**: Investments in dropdown are grouped by status (Active, Dormant, Realized) for easy identification
+- **🔗 Route Consistency**: Unified all investment detail routes to `/investments/:id` for consistent navigation from Holdings table and dropdown selector
+- **✨ Enhanced Status Management**: Consolidated duplicate status displays into single modal-based status management interface with clickable status button in Performance Metrics card
+
 ### **September 2025 Release - Professional UI & Benchmarks**
 - **🎯 Comprehensive Benchmark Management**: New dedicated Benchmarks page with PME analysis, relative performance comparison, and reference data management
 - **🎨 Professional UI Enhancement**: Implemented static design by removing hover animations, simplified grid layouts from 8 complex variants to responsive auto-fit grid

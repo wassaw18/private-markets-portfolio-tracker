@@ -1,10 +1,10 @@
 /* Operations Center - Enhanced Bulk Upload Styling */
 
-.operations-container {
-  max-width: 100%;
-  padding: var(--space-2xl);
-  background: transparent;
+.bulk-upload-page {
+  min-height: 100vh;
+  background: #f8fafc;
 }
+
 
 /* Header Section */
 .operations-header {
@@ -14,13 +14,6 @@
   margin-bottom: var(--space-lg);
 }
 
-.header-content h1 {
-  margin-bottom: var(--space-sm);
-  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 .header-actions {
   display: flex;

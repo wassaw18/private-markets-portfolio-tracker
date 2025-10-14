@@ -1,8 +1,27 @@
+/*
+ * DORMANT COMPONENT - BulkUpload.tsx
+ *
+ * This component was originally the standalone bulk upload page for the application.
+ * As of the Operations page redesign, the bulk upload functionality has been integrated
+ * into the Documents/Operations page (/documents) with a simplified interface.
+ *
+ * This standalone page (/bulk-upload) is kept dormant for potential future use if we
+ * need a more detailed, full-featured bulk upload interface with:
+ * - Advanced progress tracking
+ * - Detailed validation results
+ * - Complex prerequisite workflows
+ * - Advanced configuration options
+ *
+ * The route still exists in App.tsx but the primary bulk upload UX is now in Documents.tsx
+ *
+ * Last updated: Operations page integration - December 2024
+ */
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { importExportAPI, ImportResult } from '../services/api';
 import SectionErrorBoundary from '../components/SectionErrorBoundary';
 import '../styles/luxury-design-system.css';
-import './BulkUpload.css';
+// import './BulkUpload.css';
 
 interface UploadSection {
   id: string;
@@ -417,7 +436,10 @@ const BulkUpload: React.FC = () => {
 
     const hasPrerequisites = section.prerequisites && section.prerequisites.length > 0;
     const prerequisitesMet = !hasPrerequisites || section.prerequisites!.every(
-      prereq => uploadResults[prereq]?.success_count && uploadResults[prereq]?.success_count > 0
+      prereq => {
+        const result = uploadResults[prereq];
+        return result?.success_count && result.success_count > 0;
+      }
     );
 
     return (
@@ -552,11 +574,10 @@ const BulkUpload: React.FC = () => {
   };
 
   return (
-    <div className="operations-container">
-      {/* Header */}
+    <>
       <div className="luxury-card page-header">
-        <h1 className="luxury-heading-1">Operations Center</h1>
-        <p className="luxury-body-large">Streamlined data management and bulk operations for portfolio administration</p>
+        <h1 className="luxury-heading-1">Document Management</h1>
+        <p className="luxury-body-large">Streamlined document upload and data management for portfolio administration</p>
       </div>
 
       {/* Advanced Options Toggle */}
@@ -699,7 +720,7 @@ const BulkUpload: React.FC = () => {
           </div>
         </div>
       </SectionErrorBoundary>
-    </div>
+    </>
   );
 };
 

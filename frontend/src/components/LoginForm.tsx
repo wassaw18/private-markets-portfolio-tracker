@@ -81,7 +81,7 @@ const LoginForm: React.FC = () => {
   const handleDemoLogin = () => {
     setCredentials({
       username: 'admin',
-      password: 'password'
+      password: 'admin123'
     });
   };
 
@@ -176,7 +176,7 @@ const LoginForm: React.FC = () => {
               <p>For testing purposes, you can use:</p>
               <div className="demo-credentials">
                 <code>Username: admin</code>
-                <code>Password: password</code>
+                <code>Password: admin123</code>
               </div>
               <button
                 type="button"

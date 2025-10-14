@@ -191,7 +191,10 @@ class InvestmentUpdate(BaseModel):
     commitment_amount: Optional[float] = Field(None, ge=0)
     called_amount: Optional[float] = Field(None)
     fees: Optional[float] = Field(None, ge=0)
-    
+    status: Optional[InvestmentStatus] = None
+    realization_date: Optional[date] = None
+    realization_notes: Optional[str] = Field(None, max_length=500)
+
     # Basic Information updates
     manager: Optional[str] = None
     target_raise: Optional[float] = Field(None, ge=0)
@@ -269,6 +272,8 @@ class PortfolioPerformance(BaseModel):
     asset_class_count: int
     vintage_year_count: int
     active_investment_count: int
+    dormant_investment_count: int
+    realized_investment_count: int
     total_commitment: float
     total_called: float
 

@@ -1,7 +1,10 @@
 .entity-management {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 0;
+  max-width: none;
+  margin: 0;
+  overflow: visible;
+  height: auto;
+  max-height: none;
 }
 
 .entity-management-header {
@@ -197,6 +200,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 24px;
+  overflow: visible;
+  height: auto;
+  max-height: none;
 }
 
 /* Empty State */

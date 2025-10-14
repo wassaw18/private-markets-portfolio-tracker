@@ -1,81 +1,170 @@
-.entities-container {
-  max-width: 100%;
-  padding: 0;
+.entities-page {
+  min-height: 100vh;
+  background: #f8fafc;
 }
 
 .entities-header {
+  margin-bottom: var(--space-lg);
+}
+
+.entities-page .section-tabs {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e9ecef;
+  gap: 0;
+  border-bottom: 1px solid var(--luxury-border, #e2e8f0);
+  margin-bottom: var(--space-lg);
 }
 
-.entities-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 2rem;
-}
-
-.tab-navigation {
-  display: flex;
-  gap: 5px;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #f8f9fa;
-}
-
-.entities-page .tab-button {
+.entities-page .section-tabs .tab-button {
   padding: 12px 24px;
   border: none;
-  background-color: transparent;
-  color: #495057;
-  cursor: pointer;
+  background: none;
   font-size: 1rem;
   font-weight: 500;
-  transition: all 0.2s;
-  position: relative;
+  color: var(--luxury-text-secondary, #65676b);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
 }
 
-.entities-page .tab-button:hover {
-  background-color: #e9ecef;
-  color: #212529;
+.entities-page .section-tabs .tab-button:hover {
+  color: var(--luxury-text-primary, #1d2129);
+  background-color: var(--luxury-background-hover, #f0f2f5);
 }
 
-.entities-page .tab-button.active {
-  background-color: #007bff;
-  color: white;
+.entities-page .section-tabs .tab-button.active {
+  color: var(--luxury-primary, #2563eb);
+  border-bottom-color: var(--luxury-primary, #2563eb);
+  background: none;
+  box-shadow: none;
+  transform: none;
 }
 
-.entity-upload-section {
-  margin-bottom: 25px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.entity-upload-card,
+.entities-management-card,
+.relationships-card,
+.visualization-card {
+  padding: var(--space-lg);
+  /* Remove internal scrollbars - let content flow naturally */
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Ensure nested components don't create scrollbars */
+.entities-management-card > *,
+.relationships-card > *,
+.visualization-card > * {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Specifically target the EntityManagement component */
+.entities-management-card .entity-management {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  padding: 0;
+  margin: 0;
+}
+
+/* Ensure entities grid flows naturally */
+.entities-management-card .entities-grid {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Global override for any nested scrollbars in entities section */
+.entities-page .entities-management-card,
+.entities-page .entities-management-card *,
+.entities-page .entities-management-card .entity-management,
+.entities-page .entities-management-card .entity-management *,
+.entities-page .entities-management-card .entities-grid,
+.entities-page .entities-management-card .entities-grid * {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  max-width: none !important;
+}
+
+/* Force natural scrolling for all entity content */
+.entities-page .luxury-card.entities-management-card {
+  display: block !important;
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Critical: Remove scrolling from tab-content container */
+.entities-page .tab-content {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  max-width: none !important;
+  display: block !important;
+}
+
+/* Ensure tab-content doesn't create any constraints */
+.entities-page .tab-content,
+.entities-page .tab-content * {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
 }
 
 .tab-button.active:hover {
   background-color: #0056b3;
 }
 
-.tab-content {
-  background-color: white;
-  border-radius: 8px;
-  min-height: 400px;
+.section-content {
+  background: var(--luxury-surface, #ffffff);
+  border-radius: var(--radius-lg, 12px);
+  margin-bottom: var(--space-xl);
 }
 
-.entities-tab,
-.relationships-tab {
-  padding: 0;
+.section-content > .luxury-card {
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-lg, 12px);
 }
 
-/* Ensure the nested components take full width */
-.entities-tab > *,
-.relationships-tab > * {
+.section-content > .luxury-card:last-child {
+  margin-bottom: 0;
+}
+
+/* Ensure the nested components take full width and flow naturally */
+.section-content > * {
   width: 100%;
+  overflow: visible;
+  max-height: none;
+  height: auto;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .entities-page {
+    padding: 0 16px;
+  }
+
+  .entity-upload-card,
+  .entities-management-card,
+  .relationships-card,
+  .visualization-card {
+    padding: var(--space-md);
+  }
+
+  .section-content {
+    margin-bottom: var(--space-lg);
+  }
+
+  .entities-page .section-tabs .tab-button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .entities-header {
+    margin-bottom: var(--space-md);
+  }
 }
 
 /* Loading state styling */

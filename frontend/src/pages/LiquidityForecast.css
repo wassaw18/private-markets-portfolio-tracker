@@ -1,11 +1,105 @@
 .liquidity-forecast-page {
   min-height: 100vh;
   background: #f8fafc;
+}
+
+.cash-flow-calendar-section {
+  margin-bottom: var(--space-xl);
+}
+
+.liquidity-dashboard-section {
+  margin-bottom: var(--space-xl);
+}
+
+.cash-flow-calendar-section .luxury-card,
+.liquidity-dashboard-section .luxury-card {
+  padding: var(--space-lg);
+}
+
+/* Remove the built-in styling from CashFlowCalendar since it's now wrapped in luxury-card */
+.cash-flow-calendar-section .luxury-card .cash-flow-calendar {
+  background: transparent;
+  border: none;
+  border-radius: 0;
   padding: 0;
+  margin-top: 0;
+  box-shadow: none;
+}
+
+/* Empty state styling */
+.empty-state {
+  text-align: center;
+  padding: var(--space-xl) var(--space-lg);
+  color: var(--color-text-muted);
+}
+
+.empty-state-content h3 {
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.empty-message {
+  margin: 0 0 var(--space-xl) 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.empty-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.empty-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--color-background-subtle);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.empty-stat .stat-label {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.empty-stat .stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 @media (max-width: 768px) {
   .liquidity-forecast-page {
-    padding: 16px;
+    padding: 0 16px;
+  }
+
+  .cash-flow-calendar-section,
+  .liquidity-dashboard-section {
+    margin-bottom: var(--space-lg);
+  }
+
+  .cash-flow-calendar-section .luxury-card,
+  .liquidity-dashboard-section .luxury-card {
+    padding: var(--space-md);
+  }
+
+  .empty-stats {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .empty-state {
+    padding: var(--space-lg) var(--space-md);
   }
 }

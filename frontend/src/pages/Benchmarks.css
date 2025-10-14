@@ -1,7 +1,4 @@
 .benchmarks-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
   font-family: var(--luxury-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
 
@@ -758,7 +755,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .benchmarks-container {
-    padding: 16px;
+    padding: 0 16px;
   }
 
   .section-tabs {

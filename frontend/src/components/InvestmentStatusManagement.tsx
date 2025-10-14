@@ -4,13 +4,14 @@ import { InvestmentStatus, Investment } from '../types/investment';
 interface InvestmentStatusManagementProps {
   investment: Investment;
   onStatusUpdate: (investmentId: number, status: InvestmentStatus, password: string, realizationDate?: string, realizationNotes?: string) => Promise<void>;
+  onClose?: () => void; // Optional callback for when modal is closed
 }
 
 const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
   investment,
-  onStatusUpdate
+  onStatusUpdate,
+  onClose
 }) => {
-  const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<InvestmentStatus>(investment.status);
   const [password, setPassword] = useState('');
   const [realizationDate, setRealizationDate] = useState(investment.realization_date || '');
@@ -25,19 +26,6 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
     setRealizationNotes(investment.realization_notes || '');
   }, [investment.status, investment.realization_date, investment.realization_notes]);
 
-  const getStatusColor = (status: InvestmentStatus) => {
-    switch (status) {
-      case InvestmentStatus.ACTIVE:
-        return 'text-green-700 bg-green-100 border-green-200';
-      case InvestmentStatus.DORMANT:
-        return 'text-yellow-700 bg-yellow-100 border-yellow-200';
-      case InvestmentStatus.REALIZED:
-        return 'text-gray-700 bg-gray-100 border-gray-200';
-      default:
-        return 'text-gray-700 bg-gray-100 border-gray-200';
-    }
-  };
-
   const getStatusLabel = (status: InvestmentStatus) => {
     switch (status) {
       case InvestmentStatus.ACTIVE:
@@ -51,20 +39,13 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
     }
   };
 
-  const handleOpenStatusModal = () => {
-    setSelectedStatus(investment.status);
-    setPassword('');
-    setRealizationDate(investment.realization_date || '');
-    setRealizationNotes(investment.realization_notes || '');
-    setError(null);
-    setShowStatusModal(true);
-  };
-
   const handleCloseStatusModal = () => {
-    setShowStatusModal(false);
     setSelectedStatus(investment.status);
     setPassword('');
     setError(null);
+    if (onClose) {
+      onClose();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,50 +87,35 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
   };
 
   return (
-    <>
-      {/* Clickable Status Indicator */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Investment Status</h3>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={handleOpenStatusModal}
-              className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(investment.status)}`}
-              title="Click to change status"
-            >
-              {getStatusLabel(investment.status)}
-            </button>
-            
-            <div className="text-sm text-gray-600">
-              {investment.status_changed_by && investment.status_changed_date && (
-                <span>Updated by {investment.status_changed_by} on {new Date(investment.status_changed_date).toLocaleDateString()}</span>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Additional Details for Realized Investments */}
-        {investment.status === InvestmentStatus.REALIZED && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            {investment.realization_date && (
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Realization Date:</span> {new Date(investment.realization_date).toLocaleDateString()}
-              </div>
-            )}
-            {investment.realization_notes && (
-              <div className="mt-1 text-sm text-gray-600">
-                <span className="font-medium">Notes:</span> {investment.realization_notes}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Status Change Modal */}
-      {showStatusModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <div
+      className="fixed inset-0 flex items-center justify-center"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+          <div
+            className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '100%',
+              margin: '0 16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+              position: 'relative',
+              zIndex: 10000
+            }}
+          >
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-medium text-gray-900">Update Investment Status</h3>
               <button 
@@ -285,9 +251,7 @@ const InvestmentStatusManagement: React.FC<InvestmentStatusManagementProps> = ({
               </div>
             </form>
           </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 

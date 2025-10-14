@@ -1,7 +1,4 @@
 .visuals-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--space-2xl);
   background: transparent;
 }
 
@@ -452,7 +449,9 @@
 .visuals-page .tab-button.active {
   background: linear-gradient(135deg, var(--luxury-primary) 0%, var(--luxury-accent-blue) 100%);
   color: white;
-  box-shadow: var(--luxury-shadow-subtle);
+  box-shadow: 0 4px 8px rgba(11, 20, 38, 0.2);
+  transform: translateY(-1px);
+  font-weight: 600;
 }
 
 .analytics-content {

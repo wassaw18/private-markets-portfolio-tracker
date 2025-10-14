@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { InvestmentCreate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating, TaxClassification, ActivityClassification } from '../types/investment';
 import { investmentAPI } from '../services/api';
 import EntitySelector from './EntitySelector';
@@ -49,28 +49,47 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
     legal: true, // Optional fields only
   });
 
-  // Reset form when modal opens
+  // Persist form data to localStorage to survive tab switches and page refreshes
+  const STORAGE_KEY = 'addInvestmentModalData';
+
+  // Load saved form data when modal opens
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        name: '',
-        asset_class: AssetClass.PRIVATE_EQUITY,
-        investment_structure: InvestmentStructure.LIMITED_PARTNERSHIP,
-        entity_id: 0,
-        strategy: '',
-        vintage_year: new Date().getFullYear(),
-        commitment_amount: 0,
-        commitment_date: '',
-        liquidity_profile: LiquidityProfile.ILLIQUID,
-        currency: 'USD',
-        fees: 0,
-      });
-      setActiveTab('basic');
-      setSelectedEntityName('');
-      setError(null);
-      setValidationErrors([]);
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setFormData(parsed.formData);
+          setActiveTab(parsed.activeTab || 'basic');
+          setSelectedEntityName(parsed.selectedEntityName || '');
+        } catch (e) {
+          console.error('Failed to parse saved form data:', e);
+        }
+      }
     }
   }, [isOpen]);
+
+  // Save form data to localStorage whenever it changes (while modal is open)
+  useEffect(() => {
+    if (isOpen) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        formData,
+        activeTab,
+        selectedEntityName,
+      }));
+    }
+  }, [isOpen, formData, activeTab, selectedEntityName]);
+
+  // Clear saved data when modal closes or on successful submission
+  const clearSavedData = () => {
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  // Handle modal close - clear saved data when user explicitly closes
+  const handleClose = () => {
+    clearSavedData();
+    onClose();
+  };
 
   const validateCurrentTab = useCallback(() => {
     const errors: string[] = [];
@@ -163,6 +182,7 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
 
     try {
       await investmentAPI.createInvestment(formData);
+      clearSavedData(); // Clear saved form data on successful submission
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -218,11 +238,11 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
 
   return (
     <>
-      <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-overlay" onClick={handleClose}>
         <div className="modal-content add-investment-modal" onClick={e => e.stopPropagation()}>
           <div className="modal-header">
             <h2>Add New Investment</h2>
-            <button type="button" className="modal-close" onClick={onClose}>×</button>
+            <button type="button" className="modal-close" onClick={handleClose}>×</button>
           </div>
 
           <div className="tab-navigation">
@@ -387,7 +407,7 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
                         type="number"
                         id="target_raise"
                         name="target_raise"
-                        value={formData.target_raise || ''}
+                        value={formData.target_raise === 0 ? '' : formData.target_raise || ''}
                         onChange={handleChange}
                         min="0"
                         step="1000000"
@@ -425,11 +445,12 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
                         type="number"
                         id="commitment_amount"
                         name="commitment_amount"
-                        value={formData.commitment_amount}
+                        value={formData.commitment_amount === 0 ? '' : formData.commitment_amount}
                         onChange={handleChange}
                         required
                         min="0"
                         step="0.01"
+                        placeholder="0.00"
                       />
                     </div>
 
@@ -719,31 +740,37 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
 
             <div className="modal-actions">
               <div className="tab-navigation-buttons">
-                {activeTab !== 'basic' && (
-                  <button type="button" onClick={prevTab} className="nav-button">
-                    ← Previous
-                  </button>
-                )}
-                {activeTab !== 'legal' && (
-                  <button 
-                    type="button" 
-                    onClick={nextTab}
-                    className="nav-button"
-                    disabled={!canProceedToNext(activeTab)}
-                    style={{ visibility: 'visible' }}
-                  >
-                    Next →
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={prevTab}
+                  className="nav-button"
+                  disabled={activeTab === 'basic'}
+                >
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={nextTab}
+                  className="nav-button"
+                  disabled={activeTab === 'legal' || !canProceedToNext(activeTab)}
+                >
+                  Next
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
               </div>
-              
+
               <div className="action-buttons">
-                <button type="button" onClick={onClose} className="cancel-button">
+                <button type="button" onClick={handleClose} className="cancel-button">
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={loading || !Object.values(tabValidation).every(v => v)} 
+                <button
+                  type="submit"
+                  disabled={loading || !Object.values(tabValidation).every(v => v)}
                   className="submit-button"
                 >
                   {loading ? 'Creating...' : 'Create Investment'}

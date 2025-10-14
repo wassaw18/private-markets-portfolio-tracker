@@ -56,16 +56,40 @@ const LiquidityForecastDashboard: React.FC<Props> = ({
         let investmentDistributions = 0;
         const uncalledAmount = investment.commitment_amount - investment.called_amount;
 
-        // Estimate capital calls based on pacing model
-        if (investment.call_schedule && investment.investment_period && uncalledAmount > 0) {
+        // First, check for actual future cash flows in this month
+        if (investment.cashflows && investment.cashflows.length > 0) {
+          investment.cashflows.forEach(cf => {
+            // Parse date in local timezone to avoid UTC offset issues
+            const [year, month, day] = cf.date.split('-').map(Number);
+            const cfDate = new Date(year, month - 1, day); // month is 0-indexed
+
+            // Check if this cash flow is in the current forecast month
+            if (cfDate.getFullYear() === date.getFullYear() &&
+                cfDate.getMonth() === date.getMonth() &&
+                cfDate > today) {
+
+              // Add capital calls
+              if (cf.type === 'Capital Call' || cf.type === 'Contribution') {
+                investmentCalls += Math.abs(cf.amount);
+              }
+              // Add distributions
+              else if (cf.type === 'Distribution' || cf.type === 'Yield' || cf.type === 'Return of Principal') {
+                investmentDistributions += Math.abs(cf.amount);
+              }
+            }
+          });
+        }
+
+        // If no actual future cash flows found, estimate capital calls based on pacing model
+        if (investmentCalls === 0 && investment.call_schedule && investment.investment_period && uncalledAmount > 0) {
           const monthsFromVintage = (date.getFullYear() - (investment.vintage_year || 0)) * 12 + date.getMonth();
           const investmentPeriodMonths = investment.investment_period * 12;
-          
+
           if (monthsFromVintage >= 0 && monthsFromVintage <= investmentPeriodMonths) {
             // Calculate call rate based on schedule
             let callRate = 0;
             const progress = monthsFromVintage / investmentPeriodMonths;
-            
+
             switch (investment.call_schedule) {
               case 'Front Loaded':
                 callRate = Math.max(0, (1 - progress) * 0.15); // Higher early, declining
@@ -79,14 +103,16 @@ const LiquidityForecastDashboard: React.FC<Props> = ({
               default:
                 callRate = 0.08;
             }
-            
+
             investmentCalls = uncalledAmount * callRate;
-            capitalCalls += investmentCalls;
           }
         }
 
-        // Estimate distributions based on fund maturity and distribution timing
-        if (investment.distribution_timing && investment.fund_life) {
+        // Add actual calls to total
+        capitalCalls += investmentCalls;
+
+        // If no actual future distributions found, estimate based on fund maturity and distribution timing
+        if (investmentDistributions === 0 && investment.distribution_timing && investment.fund_life) {
           const fundAge = date.getFullYear() - (investment.vintage_year || 0);
           const fundLifeYears = investment.fund_life;
           
@@ -112,9 +138,11 @@ const LiquidityForecastDashboard: React.FC<Props> = ({
             }
             
             investmentDistributions = distributionBase * distributionRate;
-            distributions += investmentDistributions;
           }
         }
+
+        // Add actual distributions or estimates to total
+        distributions += investmentDistributions;
 
         // Add to details if there's activity
         if (investmentCalls > 1000 || investmentDistributions > 1000) {
@@ -129,7 +157,7 @@ const LiquidityForecastDashboard: React.FC<Props> = ({
 
       const netCashFlow = distributions - capitalCalls;
       cumulativeNet += netCashFlow;
-      
+
       data.push({
         month,
         date,

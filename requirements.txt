@@ -7,3 +7,7 @@ pandas==2.1.0
 openpyxl==3.1.2
 xlsxwriter==3.1.9
 pdfplumber==0.10.3
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.1
+python-dotenv==1.0.0reportlab==4.0.7

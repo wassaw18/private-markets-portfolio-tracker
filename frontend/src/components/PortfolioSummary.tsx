@@ -152,7 +152,7 @@ const PortfolioSummary: React.FC<Props> = ({ onUpdate }) => {
               <span className="value">{formatCurrency(portfolio.total_called)}</span>
             </div>
             <div className="capital-item">
-              <label>Total Distributions</label>
+              <label>Lifetime Distributions</label>
               <span className="value">{formatCurrency(perf.total_distributions)}</span>
             </div>
             <div className="capital-item total-value">
@@ -187,7 +187,7 @@ const PortfolioSummary: React.FC<Props> = ({ onUpdate }) => {
             <div className="metric-card primary">
               <label>Realized Investments</label>
               <span className="value">
-                {portfolio.investment_count - portfolio.active_investment_count}
+                {portfolio.realized_investment_count}
               </span>
             </div>
           </div>

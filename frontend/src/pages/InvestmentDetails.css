@@ -1,6 +1,4 @@
 .details-container {
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 20px;
 }
 
@@ -29,10 +27,53 @@
   background-color: #545b62;
 }
 
+.header-title-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}
+
 .details-header h2 {
   margin: 0;
   color: #333;
   font-size: 2rem;
+}
+
+.investment-dropdown {
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  min-width: 250px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.investment-dropdown:hover {
+  border-color: #adb5bd;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.investment-dropdown:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+}
+
+.investment-dropdown optgroup {
+  font-weight: 700;
+  color: #495057;
+  font-style: normal;
+  padding: 8px 0;
+}
+
+.investment-dropdown option {
+  padding: 8px;
+  font-weight: 400;
 }
 
 .investment-overview {

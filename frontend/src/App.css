@@ -44,7 +44,7 @@ main {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: var(--space-4xl);
+  margin-bottom: 0;
   background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 50%, var(--luxury-medium-blue) 100%);
   border-radius: var(--radius-xl);
   box-shadow: var(--luxury-shadow-medium);

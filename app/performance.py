@@ -82,22 +82,37 @@ def calculate_irr(cash_flows: List[CashFlowEvent], tolerance: float = 1e-6, max_
     
     return None  # Failed to converge
 
-def get_latest_nav(valuations: List[models.Valuation]) -> Optional[float]:
-    """Get the most recent NAV value from valuations within the last 12 months"""
+def get_latest_nav(valuations: List[models.Valuation], max_age_days: Optional[int] = None) -> Optional[float]:
+    """
+    Get the most recent NAV value from valuations
+
+    Args:
+        valuations: List of valuation objects
+        max_age_days: Maximum age in days for valuations to be considered current.
+                     If None, returns the latest valuation regardless of age.
+                     Default is None to show all valuations in holdings table.
+
+    Returns:
+        Latest NAV value, or None if no valuations exist or all are too old
+    """
     if not valuations:
         return None
-    
-    # Filter valuations to only include those within the last 12 months
-    today = date.today()
-    twelve_months_ago = today - timedelta(days=365)
-    
-    current_valuations = [v for v in valuations if v.date >= twelve_months_ago]
-    
-    if not current_valuations:
-        return None  # No current valuations within 12 months
-    
-    latest = max(current_valuations, key=lambda v: v.date)
-    return latest.nav_value
+
+    # Apply age filter if specified
+    if max_age_days is not None:
+        today = date.today()
+        cutoff_date = today - timedelta(days=max_age_days)
+        current_valuations = [v for v in valuations if v.date >= cutoff_date]
+
+        if not current_valuations:
+            return None  # No valuations within the specified age limit
+
+        latest = max(current_valuations, key=lambda v: v.date)
+        return latest.nav_value
+    else:
+        # No age filter - return the most recent valuation regardless of age
+        latest = max(valuations, key=lambda v: v.date)
+        return latest.nav_value
 
 def calculate_called_amount_from_cashflows(cash_flows: List[models.CashFlow]) -> float:
     """
@@ -189,22 +204,25 @@ def calculate_yield_metrics(
         Tuple of (trailing_yield, forward_yield, frequency_description, trailing_yield_amount, latest_yield_amount)
     """
     from app.models import CashFlowType
-    
-    # Filter for yield distributions only
-    yield_flows = [cf for cf in cash_flows if cf.type == CashFlowType.YIELD]
-    
+
+    today = date.today()
+
+    # Filter for yield distributions only - ONLY ACTUAL YIELDS (date <= today)
+    # This excludes future projected yields from trailing and forward calculations
+    yield_flows = [cf for cf in cash_flows if cf.type == CashFlowType.YIELD and cf.date <= today]
+
     if not yield_flows:
         return None, None, None, None, None
-    
+
     # Calculate trailing 12-month yield
     trailing_yield = None
     trailing_yield_amount = None
-    today = date.today()
     # True trailing 12 months: go back exactly 365 days from today
     # This gives us the most recent 12-month period inclusive of current month
     one_year_ago = today - timedelta(days=365)
-    
-    recent_yields = [cf for cf in yield_flows if cf.date >= one_year_ago]
+
+    # Only include yields that have actually occurred (already filtered above, but explicit here)
+    recent_yields = [cf for cf in yield_flows if cf.date >= one_year_ago and cf.date <= today]
     if recent_yields:
         total_recent_yield = sum(cf.amount for cf in recent_yields)
         trailing_yield_amount = total_recent_yield  # Store the raw dollar amount
@@ -212,14 +230,15 @@ def calculate_yield_metrics(
         yield_base = current_nav if current_nav and current_nav > 0 else abs(total_contributions)
         if yield_base > 0:
             trailing_yield = total_recent_yield / yield_base
-    
+
     # Calculate forward yield with frequency detection
     forward_yield = None
     frequency_description = None
     latest_yield_amount = None
-    
+
     if len(yield_flows) >= 1:
-        # Get most recent yield payment
+        # Get most recent ACTUAL yield payment (date <= today)
+        # yield_flows is already filtered to only include actual payments
         latest_yield = max(yield_flows, key=lambda x: x.date)
         latest_amount = latest_yield.amount
         latest_yield_amount = latest_amount  # Store the raw dollar amount
@@ -281,19 +300,21 @@ def calculate_investment_performance(
 ) -> PerformanceMetrics:
     """
     Calculate comprehensive performance metrics for an investment
-    
+
     Args:
         contributions: List of contribution cash flows
-        distributions: List of distribution cash flows  
+        distributions: List of distribution cash flows
         valuations: List of NAV valuations
-        
+
     Returns:
         PerformanceMetrics object with all calculated metrics
     """
-    
-    # Calculate totals
-    total_contributions = sum(cf.amount for cf in contributions)
-    total_distributions = sum(cf.amount for cf in distributions)
+
+    # Calculate totals - ONLY include actual cash flows through today
+    # This excludes future projected flows from the capital summary
+    today = date.today()
+    total_contributions = sum(cf.amount for cf in contributions if cf.date <= today)
+    total_distributions = sum(cf.amount for cf in distributions if cf.date <= today)
     current_nav = get_latest_nav(valuations)
     
     # Basic ratios (handle division by zero) - use absolute value since contributions are negative
@@ -312,21 +333,24 @@ def calculate_investment_performance(
     irr = None
     if abs_contributions > 0:
         cash_flows = []
-        
-        # Add contributions as outflows (they are already negative amounts)
+        today = date.today()
+
+        # Add contributions as outflows (only those on or before TODAY)
+        # This allows users to enter future projected flows that won't be used until those dates pass
         for contrib in contributions:
-            cash_flows.append(CashFlowEvent(contrib.date, contrib.amount))
-        
-        # Add distributions as positive cash flows (inflows)  
+            if contrib.date <= today:
+                cash_flows.append(CashFlowEvent(contrib.date, contrib.amount))
+
+        # Add distributions as positive cash flows (only those on or before TODAY)
         for dist in distributions:
-            cash_flows.append(CashFlowEvent(dist.date, dist.amount))
-        
-        # Add current NAV as final positive cash flow if available
+            if dist.date <= today:
+                cash_flows.append(CashFlowEvent(dist.date, dist.amount))
+
+        # Add NAV as terminal value at TODAY's date (not the historical NAV date)
+        # This captures all actual performance through today, even if cash flows occurred after the NAV date
         if current_nav is not None and current_nav > 0:
-            # Use the latest valuation date, or today if no valuations
-            nav_date = valuations[-1].date if valuations else date.today()
-            cash_flows.append(CashFlowEvent(nav_date, current_nav))
-        
+            cash_flows.append(CashFlowEvent(today, current_nav))
+
         # Calculate IRR only if we have meaningful cash flows
         if len(cash_flows) >= 2:
             irr = calculate_irr(cash_flows)

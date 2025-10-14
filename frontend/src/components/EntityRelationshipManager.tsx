@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  EntityRelationshipWithEntities, 
-  EntityRelationshipCreate, 
-  AdvancedRelationshipType,
+import {
+  EntityRelationshipWithEntities,
+  EntityRelationshipCreate,
+  RelationshipCategory,
+  FamilyRelationshipType,
+  BusinessRelationshipType,
+  TrustRelationshipType,
+  ProfessionalRelationshipType,
+  OtherRelationshipType,
   Entity,
   EntityType
 } from '../types/entity';
@@ -34,7 +39,8 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
   const [newRelationship, setNewRelationship] = useState<EntityRelationshipCreate>({
     from_entity_id: entityId || 0,
     to_entity_id: 0,
-    relationship_type: AdvancedRelationshipType.OTHER,
+    relationship_category: RelationshipCategory.OTHER,
+    relationship_type: OtherRelationshipType.OTHER,
     percentage_ownership: 0,
     is_voting_interest: true,
     effective_date: new Date().toISOString().split('T')[0],
@@ -131,7 +137,8 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
     setNewRelationship({
       from_entity_id: entityId || 0,
       to_entity_id: 0,
-      relationship_type: AdvancedRelationshipType.OTHER,
+      relationship_category: RelationshipCategory.OTHER,
+      relationship_type: OtherRelationshipType.OTHER,
       percentage_ownership: 0,
       is_voting_interest: true,
       effective_date: new Date().toISOString().split('T')[0],
@@ -139,21 +146,36 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
     });
   };
 
-  const getRelationshipTypeOptions = () => {
-    return Object.values(AdvancedRelationshipType).map(type => ({
-      value: type,
-      label: type,
-      category: getRelationshipCategory(type)
-    }));
+  const getRelationshipTypesByCategory = (category: RelationshipCategory) => {
+    switch (category) {
+      case RelationshipCategory.FAMILY:
+        return Object.values(FamilyRelationshipType);
+      case RelationshipCategory.BUSINESS:
+        return Object.values(BusinessRelationshipType);
+      case RelationshipCategory.TRUST:
+        return Object.values(TrustRelationshipType);
+      case RelationshipCategory.PROFESSIONAL:
+        return Object.values(ProfessionalRelationshipType);
+      case RelationshipCategory.OTHER:
+      default:
+        return Object.values(OtherRelationshipType);
+    }
   };
 
-  const getRelationshipCategory = (type: AdvancedRelationshipType): string => {
-    if (type.includes('TRUST')) return 'Trust';
-    if (type.includes('CORPORATE') || type.includes('SHAREHOLDER') || type.includes('BOARD') || type.includes('OFFICER') || type.includes('MANAGING')) return 'Corporate';
-    if (type.includes('FAMILY') || type.includes('GUARDIAN') || type.includes('POWER_OF_ATTORNEY')) return 'Family';
-    if (type.includes('OWNERSHIP') || type.includes('VOTING')) return 'Ownership';
-    if (type.includes('PROFESSIONAL') || type.includes('ADVISOR') || type.includes('ACCOUNTANT') || type.includes('ATTORNEY')) return 'Professional';
-    return 'Other';
+  const getDefaultRelationshipType = (category: RelationshipCategory): string => {
+    switch (category) {
+      case RelationshipCategory.FAMILY:
+        return FamilyRelationshipType.OTHER_RELATIVE;
+      case RelationshipCategory.BUSINESS:
+        return BusinessRelationshipType.MEMBER;
+      case RelationshipCategory.TRUST:
+        return TrustRelationshipType.BENEFICIARY;
+      case RelationshipCategory.PROFESSIONAL:
+        return ProfessionalRelationshipType.ADVISOR;
+      case RelationshipCategory.OTHER:
+      default:
+        return OtherRelationshipType.OTHER;
+    }
   };
 
   const formatEntityType = (entityType: EntityType): string => {
@@ -263,17 +285,38 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
               </div>
 
               <div className="form-group">
+                <label>Relationship Category</label>
+                <select
+                  value={newRelationship.relationship_category}
+                  onChange={(e) => {
+                    const category = e.target.value as RelationshipCategory;
+                    setNewRelationship({
+                      ...newRelationship,
+                      relationship_category: category,
+                      relationship_type: getDefaultRelationshipType(category)
+                    });
+                  }}
+                >
+                  {Object.values(RelationshipCategory).map(category => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
                 <label>Relationship Type</label>
                 <select
                   value={newRelationship.relationship_type}
                   onChange={(e) => setNewRelationship({
                     ...newRelationship,
-                    relationship_type: e.target.value as AdvancedRelationshipType
+                    relationship_type: e.target.value
                   })}
                 >
-                  {getRelationshipTypeOptions().map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {getRelationshipTypesByCategory(newRelationship.relationship_category).map(type => (
+                    <option key={type} value={type}>
+                      {type}
                     </option>
                   ))}
                 </select>
@@ -299,13 +342,14 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
                   min="0"
                   max="100"
                   step="0.01"
-                  value={newRelationship.percentage_ownership}
+                  value={newRelationship.percentage_ownership === 0 ? '' : newRelationship.percentage_ownership}
                   onChange={(e) => setNewRelationship({
                     ...newRelationship,
                     percentage_ownership: parseFloat(e.target.value) || 0
                   })}
+                  placeholder="0.00"
                 />
-                <small>Enter 0 if not applicable</small>
+                <small>Leave blank if not applicable</small>
               </div>
 
               <div className="form-group checkbox-group">
@@ -395,6 +439,9 @@ const EntityRelationshipManager: React.FC<EntityRelationshipManagerProps> = ({
               <div className="relationship-description">
                 <h4>{getRelationshipDescription(relationship)}</h4>
                 <div className="relationship-details">
+                  <span className="relationship-category">
+                    {relationship.relationship_category}
+                  </span>
                   <span className="relationship-type">
                     {relationship.relationship_type}
                   </span>

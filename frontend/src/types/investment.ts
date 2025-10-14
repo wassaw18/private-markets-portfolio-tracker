@@ -319,6 +319,8 @@ export interface PortfolioPerformance {
   asset_class_count: number;
   vintage_year_count: number;
   active_investment_count: number;
+  dormant_investment_count: number;
+  realized_investment_count: number;
   total_commitment: number;
   total_called: number;
 }

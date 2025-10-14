@@ -12,12 +12,13 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 
 from .database import get_db, create_database
-from .auth import get_current_active_user
+from .auth import get_current_active_user, require_contributor
 from .models import User, Tenant, DocumentCategory, DocumentStatus
 from .routers.auth import router as auth_router
 from .routers.tenant_api import router as tenant_api_router
 from .routers.pitchbook_benchmarks import router as pitchbook_router
 from .routers.relative_performance import router as relative_performance_router
+from .routers.reports import router as reports_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -29,7 +30,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://172.23.5.82:3000", "http://172.23.0.1:3000"],  # WSL2 networking support
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://172.23.5.82:3000", "http://172.23.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001", "http://172.23.5.82:3001"],  # WSL2 networking support
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -43,6 +44,7 @@ def startup_event():
 # Include routers
 app.include_router(auth_router)  # Authentication routes
 app.include_router(tenant_api_router)  # Tenant-aware API routes
+app.include_router(reports_router)  # Report generation routes
 
 # Include existing benchmark routers (these may need tenant filtering too)
 app.include_router(pitchbook_router)
@@ -492,6 +494,112 @@ def get_entity_documents(
         entity_id=entity_id,
         include_archived=include_archived
     )
+
+# =============================================================================
+# Entity Management Endpoints
+# =============================================================================
+
+@app.get("/api/entities", response_model=List[schemas.Entity])
+def get_entities(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=1000),
+    entity_type: Optional[str] = Query(None, description="Filter by entity type"),
+    search: Optional[str] = Query(None, description="Search entities by name"),
+    include_inactive: bool = Query(False, description="Include inactive entities"),
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Get entities with tenant isolation (Contributor+ required)"""
+    if search:
+        return crud_tenant.search_entities(
+            db=db,
+            tenant_id=current_user.tenant_id,
+            search_term=search,
+            skip=skip,
+            limit=limit
+        )
+
+    if entity_type:
+        return crud_tenant.get_entities_by_type(
+            db=db,
+            tenant_id=current_user.tenant_id,
+            entity_type=entity_type,
+            skip=skip,
+            limit=limit
+        )
+
+    return crud_tenant.get_entities(
+        db=db,
+        tenant_id=current_user.tenant_id,
+        skip=skip,
+        limit=limit,
+        include_inactive=include_inactive
+    )
+
+@app.post("/api/entities", response_model=schemas.Entity)
+def create_entity(
+    entity: schemas.EntityCreate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Create a new entity with tenant isolation (Contributor+ required)"""
+    return crud_tenant.create_entity(
+        db=db,
+        entity=entity,
+        tenant_id=current_user.tenant_id,
+        created_by_user_id=current_user.id
+    )
+
+@app.get("/api/entities/{entity_id}", response_model=schemas.Entity)
+def get_entity(
+    entity_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific entity with tenant isolation"""
+    entity = crud_tenant.get_entity(db, entity_id, current_user.tenant_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail="Entity not found")
+    return entity
+
+@app.put("/api/entities/{entity_id}", response_model=schemas.Entity)
+def update_entity(
+    entity_id: int,
+    entity_update: schemas.EntityUpdate,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Update an entity with tenant isolation (Contributor+ required)"""
+    updated_entity = crud_tenant.update_entity(
+        db=db,
+        entity_id=entity_id,
+        tenant_id=current_user.tenant_id,
+        entity_update=entity_update,
+        updated_by_user_id=current_user.id
+    )
+
+    if not updated_entity:
+        raise HTTPException(status_code=404, detail="Entity not found")
+
+    return updated_entity
+
+@app.delete("/api/entities/{entity_id}")
+def delete_entity(
+    entity_id: int,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """Delete an entity with tenant isolation (Contributor+ required)"""
+    success = crud_tenant.delete_entity(
+        db=db,
+        entity_id=entity_id,
+        tenant_id=current_user.tenant_id
+    )
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Entity not found")
+
+    return {"message": "Entity deleted successfully"}
 
 if __name__ == "__main__":
     import uvicorn

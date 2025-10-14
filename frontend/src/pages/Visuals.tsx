@@ -8,7 +8,6 @@ import OwnershipVisualizationChart from '../components/OwnershipVisualizationCha
 import PortfolioTimelineChart from '../components/PortfolioTimelineChart';
 import JCurveChart from '../components/JCurveChart';
 import PortfolioForecastPanel from '../components/PortfolioForecastPanel';
-import PerformanceBenchmarkingWidget from '../components/PerformanceBenchmarkingWidget';
 import './Visuals.css';
 
 const Visuals: React.FC = () => {
@@ -17,8 +16,7 @@ const Visuals: React.FC = () => {
   const [performanceData, setPerformanceData] = useState<Map<number, PerformanceMetrics>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeAnalyticsTab, setActiveAnalyticsTab] = useState<'performance' | 'risk' | 'allocation' | 'trends' | 'liquidity'>('performance');
-  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['sp500', 'cambridge_pe']);
+  const [activeAnalyticsTab, setActiveAnalyticsTab] = useState<'performance' | 'risk' | 'allocation' | 'trends'>('performance');
 
   const fetchComprehensiveData = async () => {
     try {
@@ -143,12 +141,16 @@ const Visuals: React.FC = () => {
 
       totalCurrentNAV += performance.current_nav || 0;
       totalDistributions += performance.total_distributions || 0;
+      // Note: total_contributions from performance can be negative in cash flow terms
+      // We'll use summaryStats.total_called for deployment rate instead
       totalContributions += performance.total_contributions || 0;
     });
 
     // Risk Analytics
     const assetClassConcentration = new Map<string, number>();
     const totalCommitment = investments.reduce((sum, inv) => sum + (inv.commitment_amount || 0), 0);
+    // Use summaryStats for accurate called capital
+    const totalCalled = summaryStats?.total_called || Math.abs(totalContributions);
 
     investments.forEach(inv => {
       const assetClass = inv.asset_class;
@@ -201,7 +203,7 @@ const Visuals: React.FC = () => {
 
       // Allocation Metrics
       topAssetClass: Array.from(assetClassConcentration.entries()).sort((a, b) => b[1] - a[1])[0],
-      deploymentRate: totalCommitment > 0 ? (totalContributions / totalCommitment) : 0,
+      deploymentRate: totalCommitment > 0 ? (totalCalled / totalCommitment) : 0,
       diversificationScore: assetClassConcentration.size * vintageConcentration.size,
 
       // Trend Metrics
@@ -262,7 +264,7 @@ const Visuals: React.FC = () => {
           <span className="value">{formatCurrencyCompact(summaryStats.total_nav)}</span>
         </div>
         <div className="stat-card">
-          <label>Distributions</label>
+          <label>Lifetime Distributions</label>
           <span className="value">{formatCurrencyCompact(summaryStats.total_distributions)}</span>
         </div>
         <div className="stat-card">
@@ -283,25 +285,19 @@ const Visuals: React.FC = () => {
       <div className="primary-charts-grid">
         {/* Asset Class Breakdown - Compact Table View */}
         <div className="chart-section compact-table">
-          <div className="chart-container">
-            <AssetAllocationChart />
-          </div>
+          <AssetAllocationChart />
         </div>
 
         {/* Commitment vs Called - Pie Chart */}
         <div className="chart-section pie-chart">
-          <div className="chart-container">
-            <CommitmentVsCalledChart />
-          </div>
+          <CommitmentVsCalledChart />
         </div>
       </div>
 
       {/* Full Width Vintage Chart */}
       <div className="full-width-chart">
         <div className="chart-section">
-          <div className="chart-container">
-            <VintageAllocationChart />
-          </div>
+          <VintageAllocationChart />
         </div>
       </div>
 
@@ -310,60 +306,16 @@ const Visuals: React.FC = () => {
 
         {/* Ownership Distribution Chart */}
         <div className="chart-section full-width">
-          <div className="chart-container">
-            <OwnershipVisualizationChart />
-          </div>
+          <OwnershipVisualizationChart />
         </div>
 
         {/* Time Series Charts - Full Width */}
         <div className="chart-section full-width">
-          <div className="chart-container">
-            <PortfolioTimelineChart />
-          </div>
+          <PortfolioTimelineChart />
         </div>
 
         <div className="chart-section full-width">
-          <div className="chart-container">
-            <JCurveChart />
-          </div>
-        </div>
-      </div>
-
-      {/* Analytics Insights */}
-      <div className="analytics-insights">
-        <div className="insights-header">
-          <h3>Portfolio Analytics Insights</h3>
-        </div>
-        <div className="insights-grid">
-          <div className="insight-card">
-            <label>Capital Deployment</label>
-            <span className="insight-value">
-              {summaryStats.total_commitment > 0 ? 
-                `${((summaryStats.total_called / summaryStats.total_commitment) * 100).toFixed(1)}% Called` : 'N/A'}
-            </span>
-            <small>of total commitments deployed</small>
-          </div>
-          <div className="insight-card">
-            <label>Portfolio Diversification</label>
-            <span className="insight-value">
-              {summaryStats.asset_classes} Asset Classes
-            </span>
-            <small>across {summaryStats.vintage_years} vintage years</small>
-          </div>
-          <div className="insight-card">
-            <label>Realization Status</label>
-            <span className="insight-value">
-              {summaryStats.total_distributions > 0 ? 'Active Returns' : 'Pre-Distribution'}
-            </span>
-            <small>{formatCurrencyCompact(summaryStats.total_distributions)} distributed</small>
-          </div>
-          <div className="insight-card">
-            <label>Portfolio Activity</label>
-            <span className="insight-value">
-              {summaryStats.active_investments} Active
-            </span>
-            <small>of {summaryStats.total_investments} total investments</small>
-          </div>
+          <JCurveChart />
         </div>
       </div>
 
@@ -396,12 +348,6 @@ const Visuals: React.FC = () => {
                 onClick={() => setActiveAnalyticsTab('trends')}
               >
                 📈 Trends
-              </button>
-              <button
-                className={`tab-button ${activeAnalyticsTab === 'liquidity' ? 'active' : ''}`}
-                onClick={() => setActiveAnalyticsTab('liquidity')}
-              >
-                💧 Liquidity & Cash Flow
               </button>
             </div>
           </div>
@@ -485,13 +431,6 @@ const Visuals: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Performance Benchmarking Widget */}
-                <PerformanceBenchmarkingWidget
-                  investments={investments}
-                  selectedBenchmarks={selectedBenchmarks}
-                  onBenchmarkChange={setSelectedBenchmarks}
-                />
               </div>
             )}
 
@@ -658,21 +597,6 @@ const Visuals: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Liquidity & Cash Flow Tab */}
-            {activeAnalyticsTab === 'liquidity' && (
-              <div className="analytics-tab-content">
-                <div className="liquidity-overview">
-                  <div className="liquidity-header">
-                    <h4>Portfolio Liquidity & Cash Flow Analysis</h4>
-                    <p>Cash flow calendar has been moved to the main Liquidity & Cash Flow page for better accessibility</p>
-                  </div>
-                  <div className="liquidity-redirect">
-                    <p>📅 Visit the <strong>Liquidity & Cash Flow</strong> page in the main navigation to access the interactive calendar widget.</p>
                   </div>
                 </div>
               </div>

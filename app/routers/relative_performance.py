@@ -15,6 +15,8 @@ from datetime import date, datetime
 import logging
 
 from app.database import get_db
+from app.auth import get_current_active_user
+from app.models import User
 from app.relative_performance_service import get_relative_performance_service
 from pydantic import BaseModel
 
@@ -71,6 +73,7 @@ def compare_performance(
     start_date: Optional[date] = Query(None, description="Start date for comparison (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="End date for comparison (YYYY-MM-DD)"),
     view_mode: str = Query("absolute", description="Performance view mode: 'absolute' or 'rebased'"),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -158,17 +161,25 @@ def compare_performance(
         raise HTTPException(status_code=500, detail=f"Error comparing performance: {str(e)}")
 
 @router.get("/investments")
-def get_investments_and_asset_classes(db: Session = Depends(get_db)):
+def get_investments_and_asset_classes(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
     """Get list of investments and asset classes for selection dropdowns"""
     try:
         from app.models import Investment, CashFlow
 
-        # Get all investments
-        investments = db.query(Investment).all()
+        # Get investments filtered by tenant (exclude archived)
+        investments = db.query(Investment).filter(
+            Investment.tenant_id == current_user.tenant_id,
+            Investment.is_archived == False
+        ).all()
 
-        # Get unique asset classes
+        # Get unique asset classes filtered by tenant (exclude archived)
         asset_classes = db.query(Investment.asset_class).distinct().filter(
-            Investment.asset_class.isnot(None)
+            Investment.asset_class.isnot(None),
+            Investment.tenant_id == current_user.tenant_id,
+            Investment.is_archived == False
         ).all()
         asset_classes = [ac[0] for ac in asset_classes if ac[0]]
 
@@ -215,6 +226,7 @@ def get_investment_tvpi_progression(
     investment_id: int,
     start_date: Optional[date] = Query(None, description="Start date for progression (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="End date for progression (YYYY-MM-DD)"),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Get TVPI progression over time for a specific investment"""

@@ -54,6 +54,39 @@
   margin-top: 4px;
 }
 
+.time-period-selector {
+  display: flex;
+  gap: 8px;
+  background: var(--luxury-pearl);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--luxury-border);
+}
+
+.period-button {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--luxury-dark-gray);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.period-button:hover {
+  background: var(--luxury-white);
+  color: var(--luxury-navy);
+}
+
+.period-button.active {
+  background: var(--luxury-navy);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .chart-controls {
   display: flex;
   gap: 15px;

@@ -18,11 +18,23 @@ const InvestmentDetails: React.FC = () => {
   const investmentId = parseInt(id || '0', 10);
 
   const [investment, setInvestment] = useState<Investment | null>(null);
+  const [allInvestments, setAllInvestments] = useState<Investment[]>([]);
   const [cashFlows, setCashFlows] = useState<CashFlow[]>([]);
   const [valuations, setValuations] = useState<Valuation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [performanceUpdateTrigger, setPerformanceUpdateTrigger] = useState(0);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+
+  const fetchAllInvestments = async () => {
+    try {
+      // Fetch all investments for the dropdown
+      const allInvestmentsData = await investmentAPI.getInvestments(0, 1000);
+      setAllInvestments(allInvestmentsData);
+    } catch (err) {
+      console.error('Error fetching all investments:', err);
+    }
+  };
 
   const fetchInvestmentData = async () => {
     try {
@@ -54,6 +66,10 @@ const InvestmentDetails: React.FC = () => {
       fetchInvestmentData();
     }
   }, [investmentId]);
+
+  useEffect(() => {
+    fetchAllInvestments();
+  }, []);
 
   const handleCashFlowUpdate = () => {
     cashFlowAPI.getCashFlows(investmentId).then(setCashFlows);
@@ -98,13 +114,29 @@ const InvestmentDetails: React.FC = () => {
         realizationDate,
         realizationNotes
       );
-      
+
       // Update the local investment state
       setInvestment(updatedInvestment);
+      setShowStatusModal(false);
     } catch (error: any) {
       // Re-throw the error so the component can display it
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update investment status');
     }
+  };
+
+  const handleStatusClick = () => {
+    setShowStatusModal(true);
+  };
+
+  const handleInvestmentChange = (newInvestmentId: number) => {
+    navigate(`/investments/${newInvestmentId}`);
+  };
+
+  // Group investments by status
+  const groupedInvestments = {
+    [InvestmentStatus.ACTIVE]: allInvestments.filter(inv => inv.status === InvestmentStatus.ACTIVE),
+    [InvestmentStatus.DORMANT]: allInvestments.filter(inv => inv.status === InvestmentStatus.DORMANT),
+    [InvestmentStatus.REALIZED]: allInvestments.filter(inv => inv.status === InvestmentStatus.REALIZED)
   };
 
   if (loading) {
@@ -123,15 +155,51 @@ const InvestmentDetails: React.FC = () => {
   }
 
   return (
-    <div className="details-container">
-      <div className="details-header">
-        <button onClick={() => navigate('/holdings')} className="back-button">
-          ← Back to Holdings
-        </button>
-        <h2>Investment Details</h2>
-      </div>
+    <>
+      <div className="details-container">
+        <div className="details-header">
+          <button onClick={() => navigate('/holdings')} className="back-button">
+            ← Back to Holdings
+          </button>
+          <div className="header-title-section">
+            <h2>Investment Details</h2>
+            <select
+              value={investmentId}
+              onChange={(e) => handleInvestmentChange(parseInt(e.target.value))}
+              className="investment-dropdown"
+            >
+              {groupedInvestments[InvestmentStatus.ACTIVE].length > 0 && (
+                <optgroup label="Active">
+                  {groupedInvestments[InvestmentStatus.ACTIVE].map(inv => (
+                    <option key={inv.id} value={inv.id}>
+                      {inv.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {groupedInvestments[InvestmentStatus.DORMANT].length > 0 && (
+                <optgroup label="Dormant">
+                  {groupedInvestments[InvestmentStatus.DORMANT].map(inv => (
+                    <option key={inv.id} value={inv.id}>
+                      {inv.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {groupedInvestments[InvestmentStatus.REALIZED].length > 0 && (
+                <optgroup label="Realized">
+                  {groupedInvestments[InvestmentStatus.REALIZED].map(inv => (
+                    <option key={inv.id} value={inv.id}>
+                      {inv.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+        </div>
 
-      <div className="investment-overview">
+        <div className="investment-overview">
         <div className="overview-card">
           <h3>{investment.name}</h3>
           <div className="overview-grid">
@@ -190,16 +258,10 @@ const InvestmentDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Investment Status Management */}
-      <InvestmentStatusManagement
-        key={`status-${investment.status}-${investment.realization_date}-${investment.status_changed_date}`}
-        investment={investment}
-        onStatusUpdate={handleStatusUpdate}
-      />
-
       <PerformanceMetrics
         investmentId={investmentId}
         onUpdate={performanceUpdateTrigger > 0 ? () => {} : undefined}
+        onStatusClick={handleStatusClick}
         key={performanceUpdateTrigger}
       />
 
@@ -223,7 +285,18 @@ const InvestmentDetails: React.FC = () => {
       <PacingModelPanel investment={investment} onUpdate={fetchInvestmentData} />
 
       <InvestmentForecastChart investmentId={investmentId} onUpdate={fetchInvestmentData} />
-    </div>
+      </div>
+
+      {/* Status Management Modal - outside container for proper fixed positioning */}
+      {showStatusModal && (
+        <InvestmentStatusManagement
+          key={`status-${investment.status}-${investment.realization_date}-${investment.status_changed_date}`}
+          investment={investment}
+          onStatusUpdate={handleStatusUpdate}
+          onClose={() => setShowStatusModal(false)}
+        />
+      )}
+    </>
   );
 };
 

@@ -15,10 +15,14 @@ const Entities: React.FC = () => {
   };
 
   return (
-    <div className="entities-container">
+    <div className="entities-page">
+      <div className="luxury-card page-header">
+        <h1 className="luxury-heading-1">Entity & Relationship Management</h1>
+        <p className="luxury-body-large">Manage family office entities, relationships, and organizational structures</p>
+      </div>
+
       <div className="entities-header">
-        <h2>Entity & Relationship Management</h2>
-        <div className="tab-navigation">
+        <div className="section-tabs">
           <button
             className={`tab-button ${activeTab === 'entities' ? 'active' : ''}`}
             onClick={() => setActiveTab('entities')}
@@ -42,27 +46,33 @@ const Entities: React.FC = () => {
 
       <div className="tab-content">
         {activeTab === 'entities' && (
-          <div className="entities-tab">
-            <div className="entity-upload-section">
-              <UploadWidget 
-                type="entities" 
+          <>
+            <div className="luxury-card entity-upload-card">
+              <UploadWidget
+                type="entities"
                 onUploadComplete={handleEntityUploadComplete}
                 size="medium"
               />
             </div>
-            <EntityManagement />
-          </div>
+            <div className="luxury-card entities-management-card">
+              <EntityManagement />
+            </div>
+          </>
         )}
-        
+
         {activeTab === 'relationships' && (
-          <div className="relationships-tab">
-            <EntityRelationshipManager />
+          <div className="section-content">
+            <div className="luxury-card relationships-card">
+              <EntityRelationshipManager />
+            </div>
           </div>
         )}
-        
+
         {activeTab === 'visualization' && (
-          <div className="visualization-tab">
-            <EntityRelationshipVisualization />
+          <div className="section-content">
+            <div className="luxury-card visualization-card">
+              <EntityRelationshipVisualization />
+            </div>
           </div>
         )}
       </div>

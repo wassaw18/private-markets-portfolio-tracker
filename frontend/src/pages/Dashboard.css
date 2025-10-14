@@ -2,25 +2,12 @@
 .dashboard-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 0 24px;
   min-height: 100vh;
   background: var(--luxury-background-subtle);
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: 0;
-}
-
-.page-header .luxury-heading-1 {
-  margin-bottom: 8px;
-  color: var(--luxury-text-primary);
-}
-
-.page-header .luxury-body-large {
-  color: var(--luxury-text-secondary);
-  margin: 0;
-}
+/* Page header styles moved to luxury-design-system.css */
 
 /* Asset Class Breakdown */
 
@@ -30,13 +17,72 @@
   justify-content: center;
   justify-items: center;
   padding-bottom: 20px;
-}
-
-/* Simplified responsive grid layout */
-.breakdown-grid {
-  grid-template-columns: repeat(auto-fit, minmax(320px, 400px));
   max-width: 1400px;
   margin: 0 auto;
+}
+
+/* Smart grid layout based on number of items */
+.breakdown-grid[data-count="1"] {
+  grid-template-columns: 1fr;
+  max-width: 400px;
+}
+
+.breakdown-grid[data-count="2"] {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 840px;
+}
+
+.breakdown-grid[data-count="3"] {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 1260px;
+}
+
+.breakdown-grid[data-count="4"] {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 840px;
+}
+
+.breakdown-grid[data-count="5"] {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 1260px;
+}
+
+.breakdown-grid[data-count="6"] {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 1260px;
+}
+
+.breakdown-grid[data-count="7"] {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 1260px;
+}
+
+.breakdown-grid[data-count="8"] {
+  grid-template-columns: repeat(4, 1fr);
+  max-width: 1680px;
+}
+
+/* For 7 items, center the bottom row */
+.breakdown-grid[data-count="7"] .breakdown-card:nth-child(5) {
+  grid-column: 2;
+}
+
+.breakdown-grid[data-count="7"] .breakdown-card:nth-child(6) {
+  grid-column: 3;
+}
+
+.breakdown-grid[data-count="7"] .breakdown-card:nth-child(7) {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+/* For 5 items, center the bottom row */
+.breakdown-grid[data-count="5"] .breakdown-card:nth-child(4) {
+  grid-column: 2;
+}
+
+.breakdown-grid[data-count="5"] .breakdown-card:nth-child(5) {
+  grid-column: 3;
 }
 
 .breakdown-card {
@@ -189,8 +235,27 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .breakdown-grid {
+  .breakdown-grid,
+  .breakdown-grid[data-count="1"],
+  .breakdown-grid[data-count="2"],
+  .breakdown-grid[data-count="3"],
+  .breakdown-grid[data-count="4"],
+  .breakdown-grid[data-count="5"],
+  .breakdown-grid[data-count="6"],
+  .breakdown-grid[data-count="7"],
+  .breakdown-grid[data-count="8"] {
     grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+
+  /* Reset specific positioning for mobile */
+  .breakdown-grid[data-count="7"] .breakdown-card:nth-child(5),
+  .breakdown-grid[data-count="7"] .breakdown-card:nth-child(6),
+  .breakdown-grid[data-count="7"] .breakdown-card:nth-child(7),
+  .breakdown-grid[data-count="5"] .breakdown-card:nth-child(4),
+  .breakdown-grid[data-count="5"] .breakdown-card:nth-child(5) {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .entity-breakdown-item {

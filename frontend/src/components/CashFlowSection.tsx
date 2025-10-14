@@ -97,18 +97,18 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
   };
 
 
-  // Outflows (capital going out from investor to fund)
+  // Outflows (capital going out from investor to fund) - should be negative
   const getTotalOutflows = () => {
     return cashFlows
       .filter(cf => [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION, CashFlowType.FEES].includes(cf.type))
-      .reduce((sum, cf) => sum + cf.amount, 0);
+      .reduce((sum, cf) => sum + Math.abs(cf.amount) * -1, 0); // Always negative
   };
 
-  // Inflows (capital coming back to investor from fund)
+  // Inflows (capital coming back to investor from fund) - should be positive
   const getTotalInflows = () => {
     return cashFlows
       .filter(cf => [CashFlowType.DISTRIBUTION, CashFlowType.YIELD, CashFlowType.RETURN_OF_PRINCIPAL].includes(cf.type))
-      .reduce((sum, cf) => sum + cf.amount, 0);
+      .reduce((sum, cf) => sum + Math.abs(cf.amount), 0); // Always positive
   };
 
 
@@ -169,7 +169,7 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
                   type="number"
                   id="cashflow-amount"
                   name="amount"
-                  value={formData.amount}
+                  value={formData.amount === 0 ? '' : formData.amount}
                   onChange={handleChange}
                   step="0.01"
                   placeholder="0.00"
@@ -226,39 +226,41 @@ const CashFlowSection: React.FC<Props> = ({ investmentId, cashFlows, onUpdate })
                 </tr>
               </thead>
               <tbody>
-                {cashFlows.map((cashFlow) => {
-                  const isOutflow = [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION, CashFlowType.FEES].includes(cashFlow.type);
-                  return (
-                    <tr key={cashFlow.id}>
-                      <td>{formatDate(cashFlow.date)}</td>
-                      <td>
-                        <span className={`type-badge ${cashFlow.type.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {cashFlow.type}
-                        </span>
-                      </td>
-                      <td className={`currency ${isOutflow ? 'negative' : 'positive'}`}>
-                        {isOutflow ? '-' : '+'}
-                        {formatCurrency(Math.abs(cashFlow.amount))}
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => handleEdit(cashFlow)}
-                          className="icon-button edit-icon"
-                          title="Edit Cash Flow"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => handleDelete(cashFlow.id)}
-                          className="icon-button delete-icon"
-                          title="Delete Cash Flow"
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {[...cashFlows]
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((cashFlow) => {
+                    const isOutflow = [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION, CashFlowType.FEES].includes(cashFlow.type);
+                    return (
+                      <tr key={cashFlow.id}>
+                        <td>{formatDate(cashFlow.date)}</td>
+                        <td>
+                          <span className={`type-badge ${cashFlow.type.toLowerCase().replace(/\s+/g, '-')}`}>
+                            {cashFlow.type}
+                          </span>
+                        </td>
+                        <td className={`currency ${isOutflow ? 'negative' : 'positive'}`}>
+                          {isOutflow ? '-' : '+'}
+                          {formatCurrency(Math.abs(cashFlow.amount))}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleEdit(cashFlow)}
+                            className="icon-button edit-icon"
+                            title="Edit Cash Flow"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDelete(cashFlow.id)}
+                            className="icon-button delete-icon"
+                            title="Delete Cash Flow"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

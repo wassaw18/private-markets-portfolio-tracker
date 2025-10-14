@@ -370,7 +370,7 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                       type="number"
                       id="edit-called_amount"
                       name="called_amount"
-                      value={formData.called_amount || ''}
+                      value={formData.called_amount === 0 ? '' : formData.called_amount || ''}
                       onChange={handleChange}
                       min="0"
                       step="0.01"
@@ -458,7 +458,7 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                       type="number"
                       id="edit-target_raise"
                       name="target_raise"
-                      value={formData.target_raise || ''}
+                      value={formData.target_raise === 0 ? '' : formData.target_raise || ''}
                       onChange={handleChange}
                       min="0"
                       step="1000000"
@@ -472,7 +472,7 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                       type="number"
                       id="edit-fees"
                       name="fees"
-                      value={formData.fees || ''}
+                      value={formData.fees === 0 ? '' : formData.fees || ''}
                       onChange={handleChange}
                       min="0"
                       step="0.01"
@@ -566,7 +566,7 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                       type="number"
                       id="edit-investment_period"
                       name="investment_period"
-                      value={formData.investment_period || ''}
+                      value={formData.investment_period === 0 ? '' : formData.investment_period || ''}
                       onChange={handleChange}
                       min="0"
                       max="20"
@@ -580,7 +580,7 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
                       type="number"
                       id="edit-fund_life"
                       name="fund_life"
-                      value={formData.fund_life || ''}
+                      value={formData.fund_life === 0 ? '' : formData.fund_life || ''}
                       onChange={handleChange}
                       min="0"
                       max="50"
@@ -718,26 +718,37 @@ const EditInvestmentModal: React.FC<Props> = ({ investment, onSuccess, onCancel 
 
           <div className="form-navigation">
             <div className="nav-buttons">
-              {activeTab !== 'basic' && (
-                <button type="button" onClick={prevTab} className="nav-button">
-                  ← Previous
-                </button>
-              )}
-              
-              {activeTab !== 'legal' && (
-                <button type="button" onClick={nextTab} className="nav-button">
-                  Next →
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={prevTab}
+                className="nav-button"
+                disabled={activeTab === 'basic'}
+              >
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={nextTab}
+                className="nav-button"
+                disabled={activeTab === 'legal'}
+              >
+                Next
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </button>
             </div>
 
             <div className="form-actions">
               <button type="button" onClick={onCancel} className="cancel-button">
                 Cancel
               </button>
-              <button 
-                type="submit" 
-                disabled={loading || !tabValidation.basic || !tabValidation.financial} 
+              <button
+                type="submit"
+                disabled={loading || !tabValidation.basic || !tabValidation.financial}
                 className="submit-button"
               >
                 {loading ? 'Updating...' : 'Update Investment'}

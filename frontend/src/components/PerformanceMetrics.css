@@ -36,8 +36,8 @@
   font-style: italic;
 }
 
-/* Investment Status Indicator */
-.investment-status {
+/* Investment Status Button */
+.status-button {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -45,6 +45,15 @@
   background: #f8f9fa;
   border-radius: 6px;
   border: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-button:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .status-label {
@@ -64,22 +73,22 @@
   letter-spacing: 0.3px;
 }
 
-.status-value.active {
+.status-value.status-active {
   background: #d4edda;
   color: #155724;
   border: 1px solid #c3e6cb;
 }
 
-.status-value.realized {
-  background: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
-}
-
-.status-value.pending {
+.status-value.status-dormant {
   background: #fff3cd;
   color: #856404;
   border: 1px solid #ffeaa7;
+}
+
+.status-value.status-realized {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
 }
 
 .metrics-grid {

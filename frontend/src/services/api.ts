@@ -5,12 +5,25 @@ import { Document, DocumentCreate, DocumentUpdate, DocumentUploadForm, DocumentF
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://172.23.5.82:8000';
 
+// Create axios instance with JWT token support
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Add JWT token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Filter interfaces
 export interface InvestmentFilters {
@@ -218,30 +231,42 @@ export const investmentAPI = {
 
   // Update investment status
   updateInvestmentStatus: async (
-    id: number, 
-    status: string, 
-    password: string, 
-    realizationDate?: string, 
+    id: number,
+    status: string,
+    password: string,
+    realizationDate?: string,
     realizationNotes?: string
   ): Promise<Investment> => {
-    const requestBody = {
-      status_update: {
-        status,
-        realization_date: realizationDate || null,
-        realization_notes: realizationNotes || null
-      },
-      password_confirmation: {
-        password
-      }
+    // Use the regular update endpoint with just the status field
+    // Note: password is currently not validated on backend, but kept in signature for future use
+    const requestBody: any = {
+      status
     };
-    
-    const response = await api.put(`/api/investments/${id}/status`, requestBody);
+
+    // Add realization fields if status is REALIZED
+    if (status === 'REALIZED') {
+      if (realizationDate) requestBody.realization_date = realizationDate;
+      if (realizationNotes) requestBody.realization_notes = realizationNotes;
+    }
+
+    const response = await api.put(`/api/investments/${id}`, requestBody);
     return response.data;
   },
 
-  // Delete investment
+  // Delete investment (archive)
   deleteInvestment: async (id: number): Promise<void> => {
     await api.delete(`/api/investments/${id}`);
+  },
+
+  // Restore archived investment
+  restoreInvestment: async (id: number): Promise<void> => {
+    await api.post(`/api/investments/${id}/restore`);
+  },
+
+  // Get archived investments
+  getArchivedInvestments: async (skip: number = 0, limit: number = 1000): Promise<Investment[]> => {
+    const response = await api.get(`/api/investments/archived?skip=${skip}&limit=${limit}`);
+    return response.data;
   },
 
   // Pacing model methods
@@ -1214,6 +1239,48 @@ export const pitchBookAPI = {
   getVintageYears: async (): Promise<number[]> => {
     const response = await api.get('/api/pitchbook/vintage-years');
     return response.data;
+  },
+};
+
+// Reports API
+export const reportsAPI = {
+  // Generate any report by endpoint
+  generateReport: async (endpoint: string, asOfDate?: string): Promise<ArrayBuffer> => {
+    let url = endpoint;
+    if (asOfDate) {
+      url += `?as_of_date=${asOfDate}`;
+    }
+
+    const response = await api.get(url, {
+      responseType: 'arraybuffer',
+    });
+    return response.data;
+  },
+
+  // Specific report generators
+  generatePortfolioSummary: async (asOfDate?: string): Promise<ArrayBuffer> => {
+    return reportsAPI.generateReport('/api/reports/portfolio-summary', asOfDate);
+  },
+
+  generateHoldingsReport: async (asOfDate?: string, groupBy?: string, statusFilter?: string): Promise<ArrayBuffer> => {
+    let url = '/api/reports/holdings';
+    const params = new URLSearchParams();
+
+    if (asOfDate) params.append('as_of_date', asOfDate);
+    if (groupBy) params.append('group_by', groupBy);
+    if (statusFilter) params.append('status_filter', statusFilter);
+
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+
+    const response = await api.get(url, {
+      responseType: 'arraybuffer',
+    });
+    return response.data;
+  },
+
+  generateEntityPerformance: async (asOfDate?: string): Promise<ArrayBuffer> => {
+    return reportsAPI.generateReport('/api/reports/entity-performance', asOfDate);
   },
 };
 

@@ -10,6 +10,7 @@ import Entities from './pages/Entities';
 import LiquidityForecast from './pages/LiquidityForecast';
 import BulkUpload from './pages/BulkUpload';
 import Benchmarks from './pages/Benchmarks';
+import Reports from './pages/Reports';
 import PageErrorBoundary from './components/PageErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -45,7 +46,7 @@ const Navigation: React.FC = () => {
           to="/liquidity"
           className={`nav-link ${location.pathname === '/liquidity' || location.pathname === '/calendar' ? 'active' : ''}`}
         >
-          Liquidity & Cash Flow
+          Cash Flows
         </Link>
         <Link
           to="/entities"
@@ -58,6 +59,12 @@ const Navigation: React.FC = () => {
           className={`nav-link ${location.pathname === '/benchmarks' ? 'active' : ''}`}
         >
           Benchmarks
+        </Link>
+        <Link
+          to="/reports"
+          className={`nav-link ${location.pathname === '/reports' ? 'active' : ''}`}
+        >
+          Reports
         </Link>
         <Link
           to="/documents"
@@ -153,7 +160,12 @@ function AppContent() {
                   <Benchmarks />
                 </PageErrorBoundary>
               } />
-              <Route path="/investment/:id" element={
+              <Route path="/reports" element={
+                <PageErrorBoundary pageName="Reports">
+                  <Reports />
+                </PageErrorBoundary>
+              } />
+              <Route path="/investments/:id" element={
                 <PageErrorBoundary pageName="Investment Details">
                   <InvestmentDetails />
                 </PageErrorBoundary>

@@ -27,8 +27,8 @@ interface Props {
   investments: Investment[];
   onDelete: (id: number) => void;
   onUpdate: () => void;
-  showImportExport?: boolean;
-  onToggleImportExport?: () => void;
+  onAddInvestment?: () => void;
+  onExportData?: () => void;
   hideFilters?: boolean;
   externalFilters?: TableFilters;
   onExternalFilterChange?: (key: keyof TableFilters, value: string) => void;
@@ -44,8 +44,8 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
   investments,
   onDelete,
   onUpdate,
-  showImportExport = false,
-  onToggleImportExport,
+  onAddInvestment,
+  onExportData,
   hideFilters = false,
   externalFilters,
   onExternalFilterChange,
@@ -79,7 +79,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
   }, []);
 
   const handleViewDetails = useCallback((investmentId: number) => {
-    navigate(`/investment/${investmentId}`);
+    navigate(`/investments/${investmentId}`);
   }, [navigate]);
 
   const handleEditSuccess = useCallback(() => {
@@ -265,7 +265,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         <tbody>
           {paginatedInvestments.map((investment) => (
             <tr key={investment.id}>
-              <td className="investment-name">
+              <td className="investment-name" title={investment.name}>
                 <span
                   onClick={() => handleViewDetails(investment.id)}
                   title={`${investment.name} - Click to view investment details`}
@@ -273,9 +273,9 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                   {investment.name}
                 </span>
               </td>
-              <td>{investment.asset_class}</td>
-              <td>{investment.investment_structure}</td>
-              <td className="entity-cell">
+              <td title={investment.asset_class}>{investment.asset_class}</td>
+              <td title={investment.investment_structure}>{investment.investment_structure}</td>
+              <td className="entity-cell" title={investment.entity?.name || 'No entity assigned'}>
                 {investment.entity ? (
                   <span className="entity-name-simple">{investment.entity.name}</span>
                 ) : (
@@ -285,7 +285,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
               <td className="strategy-cell" title={investment.strategy || ''}>
                 <span className="strategy-text">{investment.strategy}</span>
               </td>
-              <td>{investment.vintage_year}</td>
+              <td title={investment.vintage_year?.toString()}>{investment.vintage_year}</td>
               <td className="status-cell">
                 <span className={`status-badge ${investment.status.toLowerCase()}`}>
                   {investment.status === InvestmentStatus.ACTIVE && '🟢'}
@@ -342,7 +342,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         <tbody>
           {paginatedInvestments.map((investment) => (
             <tr key={investment.id}>
-              <td className="investment-name">
+              <td className="investment-name" title={investment.name}>
                 <span
                   onClick={() => handleViewDetails(investment.id)}
                   title={`${investment.name} - Click to view investment details`}
@@ -350,13 +350,13 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                   {investment.name}
                 </span>
               </td>
-              <td className="currency">{formatCurrency(investment.commitment_amount)}</td>
-              <td className="currency">{formatCurrency(investment.called_amount)}</td>
-              <td>{investment.commitment_date || '-'}</td>
-              <td>{investment.currency || 'USD'}</td>
-              <td>{investment.management_fee ? formatPercentage(investment.management_fee) : '-'}</td>
-              <td>{investment.performance_fee ? formatPercentage(investment.performance_fee) : '-'}</td>
-              <td>{investment.hurdle_rate ? formatPercentage(investment.hurdle_rate) : '-'}</td>
+              <td className="currency" title={formatCurrency(investment.commitment_amount)}>{formatCurrency(investment.commitment_amount)}</td>
+              <td className="currency" title={formatCurrency(investment.called_amount)}>{formatCurrency(investment.called_amount)}</td>
+              <td title={investment.commitment_date || '-'}>{investment.commitment_date || '-'}</td>
+              <td title={investment.currency || 'USD'}>{investment.currency || 'USD'}</td>
+              <td title={investment.management_fee ? formatPercentage(investment.management_fee) : '-'}>{investment.management_fee ? formatPercentage(investment.management_fee) : '-'}</td>
+              <td title={investment.performance_fee ? formatPercentage(investment.performance_fee) : '-'}>{investment.performance_fee ? formatPercentage(investment.performance_fee) : '-'}</td>
+              <td title={investment.hurdle_rate ? formatPercentage(investment.hurdle_rate) : '-'}>{investment.hurdle_rate ? formatPercentage(investment.hurdle_rate) : '-'}</td>
               <td className="currency">{formatCurrency(investment.fees)}</td>
             </tr>
           ))}
@@ -546,7 +546,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                     {performance?.current_nav ? formatCurrency(performance.current_nav) : 'N/A'}
                   </td>
                   <td className="currency">
-                    {performance?.total_contributions ? formatCurrency(performance.total_contributions) : formatCurrency(investment.called_amount)}
+                    {performance?.total_contributions ? formatCurrency(Math.abs(performance.total_contributions)) : formatCurrency(investment.called_amount)}
                   </td>
                   <td className="currency">
                     {performance?.total_distributions ? formatCurrency(performance.total_distributions) : '$0'}
@@ -583,19 +583,30 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
         <div className="table-header">
           <div className="table-title">
             <h3>Current Investments (0)</h3>
-            {onToggleImportExport && (
-              <button 
-                className="import-export-toggle"
-                onClick={onToggleImportExport}
-                title="Import/Export"
-              >
-                📊 Import/Export
-              </button>
-            )}
+            <div className="header-actions">
+              {onAddInvestment && (
+                <button
+                  className="luxury-button"
+                  onClick={onAddInvestment}
+                  title="Add Investment"
+                >
+                  ➕ Add Investment
+                </button>
+              )}
+              {onExportData && (
+                <button
+                  className="luxury-button-secondary"
+                  onClick={onExportData}
+                  title="Export Data"
+                >
+                  📊 Export Data
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <div className="empty-state">
-          <p>No investments found. Add your first investment manually or use the Import/Export button to bulk upload.</p>
+          <p>No investments found. Add your first investment with the "Add Investment" button.</p>
         </div>
       </div>
     );
@@ -604,37 +615,26 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
   return (
     <>
       <div className="enhanced-investments-table-section">
-        {/* Header */}
-        <div className="table-header">
-          <div className="table-title">
-            <h3>Current Investments ({investments.length})</h3>
-            {onToggleImportExport && (
-              <button
-                className="import-export-toggle"
-                onClick={onToggleImportExport}
-                title="Import/Export"
-              >
-                📊 Import/Export
-              </button>
-            )}
-          </div>
+        {/* Header - Two Row Layout */}
+        <div className="table-header-two-row">
+          <h3 className="table-title-full">Current Investments ({investments.length})</h3>
 
-          {/* External Filters from Holdings page - positioned below title */}
+          {/* Second row: Filters and Actions */}
           {externalFilters && onExternalFilterChange && onClearExternalFilters && externalFilterOptions && (
-            <div className="filters-below-title">
-              <div className="table-filters-horizontal external-filters">
+            <div className="filters-actions-row">
+              <div className="table-filters-inline">
                 <input
                   type="text"
                   placeholder="Search investments..."
                   value={externalFilters.search}
                   onChange={(e) => onExternalFilterChange('search', e.target.value)}
-                  className="search-input-compact"
+                  className="search-input-inline"
                 />
 
                 <select
                   value={externalFilters.assetClass}
                   onChange={(e) => onExternalFilterChange('assetClass', e.target.value)}
-                  className="filter-select-compact"
+                  className="filter-select-inline"
                 >
                   <option value="">All Asset Classes</option>
                   {externalFilterOptions.assetClasses.map(ac => (
@@ -645,7 +645,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                 <select
                   value={externalFilters.entity}
                   onChange={(e) => onExternalFilterChange('entity', e.target.value)}
-                  className="filter-select-compact"
+                  className="filter-select-inline"
                 >
                   <option value="">All Entities</option>
                   {externalFilterOptions.entities.map(entity => (
@@ -656,7 +656,7 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                 <select
                   value={externalFilters.vintageYear}
                   onChange={(e) => onExternalFilterChange('vintageYear', e.target.value)}
-                  className="filter-select-compact"
+                  className="filter-select-inline"
                 >
                   <option value="">All Years</option>
                   {externalFilterOptions.vintageYears.map(year => (
@@ -664,65 +664,86 @@ const EnhancedInvestmentsTable: React.FC<Props> = ({
                   ))}
                 </select>
 
-                <button onClick={onClearExternalFilters} className="clear-filters-btn-compact">
+                <button onClick={onClearExternalFilters} className="clear-filters-btn-inline">
                   Clear
                 </button>
               </div>
-            </div>
-          )}
 
-          {/* Internal Filters (when not using external) */}
-          {!hideFilters && !externalFilters && (
-            <div className="filters-below-title">
-              <div className="table-filters-horizontal">
-                <input
-                  type="text"
-                  placeholder="Search investments..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="search-input-compact"
-                />
-
-                <select
-                  value={filters.assetClass}
-                  onChange={(e) => handleFilterChange('assetClass', e.target.value)}
-                  className="filter-select-compact"
-                >
-                  <option value="">All Asset Classes</option>
-                  {filterOptions.assetClasses.map(ac => (
-                    <option key={ac} value={ac}>{ac}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={filters.entity}
-                  onChange={(e) => handleFilterChange('entity', e.target.value)}
-                  className="filter-select-compact"
-                >
-                  <option value="">All Entities</option>
-                  {filterOptions.entities.map(entity => (
-                    <option key={entity} value={entity}>{entity}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={filters.vintageYear}
-                  onChange={(e) => handleFilterChange('vintageYear', e.target.value)}
-                  className="filter-select-compact"
-                >
-                  <option value="">All Years</option>
-                  {filterOptions.vintageYears.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-
-                <button onClick={clearFilters} className="clear-filters-btn-compact">
-                  Clear
-                </button>
+              <div className="header-actions-inline">
+                {onAddInvestment && (
+                  <button
+                    className="action-button-primary"
+                    onClick={onAddInvestment}
+                    title="Add Investment"
+                  >
+                    ➕ Add Investment
+                  </button>
+                )}
+                {onExportData && (
+                  <button
+                    className="action-button-primary"
+                    onClick={onExportData}
+                    title="Export Data"
+                  >
+                    📊 Export Data
+                  </button>
+                )}
               </div>
             </div>
           )}
         </div>
+
+        {/* Internal Filters (when not using external) */}
+        {!hideFilters && !externalFilters && (
+          <div className="filters-below-title">
+            <div className="table-filters-horizontal">
+              <input
+                type="text"
+                placeholder="Search investments..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="search-input-compact"
+              />
+
+              <select
+                value={filters.assetClass}
+                onChange={(e) => handleFilterChange('assetClass', e.target.value)}
+                className="filter-select-compact"
+              >
+                <option value="">All Asset Classes</option>
+                {filterOptions.assetClasses.map(ac => (
+                  <option key={ac} value={ac}>{ac}</option>
+                ))}
+              </select>
+
+              <select
+                value={filters.entity}
+                onChange={(e) => handleFilterChange('entity', e.target.value)}
+                className="filter-select-compact"
+              >
+                <option value="">All Entities</option>
+                {filterOptions.entities.map(entity => (
+                  <option key={entity} value={entity}>{entity}</option>
+                ))}
+              </select>
+
+              <select
+                value={filters.vintageYear}
+                onChange={(e) => handleFilterChange('vintageYear', e.target.value)}
+                className="filter-select-compact"
+              >
+                <option value="">All Years</option>
+                {filterOptions.vintageYears.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+
+              <button onClick={clearFilters} className="clear-filters-btn-compact">
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="view-tabs">

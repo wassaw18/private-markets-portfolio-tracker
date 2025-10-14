@@ -312,6 +312,10 @@ def create_investment_cashflow(
     db.add(db_cashflow)
     db.commit()
     db.refresh(db_cashflow)
+
+    # Update investment summary fields (called_amount, fees) after adding cash flow
+    crud_tenant.update_investment_summary_fields(db, investment.id, current_user.tenant_id)
+
     return db_cashflow
 
 @router.put("/investments/{investment_id}/cashflows/{cashflow_id}", response_model=CashFlow)
@@ -736,9 +740,72 @@ def get_portfolio_value_timeline(
     db: Session = Depends(get_db)
 ):
     """Get portfolio value timeline for the current tenant"""
-    # For now, return empty list - this is a complex calculation
-    # TODO: Implement tenant-aware timeline calculation
-    return []
+    from datetime import date, timedelta
+    from collections import defaultdict
+
+    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+
+    if not investments:
+        return []
+
+    # Collect all dates where we have data points (valuations and cash flows)
+    date_points = set()
+    today = date.today()
+
+    for investment in investments:
+        # Add valuation dates
+        for val in investment.valuations:
+            if val.date <= today:
+                date_points.add(val.date)
+
+        # Add cash flow dates
+        for cf in investment.cashflows:
+            if cf.date <= today:
+                date_points.add(cf.date)
+
+    if not date_points:
+        return []
+
+    # Sort dates
+    sorted_dates = sorted(date_points)
+
+    # Calculate cumulative values for each date
+    timeline_data = []
+
+    for current_date in sorted_dates:
+        cumulative_contributions = 0
+        cumulative_distributions = 0
+        nav_value = 0
+
+        for investment in investments:
+            # Sum all contributions up to this date
+            for cf in investment.cashflows:
+                if cf.date <= current_date:
+                    if cf.type in ['Capital Call', 'Contribution']:
+                        cumulative_contributions += abs(cf.amount)
+                    elif cf.type in [models.CashFlowType.DISTRIBUTION,
+                                   models.CashFlowType.YIELD,
+                                   models.CashFlowType.RETURN_OF_PRINCIPAL]:
+                        cumulative_distributions += cf.amount
+
+            # Get NAV as of this date (use most recent valuation up to this date)
+            relevant_valuations = [v for v in investment.valuations if v.date <= current_date]
+            if relevant_valuations:
+                latest_val = max(relevant_valuations, key=lambda v: v.date)
+                nav_value += latest_val.nav_value
+
+        # Calculate net value (NAV + cumulative distributions)
+        net_value = nav_value + cumulative_distributions
+
+        timeline_data.append(TimelineDataPoint(
+            date=current_date.isoformat(),
+            nav_value=nav_value,
+            cumulative_contributions=cumulative_contributions,
+            cumulative_distributions=cumulative_distributions,
+            net_value=net_value
+        ))
+
+    return timeline_data
 
 @router.get("/dashboard/j-curve-data", response_model=List[JCurveDataPoint])
 def get_j_curve_data(
@@ -759,6 +826,9 @@ def get_dashboard_summary_stats(
     investments = crud_tenant.get_investments(db, current_user.tenant_id)
 
     # Calculate NAV and distributions from valuations and cash flows
+    from datetime import date
+    today = date.today()
+
     total_nav = 0.0
     total_distributions = 0.0
     active_investments = 0
@@ -771,11 +841,12 @@ def get_dashboard_summary_stats(
             latest_valuation = max(investment.valuations, key=lambda v: v.date)
             total_nav += latest_valuation.nav_value
 
-        # Count distributions from cash flows
+        # Count distributions from cash flows - ONLY actual distributions through today
         distributions = [cf for cf in investment.cashflows
                         if cf.type in [models.CashFlowType.DISTRIBUTION,
                                      models.CashFlowType.YIELD,
-                                     models.CashFlowType.RETURN_OF_PRINCIPAL]]
+                                     models.CashFlowType.RETURN_OF_PRINCIPAL]
+                        and cf.date <= today]
         total_distributions += sum(cf.amount for cf in distributions)
 
         # Track asset classes and vintage years
@@ -1098,17 +1169,59 @@ def delete_investment(
     current_user: User = Depends(require_contributor),
     db: Session = Depends(get_db)
 ):
-    """Delete an investment with tenant isolation (Contributor+ required)"""
+    """
+    Archive an investment (soft delete) with tenant isolation (Contributor+ required)
+
+    The investment will be hidden from normal views but can be restored.
+    All related data (cash flows, valuations) is preserved.
+    """
     success = crud_tenant.delete_investment(
+        db=db,
+        investment_id=investment_id,
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id
+    )
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    return {"message": "Investment archived successfully"}
+
+@router.post("/investments/{investment_id}/restore")
+def restore_investment(
+    investment_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """
+    Restore an archived investment with tenant isolation (Contributor+ required)
+    """
+    success = crud_tenant.restore_investment(
         db=db,
         investment_id=investment_id,
         tenant_id=current_user.tenant_id
     )
-    
+
     if not success:
         raise HTTPException(status_code=404, detail="Investment not found")
-    
-    return {"message": "Investment deleted successfully"}
+
+    return {"message": "Investment restored successfully"}
+
+@router.get("/investments/archived", response_model=List[Investment])
+def get_archived_investments(
+    skip: int = 0,
+    limit: int = 1000,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get archived investments for the current tenant"""
+    return crud_tenant.get_investments(
+        db=db,
+        tenant_id=current_user.tenant_id,
+        skip=skip,
+        limit=limit,
+        include_archived=True
+    )
 
 # =============================================================================
 # Entity Relationship Management Endpoints
@@ -1224,6 +1337,7 @@ def get_entity_relationships(
         # Manually build response dict with correct field names
         rel_with_entities = {
             "id": rel.id,
+            "uuid": rel.uuid,
             "from_entity_id": rel.from_entity_id,
             "to_entity_id": rel.to_entity_id,
             "relationship_category": rel.relationship_category,

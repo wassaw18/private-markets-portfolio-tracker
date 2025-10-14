@@ -398,13 +398,21 @@ class RelativePerformanceService:
     ) -> List[Dict[str, Any]]:
         """Calculate aggregate performance for portfolio, asset class, or single investment"""
 
-        # Get relevant investments
+        # Get relevant investments (exclude archived)
         if selection_type == "investment":
-            investments = self.db.query(Investment).filter(Investment.id == selection_value).all()
+            investments = self.db.query(Investment).filter(
+                Investment.id == selection_value,
+                Investment.is_archived == False
+            ).all()
         elif selection_type == "asset_class":
-            investments = self.db.query(Investment).filter(Investment.asset_class == selection_value).all()
+            investments = self.db.query(Investment).filter(
+                Investment.asset_class == selection_value,
+                Investment.is_archived == False
+            ).all()
         elif selection_type == "portfolio":
-            investments = self.db.query(Investment).all()
+            investments = self.db.query(Investment).filter(
+                Investment.is_archived == False
+            ).all()
         else:
             raise ValueError(f"Invalid selection_type: {selection_type}")
 

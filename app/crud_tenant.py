@@ -323,7 +323,7 @@ def update_entity(
 # Investment CRUD Operations (Tenant-Aware)
 # =============================================================================
 
-def get_investment(db: Session, investment_id: Union[int, str, UUID], tenant_id: int) -> Optional[Investment]:
+def get_investment(db: Session, investment_id: Union[int, str, UUID], tenant_id: int, include_archived: bool = False) -> Optional[Investment]:
     """Get a single investment by ID or UUID within a tenant"""
     query = db.query(Investment).options(
         joinedload(Investment.entity),
@@ -343,36 +343,54 @@ def get_investment(db: Session, investment_id: Union[int, str, UUID], tenant_id:
     else:
         query = query.filter(Investment.id == investment_id)
 
+    # Exclude archived by default
+    if not include_archived:
+        query = query.filter(Investment.is_archived == False)
+
     return query.filter(Investment.tenant_id == tenant_id).first()
 
 def get_investments(
     db: Session,
     tenant_id: int,
     skip: int = 0,
-    limit: int = 1000
+    limit: int = 1000,
+    include_archived: bool = False
 ) -> List[Investment]:
-    """Get investments within a tenant"""
-    return db.query(Investment).options(
+    """Get investments within a tenant (excludes archived by default)"""
+    query = db.query(Investment).options(
         joinedload(Investment.entity),
         joinedload(Investment.cashflows),
         joinedload(Investment.valuations)
     ).filter(
         Investment.tenant_id == tenant_id
-    ).offset(skip).limit(limit).all()
+    )
+
+    # Exclude archived by default
+    if not include_archived:
+        query = query.filter(Investment.is_archived == False)
+
+    return query.offset(skip).limit(limit).all()
 
 def get_investments_by_entity(
     db: Session,
     entity_id: int,
-    tenant_id: int
+    tenant_id: int,
+    include_archived: bool = False
 ) -> List[Investment]:
-    """Get investments for a specific entity within a tenant"""
-    return db.query(Investment).options(
+    """Get investments for a specific entity within a tenant (excludes archived by default)"""
+    query = db.query(Investment).options(
         joinedload(Investment.cashflows),
         joinedload(Investment.valuations)
     ).filter(
         Investment.entity_id == entity_id,
         Investment.tenant_id == tenant_id
-    ).all()
+    )
+
+    # Exclude archived by default
+    if not include_archived:
+        query = query.filter(Investment.is_archived == False)
+
+    return query.all()
 
 def create_investment(
     db: Session,
@@ -483,6 +501,37 @@ def _apply_cash_flow_sign_convention(amount: float, cash_flow_type: CashFlowType
         # Default: return as-is if type is unknown
         return amount
 
+def update_investment_summary_fields(db: Session, investment_id: int, tenant_id: int) -> None:
+    """
+    Update investment called_amount and fees from cash flow data
+    """
+    from app.performance import calculate_called_amount_from_cashflows, calculate_fees_from_cashflows
+
+    # Get investment
+    investment = db.query(Investment).filter(
+        Investment.id == investment_id,
+        Investment.tenant_id == tenant_id
+    ).first()
+    if not investment:
+        return
+
+    # Get all cash flows for this investment
+    cash_flows = db.query(CashFlow).filter(
+        CashFlow.investment_id == investment_id,
+        CashFlow.tenant_id == tenant_id
+    ).all()
+
+    # Calculate new values
+    new_called_amount = calculate_called_amount_from_cashflows(cash_flows)
+    new_fees = calculate_fees_from_cashflows(cash_flows)
+
+    # Update investment
+    investment.called_amount = abs(new_called_amount)  # Store as positive value
+    investment.fees = abs(new_fees)  # Store as positive value
+    investment.updated_date = datetime.utcnow()
+
+    db.commit()
+
 def create_cashflow(
     db: Session,
     cashflow: schemas.CashFlowCreate,
@@ -511,6 +560,10 @@ def create_cashflow(
     db.add(db_cashflow)
     db.commit()
     db.refresh(db_cashflow)
+
+    # Update investment summary fields
+    update_investment_summary_fields(db, db_cashflow.investment_id, tenant_id)
+
     return db_cashflow
 
 # =============================================================================
@@ -557,10 +610,13 @@ def create_valuation(
 # =============================================================================
 
 def get_tenant_stats(db: Session, tenant_id: int) -> dict:
-    """Get statistics for a tenant"""
+    """Get statistics for a tenant (excludes archived investments)"""
     user_count = db.query(User).filter(User.tenant_id == tenant_id).count()
     entity_count = db.query(Entity).filter(Entity.tenant_id == tenant_id).count()
-    investment_count = db.query(Investment).filter(Investment.tenant_id == tenant_id).count()
+    investment_count = db.query(Investment).filter(
+        Investment.tenant_id == tenant_id,
+        Investment.is_archived == False
+    ).count()
 
     return {
         "user_count": user_count,
@@ -591,16 +647,21 @@ def get_portfolio_performance(db: Session, tenant_id: int) -> schemas.PortfolioP
             investments_with_nav += 1
 
         # Collect all cash flows for portfolio-level IRR calculation
+        # ONLY include actual cash flows through today (exclude future projected flows)
+        from datetime import date
+        today = date.today()
+
         for cf in contributions:
-            all_cash_flows.append(CashFlowEvent(cf.date, -abs(cf.amount)))  # Contributions are negative
+            if cf.date <= today:
+                all_cash_flows.append(CashFlowEvent(cf.date, -abs(cf.amount)))  # Contributions are negative
         for cf in distributions:
-            all_cash_flows.append(CashFlowEvent(cf.date, abs(cf.amount)))   # Distributions are positive
+            if cf.date <= today:
+                all_cash_flows.append(CashFlowEvent(cf.date, abs(cf.amount)))   # Distributions are positive
 
         # Add current NAV as final cash flow if exists
         if perf_metrics.current_nav and perf_metrics.current_nav > 0:
             # Use today's date for NAV valuation
-            from datetime import date
-            all_cash_flows.append(CashFlowEvent(date.today(), perf_metrics.current_nav))
+            all_cash_flows.append(CashFlowEvent(today, perf_metrics.current_nav))
 
     # Calculate true portfolio-level metrics using all cash flows
     portfolio_metrics = calculate_true_portfolio_performance(all_cash_flows, investment_metrics)
@@ -634,13 +695,19 @@ def get_portfolio_performance(db: Session, tenant_id: int) -> schemas.PortfolioP
     asset_classes = set()
     vintage_years = set()
     active_investments = 0
+    dormant_investments = 0
+    realized_investments = 0
 
     for investment in investments:
         asset_classes.add(investment.asset_class)
         vintage_years.add(investment.vintage_year)
-        # Count as active if it has NAV or recent activity (could refine this logic)
-        if investment.valuations or investment.cashflows:
+        # Count investments by their actual status
+        if investment.status == "ACTIVE":
             active_investments += 1
+        elif investment.status == "DORMANT":
+            dormant_investments += 1
+        elif investment.status == "REALIZED":
+            realized_investments += 1
 
     return schemas.PortfolioPerformance(
         portfolio_performance=portfolio_performance_schema,
@@ -650,6 +717,8 @@ def get_portfolio_performance(db: Session, tenant_id: int) -> schemas.PortfolioP
         asset_class_count=len(asset_classes),
         vintage_year_count=len(vintage_years),
         active_investment_count=active_investments,
+        dormant_investment_count=dormant_investments,
+        realized_investment_count=realized_investments,
         total_commitment=total_commitment,
         total_called=total_called
     )
@@ -1236,18 +1305,29 @@ def update_cashflow(
 
     db.commit()
     db.refresh(db_cashflow)
+
+    # Update investment summary fields
+    update_investment_summary_fields(db, db_cashflow.investment_id, tenant_id)
+
     return db_cashflow
 
 
 def delete_cashflow(db: Session, cashflow_id: int, tenant_id: int) -> bool:
     """Delete a cash flow with tenant isolation"""
     db_cashflow = get_cashflow(db, cashflow_id, tenant_id)
-    
+
     if not db_cashflow:
         return False
-    
+
+    # Store investment_id before deleting the cashflow
+    investment_id = db_cashflow.investment_id
+
     db.delete(db_cashflow)
     db.commit()
+
+    # Update investment summary fields after deletion
+    update_investment_summary_fields(db, investment_id, tenant_id)
+
     return True
 
 
@@ -1315,16 +1395,44 @@ def delete_valuation(db: Session, valuation_id: int, tenant_id: int) -> bool:
 # Investment CRUD Operations (DELETE missing)
 # =============================================================================
 
-def delete_investment(db: Session, investment_id: int, tenant_id: int) -> bool:
-    """Delete an investment (soft delete by setting status to DORMANT)"""
+def delete_investment(db: Session, investment_id: int, tenant_id: int, user_id: int = None) -> bool:
+    """
+    Archive an investment (soft delete)
+
+    This hides the investment from normal views but preserves all data.
+    The investment can be restored later.
+    """
     db_investment = get_investment(db, investment_id, tenant_id)
 
     if not db_investment:
         return False
 
-    # Set status to DORMANT to indicate soft deletion
-    db_investment.status = models.InvestmentStatus.DORMANT
-    db_investment.updated_at = datetime.utcnow()
+    # Set archived flag
+    db_investment.is_archived = True
+    db_investment.archived_date = datetime.utcnow()
+    if user_id:
+        db_investment.archived_by_user_id = user_id
+    db_investment.updated_date = datetime.utcnow()
+
+    db.commit()
+    return True
+
+
+def restore_investment(db: Session, investment_id: int, tenant_id: int) -> bool:
+    """
+    Restore an archived investment
+    """
+    db_investment = get_investment(db, investment_id, tenant_id, include_archived=True)
+
+    if not db_investment:
+        return False
+
+    # Clear archived flag
+    db_investment.is_archived = False
+    db_investment.archived_date = None
+    db_investment.archived_by_user_id = None
+    db_investment.updated_date = datetime.utcnow()
+
     db.commit()
     return True
 

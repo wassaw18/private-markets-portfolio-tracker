@@ -182,7 +182,7 @@ const Dashboard: React.FC = () => {
       {/* Asset Class Breakdown */}
       <div className="luxury-card" style={{marginBottom: '32px'}}>
         <h3 className="luxury-heading-3" style={{marginBottom: '24px'}}>Asset Class Allocation</h3>
-        <div className="breakdown-grid">
+        <div className="breakdown-grid" data-count={assetClassBreakdown.length}>
           {assetClassBreakdown.map((item, index) => (
             <div key={index} className="breakdown-card">
               <div className="breakdown-header">

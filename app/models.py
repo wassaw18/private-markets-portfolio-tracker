@@ -580,7 +580,12 @@ class Investment(Base):
     realization_notes = Column(String(500), nullable=True)
     status_changed_by = Column(String, nullable=True)  # Username who changed status
     status_changed_date = Column(DateTime, nullable=True)
-    
+
+    # Archive Management (Soft Delete)
+    is_archived = Column(Boolean, default=False, nullable=False, index=True)
+    archived_date = Column(DateTime, nullable=True)
+    archived_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
     # Audit trail
     created_date = Column(DateTime, default=datetime.utcnow)
     updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

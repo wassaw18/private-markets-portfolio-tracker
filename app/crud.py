@@ -506,16 +506,21 @@ def get_portfolio_performance(db: Session) -> schemas.PortfolioPerformance:
             investments_with_nav += 1
             
         # Collect all cash flows for portfolio-level IRR calculation
+        # ONLY include actual cash flows through today (exclude future projected flows)
+        from datetime import date
+        today = date.today()
+
         for cf in contributions:
-            all_cash_flows.append(CashFlowEvent(cf.date, -abs(cf.amount)))  # Contributions are negative
+            if cf.date <= today:
+                all_cash_flows.append(CashFlowEvent(cf.date, -abs(cf.amount)))  # Contributions are negative
         for cf in distributions:
-            all_cash_flows.append(CashFlowEvent(cf.date, abs(cf.amount)))   # Distributions are positive
-            
+            if cf.date <= today:
+                all_cash_flows.append(CashFlowEvent(cf.date, abs(cf.amount)))   # Distributions are positive
+
         # Add current NAV as final cash flow if exists
         if perf_metrics.current_nav and perf_metrics.current_nav > 0:
             # Use today's date for NAV valuation
-            from datetime import date
-            all_cash_flows.append(CashFlowEvent(date.today(), perf_metrics.current_nav))
+            all_cash_flows.append(CashFlowEvent(today, perf_metrics.current_nav))
     
     # Calculate true portfolio-level metrics using all cash flows
     portfolio_metrics = calculate_true_portfolio_performance(all_cash_flows, investment_metrics)

@@ -66,9 +66,9 @@ const Calendar: React.FC = () => {
 
   return (
     <div className="calendar-page">
-      <div className="page-header">
-        <h1>Cash Flow Calendar</h1>
-        <p className="page-description">
+      <div className="luxury-card page-header">
+        <h1 className="luxury-heading-1">Cash Flow Calendar</h1>
+        <p className="luxury-body-large">
           Visualize cash flow timing and patterns across your portfolio with comprehensive period insights
         </p>
       </div>

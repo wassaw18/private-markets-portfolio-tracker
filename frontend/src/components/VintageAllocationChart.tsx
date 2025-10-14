@@ -4,17 +4,20 @@ import { VintageAllocationData } from '../types/investment';
 import { dashboardAPI } from '../services/api';
 import './ChartComponents.css';
 
+type TimePeriod = 'inception' | '5years' | '10years';
+
 const VintageAllocationChart: React.FC = () => {
-  const [data, setData] = useState<VintageAllocationData[]>([]);
+  const [rawData, setRawData] = useState<VintageAllocationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('inception');
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
       const result = await dashboardAPI.getAllocationByVintage();
-      setData(result);
+      setRawData(result);
     } catch (err) {
       setError('Failed to load vintage allocation data');
       console.error('Error fetching vintage allocation data:', err);
@@ -26,6 +29,47 @@ const VintageAllocationChart: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Fill in missing years and apply time period filter
+  const data = React.useMemo(() => {
+    if (rawData.length === 0) return [];
+
+    const currentYear = new Date().getFullYear();
+    const minYear = Math.min(...rawData.map(d => d.vintage_year));
+    const maxYear = Math.max(...rawData.map(d => d.vintage_year));
+
+    // Determine year range based on time period
+    let startYear = minYear;
+    if (timePeriod === '5years') {
+      startYear = Math.max(minYear, currentYear - 5);
+    } else if (timePeriod === '10years') {
+      startYear = Math.max(minYear, currentYear - 10);
+    }
+
+    // Create a map of existing data
+    const dataMap = new Map<number, VintageAllocationData>();
+    rawData.forEach(item => {
+      dataMap.set(item.vintage_year, item);
+    });
+
+    // Fill in all years in the range
+    const filledData: VintageAllocationData[] = [];
+    for (let year = startYear; year <= maxYear; year++) {
+      if (dataMap.has(year)) {
+        filledData.push(dataMap.get(year)!);
+      } else {
+        // Add placeholder for missing year
+        filledData.push({
+          vintage_year: year,
+          commitment_amount: 0,
+          count: 0,
+          percentage: 0
+        });
+      }
+    }
+
+    return filledData;
+  }, [rawData, timePeriod]);
 
   const formatCurrency = (value: number) => {
     if (value >= 1e9) {
@@ -102,9 +146,31 @@ const VintageAllocationChart: React.FC = () => {
   return (
     <div className="chart-wrapper">
       <div className="chart-header">
-        <h3>Allocation by Vintage Year</h3>
-        <div className="chart-subtitle">
-          {yearSpread} year{yearSpread !== 1 ? 's' : ''} ({minYear} - {maxYear})
+        <div>
+          <h3>Allocation by Vintage Year</h3>
+          <div className="chart-subtitle">
+            {yearSpread} year{yearSpread !== 1 ? 's' : ''} ({minYear} - {maxYear})
+          </div>
+        </div>
+        <div className="time-period-selector">
+          <button
+            className={`period-button ${timePeriod === 'inception' ? 'active' : ''}`}
+            onClick={() => setTimePeriod('inception')}
+          >
+            Since Inception
+          </button>
+          <button
+            className={`period-button ${timePeriod === '10years' ? 'active' : ''}`}
+            onClick={() => setTimePeriod('10years')}
+          >
+            Last 10 Years
+          </button>
+          <button
+            className={`period-button ${timePeriod === '5years' ? 'active' : ''}`}
+            onClick={() => setTimePeriod('5years')}
+          >
+            Last 5 Years
+          </button>
         </div>
       </div>
 
@@ -153,7 +219,7 @@ const VintageAllocationChart: React.FC = () => {
       <div className="chart-summary">
         <h4>Vintage Year Breakdown</h4>
         <div className="vintage-summary">
-          {data.map((item) => (
+          {data.filter(item => item.count > 0).map((item) => (
             <div key={item.vintage_year} className="vintage-item">
               <div className="vintage-year">{item.vintage_year}</div>
               <div className="vintage-amount">{formatCurrency(item.commitment_amount)}</div>

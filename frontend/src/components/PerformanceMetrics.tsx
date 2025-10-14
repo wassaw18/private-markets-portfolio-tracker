@@ -6,9 +6,10 @@ import './PerformanceMetrics.css';
 interface Props {
   investmentId: number;
   onUpdate?: () => void; // Called when performance should be recalculated
+  onStatusClick?: () => void; // Called when status button is clicked
 }
 
-const PerformanceMetrics: React.FC<Props> = ({ investmentId, onUpdate }) => {
+const PerformanceMetrics: React.FC<Props> = ({ investmentId, onUpdate, onStatusClick }) => {
   const [performance, setPerformance] = useState<InvestmentPerformance | null>(null);
   const [investment, setInvestment] = useState<Investment | null>(null);
   const [benchmarkData, setBenchmarkData] = useState<PitchBookIRRData[]>([]);
@@ -310,14 +311,16 @@ const PerformanceMetrics: React.FC<Props> = ({ investmentId, onUpdate }) => {
           </div>
         </div>
         <div className="header-right">
-          <div className="investment-status">
+          <button
+            className="status-button"
+            onClick={onStatusClick}
+            title="Manage investment status"
+          >
             <span className="status-label">Status:</span>
-            <span className={`status-value ${metrics.current_nav && metrics.current_nav > 0 ? 'active' : 
-                             metrics.total_distributions > 0 ? 'realized' : 'pending'}`}>
-              {metrics.current_nav && metrics.current_nav > 0 ? 'Active' : 
-               metrics.total_distributions > 0 ? 'Realized' : 'Pending'}
+            <span className={`status-value status-${investment?.status?.toLowerCase() || 'active'}`}>
+              {investment?.status || 'ACTIVE'}
             </span>
-          </div>
+          </button>
         </div>
       </div>
 

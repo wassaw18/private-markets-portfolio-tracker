@@ -171,7 +171,7 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
                   type="number"
                   id="valuation-nav"
                   name="nav_value"
-                  value={formData.nav_value}
+                  value={formData.nav_value === 0 ? '' : formData.nav_value}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -237,44 +237,47 @@ const ValuationSection: React.FC<Props> = ({ investmentId, valuations, onUpdate 
                 </tr>
               </thead>
               <tbody>
-                {valuations.map((valuation, index) => {
-                  const previousValuation = valuations[index + 1];
-                  const change = previousValuation 
-                    ? ((valuation.nav_value - previousValuation.nav_value) / previousValuation.nav_value) * 100
-                    : null;
-                  
-                  return (
-                    <tr key={valuation.id}>
-                      <td>{formatDate(valuation.date)}</td>
-                      <td className="currency">{formatCurrency(valuation.nav_value)}</td>
-                      <td>
-                        {change !== null ? (
-                          <span className={`percentage ${change >= 0 ? 'positive' : 'negative'}`}>
-                            {change >= 0 ? '+' : ''}{change.toFixed(1)}%
-                          </span>
-                        ) : (
-                          <span className="no-change">—</span>
-                        )}
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => handleEdit(valuation)}
-                          className="icon-button edit-icon"
-                          title="Edit Valuation"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => handleDelete(valuation.id)}
-                          className="icon-button delete-icon"
-                          title="Delete Valuation"
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {[...valuations]
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((valuation, index, sortedArray) => {
+                    // Previous valuation is the next item in the sorted (descending) array
+                    const previousValuation = sortedArray[index + 1];
+                    const change = previousValuation
+                      ? ((valuation.nav_value - previousValuation.nav_value) / previousValuation.nav_value) * 100
+                      : null;
+
+                    return (
+                      <tr key={valuation.id}>
+                        <td>{formatDate(valuation.date)}</td>
+                        <td className="currency">{formatCurrency(valuation.nav_value)}</td>
+                        <td>
+                          {change !== null ? (
+                            <span className={`percentage ${change >= 0 ? 'positive' : 'negative'}`}>
+                              {change >= 0 ? '+' : ''}{change.toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="no-change">—</span>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleEdit(valuation)}
+                            className="icon-button edit-icon"
+                            title="Edit Valuation"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDelete(valuation.id)}
+                            className="icon-button delete-icon"
+                            title="Delete Valuation"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

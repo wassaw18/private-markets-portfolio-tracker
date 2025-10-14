@@ -285,21 +285,49 @@ body {
   background: linear-gradient(90deg, var(--luxury-gold), var(--luxury-bronze));
 }
 
-/* Page Header */
+/* Sophisticated Page Header */
 .page-header {
-  text-align: center;
-  margin-bottom: 0;
-  padding: var(--space-xl) var(--space-xxl);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border: none;
+  border-bottom: 1px solid var(--luxury-border);
+  border-radius: 0;
+  box-shadow: 0 2px 16px rgba(11, 20, 38, 0.06), 0 1px 4px rgba(11, 20, 38, 0.04);
+  margin: var(--space-2xl) 0 var(--space-lg) 0;
+  padding: var(--space-xl) var(--space-3xl) var(--space-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--luxury-primary) 0%, var(--luxury-primary-light) 50%, var(--luxury-gold) 100%);
 }
 
 .page-header .luxury-heading-1 {
-  margin-bottom: var(--space-sm);
-  color: var(--luxury-text-primary);
+  margin-bottom: var(--space-md);
+  color: var(--luxury-navy);
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-black);
+  letter-spacing: -0.025em;
+  text-align: center;
+  position: relative;
 }
 
 .page-header .luxury-body-large {
   color: var(--luxury-text-secondary);
   margin: 0;
+  text-align: center;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Luxury Buttons */
@@ -573,6 +601,21 @@ body {
   .luxury-show-mobile {
     display: block !important;
   }
+
+  /* Page Header Mobile Adjustments */
+  .page-header {
+    padding: var(--space-lg) var(--space-lg) var(--space-lg);
+    margin: var(--space-lg) 0 var(--space-md) 0;
+  }
+
+  .page-header .luxury-heading-1 {
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--space-sm);
+  }
+
+  .page-header .luxury-body-large {
+    font-size: var(--font-size-lg);
+  }
 }
 
 /* Small Devices (Tablets) */
@@ -585,6 +628,16 @@ body {
   .luxury-grid-cols-3,
   .luxury-grid-cols-4 {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Page Header Tablet Adjustments */
+  .page-header {
+    padding: var(--space-lg) var(--space-2xl) var(--space-lg);
+    margin: var(--space-xl) 0 var(--space-lg) 0;
+  }
+
+  .page-header .luxury-heading-1 {
+    font-size: var(--font-size-4xl);
   }
 }
 
