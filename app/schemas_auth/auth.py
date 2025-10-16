@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, validator
 
-from ..models import UserRole, TenantStatus
+from ..models import UserRole, TenantStatus, AccountType
 
 # Authentication Schemas
 
@@ -222,6 +222,123 @@ class RegistrationRequest(BaseModel):
                 "organization_name": "New Family Office"
             }
         }
+
+# Signup Schemas (with account type selection)
+
+class SignupRequest(BaseModel):
+    """Request schema for new account signup with account type selection"""
+    # Organization details
+    organization_name: str
+    account_type: AccountType  # individual, family_office, fund_manager
+
+    # Admin user details
+    username: str
+    email: EmailStr
+    password: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    @validator('password')
+    def password_strength(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
+
+    @validator('username')
+    def username_valid(cls, v):
+        if len(v) < 3:
+            raise ValueError('Username must be at least 3 characters long')
+        return v
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "organization_name": "Smith Family Office",
+                "account_type": "family_office",
+                "username": "john_smith",
+                "email": "john@smithfamily.com",
+                "password": "secure_password",
+                "first_name": "John",
+                "last_name": "Smith"
+            }
+        }
+
+class SignupResponse(BaseModel):
+    """Response schema for signup"""
+    tenant_id: int
+    user_id: int
+    tenant_name: str
+    account_type: str
+    message: str
+
+# User Invitation Schemas
+
+class InviteUserRequest(BaseModel):
+    """Request schema for inviting a user to a tenant"""
+    email: EmailStr
+    role: UserRole  # Role to assign to the invited user
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    send_email: bool = True  # Whether to send invitation email
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "mary@smithfamily.com",
+                "role": "Viewer",
+                "first_name": "Mary",
+                "last_name": "Smith",
+                "send_email": True
+            }
+        }
+
+class InviteUserResponse(BaseModel):
+    """Response schema for user invitation"""
+    invitation_id: int
+    email: EmailStr
+    role: UserRole
+    invitation_token: str
+    invitation_link: str
+    expires_at: datetime
+    message: str
+
+class AcceptInvitationRequest(BaseModel):
+    """Request schema for accepting an invitation"""
+    username: str
+    password: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    @validator('password')
+    def password_strength(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
+
+    @validator('username')
+    def username_valid(cls, v):
+        if len(v) < 3:
+            raise ValueError('Username must be at least 3 characters long')
+        return v
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "username": "mary_smith",
+                "password": "secure_password",
+                "first_name": "Mary",
+                "last_name": "Smith"
+            }
+        }
+
+class AcceptInvitationResponse(BaseModel):
+    """Response schema for accepting invitation"""
+    user_id: int
+    tenant_id: int
+    tenant_name: str
+    username: str
+    role: UserRole
+    message: str
 
 # Error Schemas
 

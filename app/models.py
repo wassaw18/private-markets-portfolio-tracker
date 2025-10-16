@@ -299,13 +299,19 @@ class UserRole(str, enum.Enum):
     ADMIN = "Admin"              # Full access to tenant management and user administration
     MANAGER = "Manager"          # Full access to investment data and reporting
     CONTRIBUTOR = "Contributor"  # Can add/edit investments and data
-    VIEWER = "Viewer"           # Read-only access to reports and data
+    VIEWER = "Viewer"            # Read-only access to reports and data
+    LP_CLIENT = "LP_CLIENT"      # Limited Partner client (fund manager B2B2C only)
 
 class TenantStatus(str, enum.Enum):
     ACTIVE = "Active"
     SUSPENDED = "Suspended"
     TRIAL = "Trial"
     PENDING = "Pending"
+
+class AccountType(str, enum.Enum):
+    INDIVIDUAL = "INDIVIDUAL"
+    FAMILY_OFFICE = "FAMILY_OFFICE"
+    FUND_MANAGER = "FUND_MANAGER"
 
 class LiquidityProfile(str, enum.Enum):
     ILLIQUID = "Illiquid"
@@ -347,6 +353,7 @@ class Tenant(Base):
     name = Column(String, nullable=False, index=True)  # Organization name
     subdomain = Column(String, unique=True, nullable=True, index=True)  # For custom domains
     status = Column(Enum(TenantStatus), default=TenantStatus.ACTIVE, nullable=False)
+    account_type = Column(Enum(AccountType), nullable=False, default=AccountType.INDIVIDUAL, index=True)
     settings = Column(Text, nullable=True)  # JSON settings for tenant configuration
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -383,6 +390,38 @@ class User(Base):
 
     # Unique constraint: username must be unique within a tenant
     __table_args__ = (UniqueConstraint('username', 'tenant_id', name='unique_username_per_tenant'),)
+
+class Invitation(Base):
+    """
+    Represents user invitations to join a tenant.
+    Stores invitation tokens and tracks invitation status.
+    """
+    __tablename__ = "invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, nullable=False, index=True)
+    role = Column(Enum(UserRole), nullable=False)
+    invitation_token = Column(String, unique=True, nullable=False, index=True)
+    is_accepted = Column(Boolean, default=False, nullable=False)
+    is_expired = Column(Boolean, default=False, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    accepted_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Foreign keys
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    invited_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    accepted_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Relationships
+    tenant = relationship("Tenant")
+    invited_by = relationship("User", foreign_keys=[invited_by_user_id])
+    accepted_by = relationship("User", foreign_keys=[accepted_user_id])
+
+    __table_args__ = (
+        Index('ix_invitation_tenant', 'tenant_id'),
+        Index('ix_invitation_email_tenant', 'email', 'tenant_id'),
+    )
 
 class Entity(Base):
     """

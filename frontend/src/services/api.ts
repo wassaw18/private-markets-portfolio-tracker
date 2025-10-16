@@ -1284,4 +1284,87 @@ export const reportsAPI = {
   },
 };
 
+// Fund Manager API
+export const fundManagerAPI = {
+  // Get fund overview with aggregated portfolio metrics
+  getFundOverview: async (): Promise<any> => {
+    const response = await api.get('/api/fund/overview');
+    return response.data;
+  },
+};
+
+// Auth API types
+export interface SignupRequest {
+  organization_name: string;
+  account_type: 'INDIVIDUAL' | 'FAMILY_OFFICE' | 'FUND_MANAGER';
+  username: string;
+  email: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+export interface SignupResponse {
+  tenant_id: number;
+  user_id: number;
+  tenant_name: string;
+  account_type: string;
+  message: string;
+}
+
+export interface InviteUserRequest {
+  email: string;
+  role: string;
+  first_name?: string;
+  last_name?: string;
+  send_email?: boolean;
+}
+
+export interface InviteUserResponse {
+  invitation_id: number;
+  email: string;
+  role: string;
+  invitation_token: string;
+  invitation_link: string;
+  expires_at: string;
+  message: string;
+}
+
+export interface AcceptInvitationRequest {
+  username: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+export interface AcceptInvitationResponse {
+  user_id: number;
+  tenant_id: number;
+  tenant_name: string;
+  username: string;
+  role: string;
+  message: string;
+}
+
+// Auth API
+export const authAPI = {
+  // Signup new organization
+  signup: async (signupData: SignupRequest): Promise<SignupResponse> => {
+    const response = await api.post('/api/auth/signup', signupData);
+    return response.data;
+  },
+
+  // Invite user to organization
+  inviteUser: async (inviteData: InviteUserRequest): Promise<InviteUserResponse> => {
+    const response = await api.post('/api/auth/invite', inviteData);
+    return response.data;
+  },
+
+  // Accept invitation
+  acceptInvitation: async (token: string, acceptData: AcceptInvitationRequest): Promise<AcceptInvitationResponse> => {
+    const response = await api.post(`/api/auth/accept-invite/${token}`, acceptData);
+    return response.data;
+  },
+};
+
 export default api;

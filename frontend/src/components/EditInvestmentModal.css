@@ -1,31 +1,7 @@
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(11, 20, 38, 0.85) 0%, rgba(11, 20, 38, 0.95) 100%);
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: var(--space-xl);
-}
+/* EditInvestmentModal.css - Component-specific styles */
+/* Common modal, button, and form styles now in luxury-design-system.css */
 
-.modal-content {
-  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--luxury-pale-gray);
-  width: 100%;
-  max-width: 1100px;
-  max-height: 95vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--luxury-shadow-large);
-}
-
+/* Modal content structure */
 .modal-content form {
   display: flex;
   flex-direction: column;
@@ -113,45 +89,6 @@
   border-color: #faa;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-xl) var(--space-4xl);
-  border-bottom: 1px solid var(--luxury-pale-gray);
-  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-pearl) 100%);
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: var(--luxury-navy);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.02em;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.close-button:hover {
-  background-color: #f5f5f5;
-  color: #333;
 }
 
 .modal-content .form-grid {

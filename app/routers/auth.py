@@ -13,11 +13,12 @@ from ..auth import (
     get_current_active_user, require_admin, require_manager,
     get_tenant_context, verify_password, get_password_hash
 )
-from ..models import User, UserRole
+from ..models import User, UserRole, Tenant, TenantStatus, AccountType, Invitation
 from ..schemas_auth.auth import (
     LoginRequest, TokenResponse, RefreshTokenRequest, ChangePasswordRequest,
     UserCreate, UserUpdate, UserResponse, UserListResponse, UserProfile,
-    UpdateProfileRequest, ErrorResponse
+    UpdateProfileRequest, ErrorResponse, SignupRequest, SignupResponse,
+    InviteUserRequest, InviteUserResponse, AcceptInvitationRequest, AcceptInvitationResponse
 )
 from .. import crud_tenant
 
@@ -341,6 +342,271 @@ async def deactivate_user(
     )
 
     return {"message": "User deactivated successfully"}
+
+# =============================================================================
+# Registration Endpoints
+# =============================================================================
+
+@router.post("/signup", response_model=SignupResponse)
+async def signup(
+    signup_request: SignupRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Register a new organization/user account with account type selection.
+    Creates a new tenant and admin user in a single transaction.
+    """
+    # Check if email already exists across all tenants
+    from sqlalchemy import select
+    existing_user = db.execute(
+        select(User).where(User.email == signup_request.email)
+    ).scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists"
+        )
+
+    # Check if organization name is too similar to existing tenants (basic check)
+    existing_tenant = db.execute(
+        select(Tenant).where(Tenant.name == signup_request.organization_name)
+    ).scalar_one_or_none()
+
+    if existing_tenant:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization with this name already exists"
+        )
+
+    try:
+        # Create new tenant with account type
+        from datetime import datetime
+        new_tenant = Tenant(
+            name=signup_request.organization_name,
+            status=TenantStatus.ACTIVE,
+            account_type=signup_request.account_type,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(new_tenant)
+        db.flush()  # Get the tenant ID
+
+        # Create admin user for the tenant
+        hashed_password = get_password_hash(signup_request.password)
+        admin_user = User(
+            username=signup_request.username,
+            email=signup_request.email,
+            hashed_password=hashed_password,
+            first_name=signup_request.first_name,
+            last_name=signup_request.last_name,
+            role=UserRole.ADMIN,
+            is_active=True,
+            tenant_id=new_tenant.id,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(admin_user)
+        db.commit()
+        db.refresh(new_tenant)
+        db.refresh(admin_user)
+
+        return SignupResponse(
+            tenant_id=new_tenant.id,
+            user_id=admin_user.id,
+            tenant_name=new_tenant.name,
+            account_type=new_tenant.account_type.value,
+            message=f"Account created successfully. Welcome to {new_tenant.name}!"
+        )
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create account: {str(e)}"
+        )
+
+@router.post("/invite", response_model=InviteUserResponse)
+async def invite_user(
+    invite_request: InviteUserRequest,
+    current_user: User = Depends(require_manager),
+    db: Session = Depends(get_db)
+):
+    """
+    Invite a new user to join the current tenant (Manager+ required).
+    Creates an invitation token that can be used to accept the invitation.
+    """
+    from datetime import datetime, timedelta
+    import secrets
+
+    # Check if user already exists in this tenant
+    existing_user = crud_tenant.get_user_by_email(db, invite_request.email, current_user.tenant_id)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists in this organization"
+        )
+
+    # Check for pending invitations
+    from sqlalchemy import select, and_
+    existing_invitation = db.execute(
+        select(Invitation).where(
+            and_(
+                Invitation.email == invite_request.email,
+                Invitation.tenant_id == current_user.tenant_id,
+                Invitation.is_accepted == False,
+                Invitation.is_expired == False
+            )
+        )
+    ).scalar_one_or_none()
+
+    if existing_invitation:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Pending invitation already exists for this email"
+        )
+
+    # Only admins can invite other admins
+    if invite_request.role == UserRole.ADMIN and current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can invite admin users"
+        )
+
+    # Generate invitation token
+    invitation_token = secrets.token_urlsafe(32)
+
+    # Create invitation (expires in 7 days)
+    invitation = Invitation(
+        email=invite_request.email,
+        role=invite_request.role,
+        invitation_token=invitation_token,
+        expires_at=datetime.utcnow() + timedelta(days=7),
+        tenant_id=current_user.tenant_id,
+        invited_by_user_id=current_user.id,
+        created_at=datetime.utcnow()
+    )
+
+    db.add(invitation)
+    db.commit()
+    db.refresh(invitation)
+
+    # Generate invitation link (in production, this would use actual domain)
+    invitation_link = f"/accept-invite/{invitation_token}"
+
+    return InviteUserResponse(
+        invitation_id=invitation.id,
+        email=invitation.email,
+        role=invitation.role,
+        invitation_token=invitation_token,
+        invitation_link=invitation_link,
+        expires_at=invitation.expires_at,
+        message=f"Invitation sent to {invitation.email}"
+    )
+
+@router.post("/accept-invite/{token}", response_model=AcceptInvitationResponse)
+async def accept_invitation(
+    token: str,
+    accept_request: AcceptInvitationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Accept an invitation using the invitation token.
+    Creates a new user account in the invited tenant.
+    """
+    from datetime import datetime
+    from sqlalchemy import select, and_
+
+    # Find the invitation
+    invitation = db.execute(
+        select(Invitation).where(
+            and_(
+                Invitation.invitation_token == token,
+                Invitation.is_accepted == False,
+                Invitation.is_expired == False
+            )
+        )
+    ).scalar_one_or_none()
+
+    if not invitation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid or expired invitation"
+        )
+
+    # Check if invitation is expired
+    if invitation.expires_at < datetime.utcnow():
+        invitation.is_expired = True
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invitation has expired"
+        )
+
+    # Check if user already exists with this email
+    existing_user = db.execute(
+        select(User).where(User.email == invitation.email)
+    ).scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists"
+        )
+
+    # Check if username already exists in the tenant
+    existing_username = crud_tenant.get_user_by_username(db, accept_request.username, invitation.tenant_id)
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already exists in this organization"
+        )
+
+    try:
+        # Create the new user
+        hashed_password = get_password_hash(accept_request.password)
+        new_user = User(
+            username=accept_request.username,
+            email=invitation.email,
+            hashed_password=hashed_password,
+            first_name=accept_request.first_name or invitation.email.split('@')[0],
+            last_name=accept_request.last_name,
+            role=invitation.role,
+            is_active=True,
+            tenant_id=invitation.tenant_id,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+
+        db.add(new_user)
+        db.flush()
+
+        # Mark invitation as accepted
+        invitation.is_accepted = True
+        invitation.accepted_at = datetime.utcnow()
+        invitation.accepted_user_id = new_user.id
+
+        db.commit()
+        db.refresh(new_user)
+
+        # Get tenant info
+        tenant = crud_tenant.get_tenant(db, invitation.tenant_id)
+
+        return AcceptInvitationResponse(
+            user_id=new_user.id,
+            tenant_id=tenant.id,
+            tenant_name=tenant.name,
+            username=new_user.username,
+            role=new_user.role,
+            message=f"Welcome to {tenant.name}! Your account has been created successfully."
+        )
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create account: {str(e)}"
+        )
 
 # =============================================================================
 # Tenant Information Endpoints

@@ -1,0 +1,50 @@
+/* LPQuarterlyStatementModal.css - Component-specific styles */
+/* Common form styles now in luxury-design-system.css */
+
+.lp-quarterly-modal {
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-label.section-label {
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.info-box {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  margin-top: 24px;
+}
+
+.info-box svg {
+  flex-shrink: 0;
+  color: #1976d2;
+  margin-top: 2px;
+}
+
+.info-box p {
+  margin: 0;
+  font-size: 13px;
+  color: #1565c0;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .lp-quarterly-modal {
+    max-width: 95vw;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

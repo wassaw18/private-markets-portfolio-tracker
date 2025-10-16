@@ -120,4 +120,5 @@ docs/_build/
 # Temporary Excel files and templates
 *_temp.xlsx
 *_fresh.xlsx
-*_old.xlsx
+*_old.xlsxdocs/benchmarks/source_documents/*.pdf
+docs/benchmarks/source_documents/*.xlsx

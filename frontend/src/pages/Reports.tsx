@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { reportsAPI } from '../services/api';
 import CashFlowReportModal, { CashFlowReportConfig } from '../components/CashFlowReportModal';
+import LPQuarterlyStatementModal, { LPQuarterlyStatementConfig } from '../components/LPQuarterlyStatementModal';
 import './Reports.css';
 
 interface ReportSection {
@@ -22,8 +23,23 @@ const Reports: React.FC = () => {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCashFlowModal, setShowCashFlowModal] = useState(false);
+  const [showLPStatementModal, setShowLPStatementModal] = useState(false);
 
   const reportSections: ReportSection[] = [
+    {
+      id: 'fund-manager',
+      title: 'Fund Manager Reports',
+      description: 'LP statements and fund-level reporting',
+      reports: [
+        {
+          id: 'lp-quarterly-statement',
+          name: 'LP Quarterly Statement',
+          description: 'Comprehensive quarterly statement for Limited Partners including capital account summary, performance metrics, portfolio details, and transaction history',
+          endpoint: '/api/reports/lp-quarterly-statement',
+          icon: '📄'
+        }
+      ]
+    },
     {
       id: 'performance',
       title: 'Performance Reports',
@@ -83,6 +99,12 @@ const Reports: React.FC = () => {
   ];
 
   const handleGenerateReport = async (report: Report) => {
+    // Show modal for LP quarterly statement
+    if (report.id === 'lp-quarterly-statement') {
+      setShowLPStatementModal(true);
+      return;
+    }
+
     // Show modal for cash flow activity report
     if (report.id === 'cash-flow-activity') {
       setShowCashFlowModal(true);
@@ -153,6 +175,57 @@ const Reports: React.FC = () => {
     } catch (err: any) {
       console.error('Error generating cash flow report:', err);
       setError(err.response?.data?.detail || 'Failed to generate report. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleGenerateLPStatement = async (config: LPQuarterlyStatementConfig) => {
+    setShowLPStatementModal(false);
+    setLoading('lp-quarterly-statement');
+    setError(null);
+
+    try {
+      // Build query parameters
+      const params = new URLSearchParams({
+        lp_id: config.lpId,
+        quarter: config.quarter,
+        year: config.year,
+        include_portfolio_details: config.includePortfolioDetails.toString(),
+        include_transaction_history: config.includeTransactionHistory.toString(),
+        include_projections: config.includeProjections.toString()
+      });
+
+      // For now, simulate PDF generation with a success message
+      // In production, this would call: reportsAPI.generateReport(`/api/reports/lp-quarterly-statement?${params.toString()}`)
+
+      console.log('Generating LP Quarterly Statement with config:', config);
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Create a mock PDF blob for demonstration
+      const mockPdfContent = `LP Quarterly Statement Mock PDF\n\nLP: ${config.lpName}\nPeriod: ${config.quarter} ${config.year}\n\nThis is a mockup. In production, this would be a real PDF generated from the backend.`;
+      const blob = new Blob([mockPdfContent], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `lp-quarterly-statement_${config.lpName.replace(/\s/g, '_')}_${config.quarter}_${config.year}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Show success message
+      alert(`Successfully generated LP Quarterly Statement for ${config.lpName} (${config.quarter} ${config.year})`);
+
+    } catch (err: any) {
+      console.error('Error generating LP statement:', err);
+      setError(err.response?.data?.detail || 'Failed to generate LP statement. Please try again.');
     } finally {
       setLoading(null);
     }
@@ -229,6 +302,12 @@ const Reports: React.FC = () => {
         isOpen={showCashFlowModal}
         onClose={() => setShowCashFlowModal(false)}
         onGenerate={handleGenerateCashFlowReport}
+      />
+
+      <LPQuarterlyStatementModal
+        isOpen={showLPStatementModal}
+        onClose={() => setShowLPStatementModal(false)}
+        onGenerate={handleGenerateLPStatement}
       />
     </div>
   );

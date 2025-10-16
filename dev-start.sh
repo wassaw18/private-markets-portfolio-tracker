@@ -111,6 +111,39 @@ start_frontend() {
     fi
 }
 
+# Function to start database viewer
+start_db_viewer() {
+    echo -e "${BLUE}🗄️  Starting Database Viewer...${NC}"
+
+    # Ensure virtual environment is activated
+    source venv/bin/activate
+
+    # Find available port
+    DB_VIEWER_PORT=5001
+    if check_port $DB_VIEWER_PORT; then
+        DB_VIEWER_PORT=5002
+        if check_port $DB_VIEWER_PORT; then
+            DB_VIEWER_PORT=5003
+        fi
+    fi
+
+    echo -e "${GREEN}🚀 Starting database viewer on port $DB_VIEWER_PORT${NC}"
+    echo -e "${BLUE}🔍 Database Viewer will be accessible at: http://localhost:$DB_VIEWER_PORT${NC}"
+
+    # Start database viewer
+    python db_viewer.py &
+    DB_VIEWER_PID=$!
+
+    # Wait for database viewer to start
+    sleep 3
+    if kill -0 $DB_VIEWER_PID 2>/dev/null; then
+        echo -e "${GREEN}✅ Database viewer started successfully (PID: $DB_VIEWER_PID)${NC}"
+    else
+        echo -e "${RED}❌ Database viewer failed to start${NC}"
+        # Don't exit - this is non-critical
+    fi
+}
+
 # Function to check WSL2 networking
 check_wsl2_network() {
     echo -e "${BLUE}🔍 Checking WSL2 Network Configuration...${NC}"
@@ -141,10 +174,12 @@ main() {
     echo -e "${BLUE}🧹 Cleaning up existing processes...${NC}"
     pkill -f "uvicorn.*app.main" 2>/dev/null || true
     pkill -f "react-scripts start" 2>/dev/null || true
+    pkill -f "db_viewer.py" 2>/dev/null || true
     sleep 2
 
     # Start services
     start_backend
+    start_db_viewer
     start_frontend
     check_wsl2_network
 
@@ -156,12 +191,14 @@ main() {
     echo -e "${BLUE}   • Backend API: http://localhost:$BACKEND_PORT${NC}"
     echo -e "${BLUE}   • API Documentation: http://localhost:$BACKEND_PORT/docs${NC}"
     echo -e "${BLUE}   • Interactive API: http://localhost:$BACKEND_PORT/redoc${NC}"
+    echo -e "${BLUE}   • Database Viewer: http://localhost:$DB_VIEWER_PORT${NC}"
     echo ""
     echo -e "${YELLOW}💡 Tips:${NC}"
     echo -e "${YELLOW}   • File changes will auto-reload both frontend and backend${NC}"
+    echo -e "${YELLOW}   • Use Database Viewer to browse and query your PostgreSQL database${NC}"
     echo -e "${YELLOW}   • Use tmux session 'private-markets' for organized development${NC}"
     echo -e "${YELLOW}   • Backend logs: tail -f backend.log${NC}"
-    echo -e "${YELLOW}   • Kill servers: pkill -f 'uvicorn\\|react-scripts'${NC}"
+    echo -e "${YELLOW}   • Kill servers: pkill -f 'uvicorn\\|react-scripts\\|db_viewer'${NC}"
     echo ""
     echo -e "${GREEN}Happy coding! 🚀${NC}"
 }

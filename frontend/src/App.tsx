@@ -11,6 +11,10 @@ import LiquidityForecast from './pages/LiquidityForecast';
 import BulkUpload from './pages/BulkUpload';
 import Benchmarks from './pages/Benchmarks';
 import Reports from './pages/Reports';
+import FundDashboard from './pages/FundDashboard';
+import LPCapitalAccounts from './pages/LPCapitalAccounts';
+import Signup from './pages/Signup';
+import AcceptInvitation from './pages/AcceptInvitation';
 import PageErrorBoundary from './components/PageErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -29,6 +33,18 @@ const Navigation: React.FC = () => {
           className={`nav-link ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
         >
           Dashboard
+        </Link>
+        <Link
+          to="/fund-dashboard"
+          className={`nav-link ${location.pathname === '/fund-dashboard' ? 'active' : ''}`}
+        >
+          Fund Manager
+        </Link>
+        <Link
+          to="/lp-accounts"
+          className={`nav-link ${location.pathname === '/lp-accounts' ? 'active' : ''}`}
+        >
+          LP Accounts
         </Link>
         <Link
           to="/holdings"
@@ -120,6 +136,16 @@ function AppContent() {
                   <Dashboard />
                 </PageErrorBoundary>
               } />
+              <Route path="/fund-dashboard" element={
+                <PageErrorBoundary pageName="Fund Manager Dashboard">
+                  <FundDashboard />
+                </PageErrorBoundary>
+              } />
+              <Route path="/lp-accounts" element={
+                <PageErrorBoundary pageName="LP Capital Accounts">
+                  <LPCapitalAccounts />
+                </PageErrorBoundary>
+              } />
               <Route path="/holdings" element={
                 <PageErrorBoundary pageName="Holdings">
                   <Holdings />
@@ -187,7 +213,22 @@ function App() {
     <PageErrorBoundary pageName="Application">
       <AuthProvider>
         <Router>
-          <AppContent />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/signup" element={
+              <PageErrorBoundary pageName="Signup">
+                <Signup />
+              </PageErrorBoundary>
+            } />
+            <Route path="/accept-invite/:token" element={
+              <PageErrorBoundary pageName="Accept Invitation">
+                <AcceptInvitation />
+              </PageErrorBoundary>
+            } />
+
+            {/* Protected routes */}
+            <Route path="/*" element={<AppContent />} />
+          </Routes>
         </Router>
       </AuthProvider>
     </PageErrorBoundary>

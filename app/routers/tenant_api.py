@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from ..database import get_db
@@ -1432,3 +1432,170 @@ def delete_entity_relationship(
 
     return {"message": "Relationship deleted successfully"}
 
+
+# ============================================================================
+# FUND MANAGER ENDPOINTS
+# ============================================================================
+
+@router.get("/fund/overview")
+def get_fund_overview(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get fund-level overview for portfolio managers
+    Aggregates all investments to show total commitments, AUM, unfunded obligations, etc.
+    """
+    try:
+        from sqlalchemy import func
+        from ..models import Investment, CashFlow, Valuation, CashFlowType
+        from collections import defaultdict
+
+        # Get all active investments for this tenant
+        investments = db.query(Investment).filter(
+            Investment.tenant_id == current_user.tenant_id,
+            Investment.is_archived == False
+        ).all()
+
+        # Initialize aggregates
+        total_commitments = 0
+        total_called = 0
+        total_distributed = 0
+        total_nav = 0
+        investment_count = len(investments)
+
+        # Track by vintage year
+        vintage_data = defaultdict(lambda: {
+            'vintage': 0,
+            'count': 0,
+            'commitments': 0,
+            'called': 0,
+            'distributed': 0,
+            'nav': 0
+        })
+
+        # Track by GP
+        gp_data = defaultdict(lambda: {
+            'name': '',
+            'commitments': 0,
+            'count': 0
+        })
+
+        # Recent capital calls (last 30 days)
+        thirty_days_ago = datetime.now().date() - timedelta(days=30)
+        recent_calls = []
+
+        for inv in investments:
+            # Aggregate totals
+            commitment = inv.commitment_amount or 0
+            called = inv.called_amount or 0
+
+            total_commitments += commitment
+            total_called += called
+
+            # Get distributions from cash flows
+            distributions = db.query(func.sum(CashFlow.amount)).filter(
+                CashFlow.investment_id == inv.id,
+                CashFlow.type.in_([
+                    CashFlowType.DISTRIBUTION,
+                    CashFlowType.YIELD,
+                    CashFlowType.RETURN_OF_PRINCIPAL
+                ])
+            ).scalar() or 0
+
+            total_distributed += abs(distributions)
+
+            # Get latest NAV
+            latest_val = db.query(Valuation).filter(
+                Valuation.investment_id == inv.id
+            ).order_by(Valuation.date.desc()).first()
+
+            nav = latest_val.nav_value if latest_val else 0
+            total_nav += nav
+
+            # Aggregate by vintage year
+            vintage = inv.vintage_year
+            vintage_data[vintage]['vintage'] = vintage
+            vintage_data[vintage]['count'] += 1
+            vintage_data[vintage]['commitments'] += commitment
+            vintage_data[vintage]['called'] += called
+            vintage_data[vintage]['distributed'] += abs(distributions)
+            vintage_data[vintage]['nav'] += nav
+
+            # Aggregate by GP
+            gp_name = inv.manager or 'Unknown'
+            gp_data[gp_name]['name'] = gp_name
+            gp_data[gp_name]['commitments'] += commitment
+            gp_data[gp_name]['count'] += 1
+
+            # Get recent capital calls
+            recent_cf = db.query(CashFlow).filter(
+                CashFlow.investment_id == inv.id,
+                CashFlow.type.in_([CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION]),
+                CashFlow.date >= thirty_days_ago
+            ).order_by(CashFlow.date.desc()).all()
+
+            for cf in recent_cf:
+                recent_calls.append({
+                    'investment_name': inv.name,
+                    'date': cf.date.isoformat(),
+                    'amount': abs(cf.amount)
+                })
+
+        # Calculate unfunded obligations
+        unfunded = total_commitments - total_called
+
+        # Calculate deployment rate
+        deployment_rate = (total_called / total_commitments * 100) if total_commitments > 0 else 0
+
+        # Calculate performance metrics
+        tvpi = ((total_nav + total_distributed) / total_called) if total_called > 0 else 0
+        dpi = (total_distributed / total_called) if total_called > 0 else 0
+        rvpi = (total_nav / total_called) if total_called > 0 else 0
+
+        # Sort and format vintage data
+        vintage_list = sorted(vintage_data.values(), key=lambda x: x['vintage'], reverse=True)
+        for v in vintage_list:
+            v['tvpi'] = ((v['nav'] + v['distributed']) / v['called']) if v['called'] > 0 else 0
+            v['dpi'] = (v['distributed'] / v['called']) if v['called'] > 0 else 0
+
+        # Sort GPs by commitment size
+        gp_list = sorted(gp_data.values(), key=lambda x: x['commitments'], reverse=True)
+        top_gps = gp_list[:5]
+
+        # Calculate GP concentration
+        for gp in top_gps:
+            gp['percentage'] = (gp['commitments'] / total_commitments * 100) if total_commitments > 0 else 0
+
+        # Sort recent calls by date
+        recent_calls_sorted = sorted(recent_calls, key=lambda x: x['date'], reverse=True)[:10]
+
+        # Calculate total recent calls amount
+        total_recent_calls = sum(call['amount'] for call in recent_calls_sorted)
+
+        return {
+            'overview': {
+                'total_aum': total_nav,
+                'total_commitments': total_commitments,
+                'total_called': total_called,
+                'total_distributed': total_distributed,
+                'unfunded_obligations': unfunded,
+                'deployment_rate': deployment_rate,
+                'investment_count': investment_count,
+                'tvpi': tvpi,
+                'dpi': dpi,
+                'rvpi': rvpi
+            },
+            'vintage_performance': vintage_list,
+            'top_gps': top_gps,
+            'recent_activity': {
+                'capital_calls': recent_calls_sorted,
+                'total_recent_calls': total_recent_calls
+            }
+        }
+
+    except Exception as e:
+        import traceback
+        print(f"Error generating fund overview: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Error generating fund overview: {str(e)}")

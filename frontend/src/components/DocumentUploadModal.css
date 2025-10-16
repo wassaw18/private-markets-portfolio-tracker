@@ -1,4 +1,7 @@
-/* Upload Modal */
+/* DocumentUploadModal.css - Component-specific styles */
+/* Common modal, button, and form styles now in luxury-design-system.css */
+
+/* Upload Modal - Component Specific */
 .upload-modal {
   max-width: 1000px;
   width: 100%;
@@ -144,48 +147,8 @@
   margin-bottom: 16px;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
 .form-group.full-width {
   grid-column: 1 / -1;
-}
-
-.form-group label {
-  margin-bottom: 6px;
-  font-weight: 500;
-  color: #333;
-  font-size: 0.9rem;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: var(--space-md) var(--space-lg);
-  border: 2px solid var(--luxury-pale-gray);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-base);
-  font-family: var(--font-family-primary);
-  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-pearl) 100%);
-  transition: all var(--transition-medium);
-  color: var(--luxury-dark-gray);
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--luxury-gold);
-  background: var(--luxury-white);
-  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.15);
-  transform: translateY(-1px);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 80px;
 }
 
 .form-help {
@@ -195,104 +158,18 @@
   line-height: 1.3;
 }
 
-/* Checkbox Styles */
+/* Checkbox Styles - Component overrides */
 .checkbox-group {
   margin-top: 16px;
 }
 
 .checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  color: #333;
-  cursor: pointer;
   margin-bottom: 8px;
-}
-
-.checkbox-label input[type="checkbox"] {
-  margin: 0;
-  width: 16px;
-  height: 16px;
 }
 
 /* Entity Input */
 .entity-input {
   width: 100%;
-}
-
-/* Modal Base Styles - Luxury Design System */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(11, 20, 38, 0.85) 0%, rgba(11, 20, 38, 0.95) 100%);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--space-xl);
-}
-
-.modal-content {
-  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--luxury-shadow-large);
-  border: 1px solid var(--luxury-pale-gray);
-  max-width: 1000px;
-  width: 100%;
-  max-height: 95vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: var(--space-3xl) var(--space-3xl) 0;
-  border-bottom: 1px solid var(--luxury-pale-gray);
-  margin-bottom: var(--space-3xl);
-  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-pearl) 100%);
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: var(--luxury-navy);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.02em;
-}
-
-.close-button {
-  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
-  border: 1px solid var(--luxury-pale-gray);
-  font-size: var(--font-size-xl);
-  cursor: pointer;
-  color: var(--luxury-medium-gray);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-medium);
-  margin-left: var(--space-lg);
-  box-shadow: var(--luxury-shadow-subtle);
-}
-
-.close-button:hover {
-  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-white) 100%);
-  color: var(--luxury-navy);
-  border-color: var(--luxury-gold);
-  transform: translateY(-1px);
-  box-shadow: var(--luxury-shadow-medium);
 }
 
 /* Upload Form */
@@ -301,19 +178,6 @@
   flex: 1;
   overflow-y: auto;
   max-height: calc(95vh - 120px);
-}
-
-/* Error Message */
-.error-message {
-  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(220, 38, 38, 0.1) 100%);
-  color: var(--luxury-error);
-  padding: var(--space-lg) var(--space-xl);
-  border-radius: var(--radius-lg);
-  margin: 0 var(--space-3xl) var(--space-xl);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  box-shadow: var(--luxury-shadow-subtle);
 }
 
 /* Validation error styles */
@@ -342,121 +206,49 @@
   font-size: 0.9rem;
 }
 
-/* Modal Actions */
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding-top: 20px;
-  border-top: 1px solid #e9ecef;
-}
-
-.cancel-button {
-  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
-  color: var(--luxury-dark-gray);
-  border: 2px solid var(--luxury-pale-gray);
-  padding: var(--space-md) var(--space-2xl);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  font-family: var(--font-family-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  transition: all var(--transition-medium);
-  box-shadow: var(--luxury-shadow-subtle);
-}
-
-.cancel-button:hover {
-  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-white) 100%);
-  border-color: var(--luxury-medium-gray);
-  transform: translateY(-1px);
-  box-shadow: var(--luxury-shadow-medium);
-}
-
-.submit-button {
-  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 100%);
-  color: var(--luxury-white);
-  border: 2px solid var(--luxury-navy);
-  padding: var(--space-md) var(--space-2xl);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  font-family: var(--font-family-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  transition: all var(--transition-medium);
-  box-shadow: var(--luxury-shadow-medium);
-}
-
-.submit-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--luxury-dark-blue) 0%, var(--luxury-navy) 100%);
-  border-color: var(--luxury-gold);
-  transform: translateY(-2px);
-  box-shadow: var(--luxury-shadow-large);
-}
-
-.submit-button:disabled {
-  background: var(--luxury-medium-gray);
-  border-color: var(--luxury-medium-gray);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
-  .modal-overlay {
-    padding: 10px;
-  }
-  
-  .modal-content {
-    max-height: 95vh;
-  }
-  
   .modal-header {
-    padding: 20px 20px 0;
-    margin-bottom: 20px;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
-  .modal-header h3 {
-    font-size: 1.3rem;
-  }
-  
+
   .close-button {
     position: absolute;
     top: 20px;
     right: 20px;
     margin: 0;
   }
-  
+
   .upload-form {
     padding: 0 20px 20px;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
     gap: 16px;
     margin-bottom: 16px;
   }
-  
+
   .file-drop-zone {
     padding: 30px 15px;
   }
-  
+
   .upload-icon {
     font-size: 2.5rem;
     margin-bottom: 12px;
   }
-  
+
   .file-drop-prompt p {
     font-size: 1rem;
   }
-  
+
   .modal-actions {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .cancel-button,
   .submit-button {
     width: 100%;
@@ -464,31 +256,23 @@
 }
 
 @media (max-width: 480px) {
-  .modal-content {
-    border-radius: 8px;
-  }
-  
-  .modal-header {
-    padding: 16px 16px 0;
-  }
-  
   .close-button {
     top: 16px;
     right: 16px;
   }
-  
+
   .upload-form {
     padding: 0 16px 16px;
   }
-  
+
   .file-drop-zone {
     padding: 24px 12px;
   }
-  
+
   .upload-icon {
     font-size: 2rem;
   }
-  
+
   .form-group input,
   .form-group select,
   .form-group textarea {

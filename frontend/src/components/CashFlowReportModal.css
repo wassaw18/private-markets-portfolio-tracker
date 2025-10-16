@@ -1,3 +1,6 @@
+/* CashFlowReportModal.css - Component-specific styles */
+/* Common modal, button, and form styles now in luxury-design-system.css */
+
 .cash-flow-modal {
   max-width: 700px;
   max-height: 90vh;
