@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { AuthState, AuthContextType, User, LoginCredentials, AuthTokens, UserRole } from '../types/auth';
+import { AuthState, AuthContextType, User, LoginCredentials, AuthTokens, UserRole, AccountType } from '../types/auth';
 import { authAPI } from '../services/authApi';
 
 // Auth reducer
 type AuthAction =
   | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: { user: User; tokens: AuthTokens } }
+  | { type: 'LOGIN_SUCCESS'; payload: { user: User; tokens: AuthTokens; accountType?: string } }
   | { type: 'LOGIN_FAILURE'; payload?: string }
   | { type: 'LOGOUT' }
-  | { type: 'RESTORE_SESSION'; payload: { user: User; tokens: AuthTokens } }
+  | { type: 'RESTORE_SESSION'; payload: { user: User; tokens: AuthTokens; accountType?: string } }
   | { type: 'TOKEN_REFRESH_SUCCESS'; payload: AuthTokens }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_ERROR' };
@@ -17,6 +17,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
   tokens: null,
+  accountType: null,
   loading: true,
   error: null
 };
@@ -34,6 +35,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: true,
         user: action.payload.user,
         tokens: action.payload.tokens,
+        accountType: action.payload.accountType as AccountType || null,
         loading: false,
         error: null
       };
@@ -42,6 +44,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: false,
         user: null,
         tokens: null,
+        accountType: null,
         loading: false,
         error: action.payload || 'Login failed'
       };
@@ -50,6 +53,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: false,
         user: null,
         tokens: null,
+        accountType: null,
         loading: false,
         error: null
       };
@@ -58,6 +62,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: true,
         user: action.payload.user,
         tokens: action.payload.tokens,
+        accountType: action.payload.accountType as AccountType || null,
         loading: false,
         error: null
       };
@@ -95,12 +100,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authState, dispatch] = useReducer(authReducer, initialState);
 
   // Helper function to store tokens securely
-  const storeTokens = (tokens: AuthTokens, user: User) => {
+  const storeTokens = (tokens: AuthTokens, user: User, accountType?: string) => {
     try {
       localStorage.setItem('access_token', tokens.access_token);
       localStorage.setItem('refresh_token', tokens.refresh_token);
       localStorage.setItem('auth_user', JSON.stringify(user));
       localStorage.setItem('token_expires_at', (Date.now() + tokens.expires_in * 1000).toString());
+      if (accountType) {
+        localStorage.setItem('account_type', accountType);
+      }
     } catch (error) {
       console.error('Error storing auth data:', error);
     }
@@ -113,6 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('auth_user');
       localStorage.removeItem('token_expires_at');
+      localStorage.removeItem('account_type');
     } catch (error) {
       console.error('Error clearing auth data:', error);
     }
@@ -143,7 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         expires_in: response.expires_in
       };
 
-      storeTokens(tokens, response.user);
+      storeTokens(tokens, response.user, response.account_type);
       dispatch({ type: 'TOKEN_REFRESH_SUCCESS', payload: tokens });
 
       return true;
@@ -162,6 +171,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const accessToken = localStorage.getItem('access_token');
         const refreshTokenValue = localStorage.getItem('refresh_token');
         const storedUser = localStorage.getItem('auth_user');
+        const storedAccountType = localStorage.getItem('account_type');
 
         if (!accessToken || !refreshTokenValue || !storedUser) {
           dispatch({ type: 'LOGIN_FAILURE' });
@@ -200,7 +210,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         dispatch({
           type: 'RESTORE_SESSION',
-          payload: { user, tokens }
+          payload: { user, tokens, accountType: storedAccountType || undefined }
         });
 
       } catch (error) {
@@ -227,11 +237,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         expires_in: response.expires_in
       };
 
-      storeTokens(tokens, response.user);
+      storeTokens(tokens, response.user, response.account_type);
 
       dispatch({
         type: 'LOGIN_SUCCESS',
-        payload: { user: response.user, tokens }
+        payload: { user: response.user, tokens, accountType: response.account_type }
       });
 
       return true;
@@ -267,7 +277,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       'Viewer': 1,
       'Contributor': 2,
       'Manager': 3,
-      'Admin': 4
+      'Admin': 4,
+      'LP_CLIENT': 1  // LP clients have viewer-level access
     };
 
     const userRoleLevel = roleHierarchy[authState.user.role] || 0;
@@ -289,6 +300,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return username;
   };
 
+  // Get account type
+  const getAccountType = (): AccountType | null => {
+    return authState.accountType;
+  };
+
   const contextValue: AuthContextType = {
     authState,
     login,
@@ -296,7 +312,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshToken,
     isLoading: authState.loading,
     hasRole,
-    getUserFullName
+    getUserFullName,
+    getAccountType
   };
 
   return (

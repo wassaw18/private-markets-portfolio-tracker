@@ -44,7 +44,11 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    tokens = create_user_tokens(user)
+    # Eager load tenant relationship for token generation
+    from sqlalchemy.orm import joinedload
+    user = db.query(User).options(joinedload(User.tenant)).filter(User.id == user.id).first()
+
+    tokens = create_user_tokens(user, db)
 
     # Convert user to response format
     user_response = UserResponse(
@@ -61,12 +65,16 @@ async def login(
         updated_at=user.updated_at
     )
 
+    # Add account_type to response
+    account_type = user.tenant.account_type.value if user.tenant else None
+
     return TokenResponse(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
         token_type=tokens["token_type"],
         expires_in=tokens["expires_in"],
-        user=user_response
+        user=user_response,
+        account_type=account_type
     )
 
 @router.post("/refresh", response_model=TokenResponse)

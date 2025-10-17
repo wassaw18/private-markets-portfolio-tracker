@@ -288,22 +288,34 @@ def get_tenant_context(current_user: User = Depends(get_current_active_user)) ->
     """
     return current_user, current_user.tenant_id
 
-def create_user_tokens(user: User) -> dict:
+def create_user_tokens(user: User, db: Session = None) -> dict:
     """
     Create access and refresh tokens for a user
 
     Args:
         user: User to create tokens for
+        db: Database session (optional, for fetching account_type)
 
     Returns:
         Dictionary with access_token and refresh_token
     """
+    # Get account_type from tenant if db session provided
+    account_type = None
+    if db and user.tenant:
+        account_type = user.tenant.account_type.value
+    elif hasattr(user, 'tenant') and user.tenant:
+        account_type = user.tenant.account_type.value
+
     token_data = {
         "user_id": user.id,
         "tenant_id": user.tenant_id,
         "username": user.username,
         "role": user.role.value
     }
+
+    # Add account_type if available
+    if account_type:
+        token_data["account_type"] = account_type
 
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)

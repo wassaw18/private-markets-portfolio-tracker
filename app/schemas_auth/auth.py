@@ -30,6 +30,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int  # seconds
     user: 'UserResponse'
+    account_type: Optional[str] = None  # Tenant's account type
 
 class RefreshTokenRequest(BaseModel):
     """Request schema for token refresh"""

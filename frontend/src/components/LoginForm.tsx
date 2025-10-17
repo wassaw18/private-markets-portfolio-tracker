@@ -78,11 +78,45 @@ const LoginForm: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = () => {
-    setCredentials({
+  interface DemoAccount {
+    id: string;
+    name: string;
+    description: string;
+    accountType: string;
+    username: string;
+    password: string;
+  }
+
+  const demoAccounts: DemoAccount[] = [
+    {
+      id: 'admin',
+      name: 'Admin Account',
+      description: 'Individual investor - Full access',
+      accountType: 'INDIVIDUAL',
       username: 'admin',
       password: 'admin123'
-    });
+    },
+    {
+      id: 'fund-manager',
+      name: 'Fund Manager Account',
+      description: 'GP with LP clients - Fund management features',
+      accountType: 'FUND_MANAGER',
+      username: 'testfm',
+      password: 'admin123'
+    }
+  ];
+
+  const [selectedDemoAccount, setSelectedDemoAccount] = useState<string>('admin');
+
+  const handleDemoAccountSelect = (accountId: string) => {
+    setSelectedDemoAccount(accountId);
+    const account = demoAccounts.find(acc => acc.id === accountId);
+    if (account) {
+      setCredentials({
+        username: account.username,
+        password: account.password
+      });
+    }
   };
 
   return (
@@ -170,22 +204,45 @@ const LoginForm: React.FC = () => {
 
           <div className="login-demo">
             <div className="demo-divider">
-              <span>Demo Credentials</span>
+              <span>Demo Accounts</span>
             </div>
             <div className="demo-info">
-              <p>For testing purposes, you can use:</p>
-              <div className="demo-credentials">
-                <code>Username: admin</code>
-                <code>Password: admin123</code>
+              <p>Select a demo account to test different user types:</p>
+
+              <div className="demo-accounts-grid">
+                {demoAccounts.map(account => (
+                  <button
+                    key={account.id}
+                    type="button"
+                    className={`demo-account-card ${selectedDemoAccount === account.id ? 'selected' : ''}`}
+                    onClick={() => handleDemoAccountSelect(account.id)}
+                    disabled={isLoading}
+                  >
+                    <div className="demo-account-icon">
+                      {account.accountType === 'INDIVIDUAL' ? '👤' : '🏢'}
+                    </div>
+                    <div className="demo-account-info">
+                      <div className="demo-account-name">{account.name}</div>
+                      <div className="demo-account-description">{account.description}</div>
+                      <div className="demo-account-type">{account.accountType}</div>
+                    </div>
+                    {selectedDemoAccount === account.id && (
+                      <div className="demo-account-selected-badge">✓</div>
+                    )}
+                  </button>
+                ))}
               </div>
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                className="demo-button"
-                disabled={isLoading}
-              >
-                Fill Demo Credentials
-              </button>
+
+              <div className="demo-credentials-display">
+                <div className="demo-credential-item">
+                  <span className="credential-label">Username:</span>
+                  <code>{credentials.username || 'Select an account'}</code>
+                </div>
+                <div className="demo-credential-item">
+                  <span className="credential-label">Password:</span>
+                  <code>{credentials.password || '•••••••'}</code>
+                </div>
+              </div>
             </div>
           </div>
 

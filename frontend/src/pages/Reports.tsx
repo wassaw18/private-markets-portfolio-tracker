@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { reportsAPI } from '../services/api';
 import CashFlowReportModal, { CashFlowReportConfig } from '../components/CashFlowReportModal';
 import LPQuarterlyStatementModal, { LPQuarterlyStatementConfig } from '../components/LPQuarterlyStatementModal';
+import { useAuth } from '../contexts/AuthContext';
+import { AccountType } from '../types/auth';
 import './Reports.css';
 
 interface ReportSection {
@@ -9,6 +11,8 @@ interface ReportSection {
   title: string;
   description: string;
   reports: Report[];
+  accountTypes?: AccountType[]; // Which account types can see this section
+  excludedRoles?: string[];     // Which roles CANNOT see this section
 }
 
 interface Report {
@@ -20,16 +24,19 @@ interface Report {
 }
 
 const Reports: React.FC = () => {
+  const { authState, getAccountType } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCashFlowModal, setShowCashFlowModal] = useState(false);
   const [showLPStatementModal, setShowLPStatementModal] = useState(false);
 
-  const reportSections: ReportSection[] = [
+  const allReportSections: ReportSection[] = [
     {
       id: 'fund-manager',
       title: 'Fund Manager Reports',
       description: 'LP statements and fund-level reporting',
+      accountTypes: ['FUND_MANAGER'],
+      excludedRoles: ['LP_CLIENT'],
       reports: [
         {
           id: 'lp-quarterly-statement',
@@ -44,6 +51,8 @@ const Reports: React.FC = () => {
       id: 'performance',
       title: 'Performance Reports',
       description: 'Portfolio-wide and investment-level performance analytics',
+      accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER'],
+      excludedRoles: ['LP_CLIENT'],
       reports: [
         {
           id: 'portfolio-summary',
@@ -58,6 +67,8 @@ const Reports: React.FC = () => {
       id: 'holdings',
       title: 'Holdings & Positions',
       description: 'Current investment positions and holdings data',
+      accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER'],
+      excludedRoles: ['LP_CLIENT'],
       reports: [
         {
           id: 'holdings',
@@ -72,6 +83,8 @@ const Reports: React.FC = () => {
       id: 'entities',
       title: 'Entity Reports',
       description: 'Entity-level aggregations and performance',
+      accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER'],
+      excludedRoles: ['LP_CLIENT'],
       reports: [
         {
           id: 'entity-performance',
@@ -86,6 +99,8 @@ const Reports: React.FC = () => {
       id: 'cash-flow',
       title: 'Cash Flow Reports',
       description: 'Capital calls, distributions, and cash flow activity',
+      accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER'],
+      excludedRoles: ['LP_CLIENT'],
       reports: [
         {
           id: 'cash-flow-activity',
@@ -97,6 +112,30 @@ const Reports: React.FC = () => {
       ]
     }
   ];
+
+  // Filter report sections based on user's account type and role
+  const reportSections = useMemo(() => {
+    const accountType = getAccountType();
+    const userRole = authState.user?.role;
+
+    if (!accountType || !userRole) {
+      return [];
+    }
+
+    return allReportSections.filter(section => {
+      // Check if account type is allowed (if accountTypes is specified)
+      if (section.accountTypes && !section.accountTypes.includes(accountType)) {
+        return false;
+      }
+
+      // Check if role is explicitly excluded
+      if (section.excludedRoles && section.excludedRoles.includes(userRole)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [authState.user?.role, getAccountType]);
 
   const handleGenerateReport = async (report: Report) => {
     // Show modal for LP quarterly statement

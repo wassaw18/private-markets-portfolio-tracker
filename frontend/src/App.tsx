@@ -19,75 +19,37 @@ import PageErrorBoundary from './components/PageErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { setupGlobalErrorHandlers } from './hooks/useErrorHandler';
+import { getFilteredNavigation } from './config/navigationConfig';
 import './styles/luxury-design-system.css';
 import './App.css';
 
 const Navigation: React.FC = () => {
   const location = useLocation();
-  
+  const { authState, getAccountType } = useAuth();
+
+  // Get filtered navigation items based on user's account type and role
+  const accountType = getAccountType();
+  const userRole = authState.user?.role;
+
+  // If no user or role, don't show navigation
+  if (!authState.user || !userRole) {
+    return null;
+  }
+
+  const navItems = getFilteredNavigation(accountType, userRole);
+
   return (
     <nav className="main-navigation">
       <div className="nav-links">
-        <Link
-          to="/dashboard"
-          className={`nav-link ${location.pathname === '/dashboard' || location.pathname === '/' ? 'active' : ''}`}
-        >
-          Dashboard
-        </Link>
-        <Link
-          to="/fund-dashboard"
-          className={`nav-link ${location.pathname === '/fund-dashboard' ? 'active' : ''}`}
-        >
-          Fund Manager
-        </Link>
-        <Link
-          to="/lp-accounts"
-          className={`nav-link ${location.pathname === '/lp-accounts' ? 'active' : ''}`}
-        >
-          LP Accounts
-        </Link>
-        <Link
-          to="/holdings"
-          className={`nav-link ${location.pathname === '/holdings' ? 'active' : ''}`}
-        >
-          Holdings
-        </Link>
-        <Link
-          to="/visuals"
-          className={`nav-link ${location.pathname === '/visuals' ? 'active' : ''}`}
-        >
-          Analytics
-        </Link>
-        <Link
-          to="/liquidity"
-          className={`nav-link ${location.pathname === '/liquidity' || location.pathname === '/calendar' ? 'active' : ''}`}
-        >
-          Cash Flows
-        </Link>
-        <Link
-          to="/entities"
-          className={`nav-link ${location.pathname === '/entities' ? 'active' : ''}`}
-        >
-          Entities
-        </Link>
-        <Link
-          to="/benchmarks"
-          className={`nav-link ${location.pathname === '/benchmarks' ? 'active' : ''}`}
-        >
-          Benchmarks
-        </Link>
-        <Link
-          to="/reports"
-          className={`nav-link ${location.pathname === '/reports' ? 'active' : ''}`}
-        >
-          Reports
-        </Link>
-        <Link
-          to="/documents"
-          className={`nav-link ${location.pathname === '/documents' || location.pathname === '/bulk-upload' ? 'active' : ''}`}
-        >
-          Operations
-        </Link>
+        {navItems.map(item => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={`nav-link ${location.pathname === item.path || (item.path === '/dashboard' && location.pathname === '/') || (item.path === '/liquidity' && location.pathname === '/calendar') || (item.path === '/documents' && location.pathname === '/bulk-upload') ? 'active' : ''}`}
+          >
+            {item.label}
+          </Link>
+        ))}
       </div>
     </nav>
   );

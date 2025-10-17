@@ -2,7 +2,8 @@
  * Authentication types and interfaces for JWT-based multi-tenant system
  */
 
-export type UserRole = 'Admin' | 'Manager' | 'Contributor' | 'Viewer';
+export type UserRole = 'Admin' | 'Manager' | 'Contributor' | 'Viewer' | 'LP_CLIENT';
+export type AccountType = 'INDIVIDUAL' | 'FAMILY_OFFICE' | 'FUND_MANAGER';
 
 export interface Tenant {
   id: number;
@@ -40,12 +41,14 @@ export interface AuthTokens {
 
 export interface LoginResponse extends AuthTokens {
   user: User;
+  account_type?: string;
 }
 
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   tokens: AuthTokens | null;
+  accountType: AccountType | null;
   loading: boolean;
   error: string | null;
 }
@@ -63,6 +66,7 @@ export interface AuthContextType {
   isLoading: boolean;
   hasRole: (requiredRole: UserRole) => boolean;
   getUserFullName: () => string;
+  getAccountType: () => AccountType | null;
 }
 
 export interface ChangePasswordRequest {
