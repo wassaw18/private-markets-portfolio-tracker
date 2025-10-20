@@ -10,6 +10,7 @@ export interface NavItem {
   label: string;
   accountTypes: AccountType[];  // Which account types can see this tab
   excludedRoles?: UserRole[];   // Which roles CANNOT see this tab (optional)
+  requiredRoles?: UserRole[];   // If specified, ONLY these roles can see this tab (overrides excludedRoles)
 }
 
 /**
@@ -18,6 +19,14 @@ export interface NavItem {
  * If excludedRoles is specified, those roles won't see the tab even if account type matches
  */
 export const navigationConfig: NavItem[] = [
+  // LP Portal - Only for LP_CLIENT users
+  {
+    path: '/lp-portal',
+    label: 'LP Portal',
+    accountTypes: ['FUND_MANAGER'],
+    requiredRoles: ['LP_CLIENT']
+  },
+
   // Dashboard - Individual & Family Office only
   {
     path: '/dashboard',
@@ -88,10 +97,10 @@ export const navigationConfig: NavItem[] = [
     accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER']
   },
 
-  // Operations (Documents) - All account types
+  // Operations (Documents) - All account types (LP_CLIENT can access for quarterly statements)
   {
     path: '/documents',
-    label: 'Operations',
+    label: 'Documents',
     accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER']
   }
 ];
@@ -109,6 +118,11 @@ export const shouldShowNavItem = (
 
   // Check if account type is allowed
   if (!item.accountTypes.includes(accountType)) return false;
+
+  // If requiredRoles is specified, ONLY those roles can see this item
+  if (item.requiredRoles) {
+    return item.requiredRoles.includes(userRole);
+  }
 
   // Check if role is explicitly excluded
   if (item.excludedRoles && item.excludedRoles.includes(userRole)) return false;

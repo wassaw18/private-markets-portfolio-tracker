@@ -267,6 +267,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     clearTokens();
     dispatch({ type: 'LOGOUT' });
+
+    // Hard redirect to root to clear all React Router state and ensure fresh start
+    window.location.href = '/';
   };
 
   // Role-based access control

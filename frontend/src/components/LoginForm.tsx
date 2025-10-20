@@ -58,7 +58,7 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -67,11 +67,11 @@ const LoginForm: React.FC = () => {
 
     try {
       const success = await login(credentials);
-      
+
       if (!success) {
         setError('Invalid username or password. Please try again.');
       }
-      // If successful, the auth context will handle the redirect
+      // If successful, the useEffect will handle the redirect
     } catch (err) {
       setError('An error occurred during login. Please try again.');
       console.error('Login error:', err);
@@ -102,6 +102,14 @@ const LoginForm: React.FC = () => {
       description: 'GP with LP clients - Fund management features',
       accountType: 'FUND_MANAGER',
       username: 'testfm',
+      password: 'admin123'
+    },
+    {
+      id: 'lp-client',
+      name: 'LP Client Account',
+      description: 'Limited Partner - View only access',
+      accountType: 'LP_CLIENT',
+      username: 'lp_demo',
       password: 'admin123'
     }
   ];
@@ -219,7 +227,7 @@ const LoginForm: React.FC = () => {
                     disabled={isLoading}
                   >
                     <div className="demo-account-icon">
-                      {account.accountType === 'INDIVIDUAL' ? '👤' : '🏢'}
+                      {account.accountType === 'INDIVIDUAL' ? '👤' : account.accountType === 'LP_CLIENT' ? '👥' : '🏢'}
                     </div>
                     <div className="demo-account-info">
                       <div className="demo-account-name">{account.name}</div>

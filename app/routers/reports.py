@@ -95,10 +95,14 @@ async def generate_portfolio_summary_report(
                 CashFlow.date <= report_date
             ).all()
 
-            # Calculate called and distributions
-            called = sum(cf.amount for cf in cash_flows if cf.amount < 0)
-            distributions = sum(cf.amount for cf in cash_flows if cf.amount > 0)
-            total_called += abs(called)
+            # Calculate called and distributions using type-based filtering
+            # Called capital EXCLUDES fees (industry standard for performance calculations)
+            called_types = [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION]
+            inflow_types = [CashFlowType.DISTRIBUTION, CashFlowType.YIELD, CashFlowType.RETURN_OF_PRINCIPAL]
+
+            called = abs(sum(cf.amount for cf in cash_flows if cf.type in called_types))
+            distributions = abs(sum(cf.amount for cf in cash_flows if cf.type in inflow_types))
+            total_called += called
             total_distributions += distributions
 
             # Get latest valuation
@@ -267,10 +271,13 @@ async def generate_holdings_report(
             ).all()
 
             # Use type-based filtering for accuracy
-            outflow_types = [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION, CashFlowType.FEES]
+            # Called capital EXCLUDES fees (industry standard for performance calculations)
+            called_types = [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION]
+            fee_types = [CashFlowType.FEES]
             inflow_types = [CashFlowType.DISTRIBUTION, CashFlowType.YIELD, CashFlowType.RETURN_OF_PRINCIPAL]
 
-            called = abs(sum(cf.amount for cf in cash_flows if cf.type in outflow_types))
+            called = abs(sum(cf.amount for cf in cash_flows if cf.type in called_types))
+            fees = abs(sum(cf.amount for cf in cash_flows if cf.type in fee_types))
             distributions = abs(sum(cf.amount for cf in cash_flows if cf.type in inflow_types))
             uncalled = (inv.commitment_amount or 0) - called
 
@@ -292,6 +299,7 @@ async def generate_holdings_report(
                 'vintage_year': inv.vintage_year,
                 'commitment_amount': inv.commitment_amount or 0,
                 'called_amount': called,
+                'fees': fees,
                 'uncalled_amount': uncalled,
                 'current_nav': current_nav,
                 'distributions': distributions,
@@ -382,10 +390,11 @@ async def generate_entity_performance_report(
                 ).all()
 
                 # Use type-based filtering for accuracy
-                outflow_types = [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION, CashFlowType.FEES]
+                # Called capital EXCLUDES fees (industry standard for performance calculations)
+                called_types = [CashFlowType.CAPITAL_CALL, CashFlowType.CONTRIBUTION]
                 inflow_types = [CashFlowType.DISTRIBUTION, CashFlowType.YIELD, CashFlowType.RETURN_OF_PRINCIPAL]
 
-                called = abs(sum(cf.amount for cf in cash_flows if cf.type in outflow_types))
+                called = abs(sum(cf.amount for cf in cash_flows if cf.type in called_types))
                 distributions = abs(sum(cf.amount for cf in cash_flows if cf.type in inflow_types))
                 total_called += called
                 total_distributions += distributions

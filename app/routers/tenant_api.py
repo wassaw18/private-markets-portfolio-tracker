@@ -179,7 +179,19 @@ def read_investments(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get investments"""
+    """Get investments with LP data isolation"""
+    # For LP_CLIENT users, only return investments for their associated entity
+    if current_user.role == models.UserRole.LP_CLIENT:
+        if not current_user.entity_id:
+            # LP user with no entity association sees nothing
+            return []
+        return crud_tenant.get_investments_by_entity(
+            db=db,
+            entity_id=current_user.entity_id,
+            tenant_id=current_user.tenant_id
+        )
+
+    # For all other users, return all tenant investments
     return crud_tenant.get_investments(
         db=db,
         tenant_id=current_user.tenant_id,
@@ -193,10 +205,16 @@ def read_investment(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get a specific investment by ID or UUID"""
+    """Get a specific investment by ID or UUID with LP data isolation"""
     investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
     if investment is None:
         raise HTTPException(status_code=404, detail="Investment not found")
+
+    # LP data isolation: verify LP user can only access their entity's investments
+    if current_user.role == models.UserRole.LP_CLIENT:
+        if not current_user.entity_id or investment.entity_id != current_user.entity_id:
+            raise HTTPException(status_code=404, detail="Investment not found")
+
     return investment
 
 @router.put("/investments/{investment_id}", response_model=Investment)
@@ -232,11 +250,16 @@ def read_investments_by_entity(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get investments for a specific entity by ID or UUID"""
+    """Get investments for a specific entity by ID or UUID with LP data isolation"""
     # Verify entity belongs to the same tenant
     entity = crud_tenant.get_entity(db, entity_id, current_user.tenant_id)
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
+
+    # LP data isolation: LP users can only access their own entity
+    if current_user.role == models.UserRole.LP_CLIENT:
+        if not current_user.entity_id or str(entity.id) != str(entity_id):
+            raise HTTPException(status_code=404, detail="Entity not found")
 
     return crud_tenant.get_investments_by_entity(
         db=db, entity_id=entity_id, tenant_id=current_user.tenant_id
@@ -248,14 +271,26 @@ def get_investment_performance(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get performance metrics for a specific investment by ID or UUID"""
+    """Get performance metrics for a specific investment by ID or UUID with LP data isolation"""
     try:
+        # First get the investment to check ownership
+        investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+        if investment is None:
+            raise HTTPException(status_code=404, detail="Investment not found")
+
+        # LP data isolation: verify LP user can only access their entity's investments
+        if current_user.role == models.UserRole.LP_CLIENT:
+            if not current_user.entity_id or investment.entity_id != current_user.entity_id:
+                raise HTTPException(status_code=404, detail="Investment not found")
+
         performance = crud_tenant.get_investment_performance(
             db=db, tenant_id=current_user.tenant_id, investment_id=investment_id
         )
         if performance is None:
             raise HTTPException(status_code=404, detail="Investment not found")
         return performance
+    except HTTPException:
+        raise
     except Exception as e:
         import traceback
         error_traceback = traceback.format_exc()
@@ -271,11 +306,16 @@ def get_investment_cashflows(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get cash flows for a specific investment by ID or UUID"""
+    """Get cash flows for a specific investment by ID or UUID with LP data isolation"""
     # First verify the investment exists and belongs to the user's tenant
     investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
     if not investment:
         raise HTTPException(status_code=404, detail="Investment not found")
+
+    # LP data isolation: verify LP user can only access their entity's investments
+    if current_user.role == models.UserRole.LP_CLIENT:
+        if not current_user.entity_id or investment.entity_id != current_user.entity_id:
+            raise HTTPException(status_code=404, detail="Investment not found")
 
     # Get cash flows for this investment
     cashflows = db.query(models.CashFlow).filter(
@@ -375,11 +415,16 @@ def get_investment_valuations(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get valuations for a specific investment by ID or UUID"""
+    """Get valuations for a specific investment by ID or UUID with LP data isolation"""
     # First verify the investment exists and belongs to the user's tenant
     investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
     if not investment:
         raise HTTPException(status_code=404, detail="Investment not found")
+
+    # LP data isolation: verify LP user can only access their entity's investments
+    if current_user.role == models.UserRole.LP_CLIENT:
+        if not current_user.entity_id or investment.entity_id != current_user.entity_id:
+            raise HTTPException(status_code=404, detail="Investment not found")
 
     # Get valuations for this investment
     valuations = db.query(models.Valuation).filter(
@@ -561,16 +606,28 @@ def read_valuations(
 # Dashboard Endpoints
 # =============================================================================
 
+def _get_user_investments(db: Session, current_user: User):
+    """Helper function to get investments with LP data isolation"""
+    if current_user.role == models.UserRole.LP_CLIENT:
+        if not current_user.entity_id:
+            return []
+        return crud_tenant.get_investments_by_entity(
+            db=db,
+            entity_id=current_user.entity_id,
+            tenant_id=current_user.tenant_id
+        )
+    return crud_tenant.get_investments(db, current_user.tenant_id)
+
 @router.get("/dashboard/summary")
 def get_dashboard_summary(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get dashboard summary for the current tenant"""
+    """Get dashboard summary for the current tenant with LP data isolation"""
     from .. import dashboard
 
-    # Get all investments for the tenant
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    # Get investments with LP data isolation
+    investments = _get_user_investments(db, current_user)
 
     # Calculate portfolio summary using existing dashboard logic
     # This will automatically be filtered to the tenant's investments
@@ -585,10 +642,10 @@ def get_asset_class_breakdown(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get asset class breakdown for the current tenant"""
+    """Get asset class breakdown for the current tenant with LP data isolation"""
     from .. import dashboard
 
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    investments = _get_user_investments(db, current_user)
 
     try:
         breakdown = dashboard.calculate_asset_class_breakdown(investments)
@@ -601,10 +658,10 @@ def get_entity_breakdown(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get entity breakdown for the current tenant"""
+    """Get entity breakdown for the current tenant with LP data isolation"""
     from .. import dashboard
 
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    investments = _get_user_investments(db, current_user)
 
     try:
         breakdown = dashboard.calculate_entity_breakdown(investments)
@@ -646,9 +703,9 @@ def get_commitment_vs_called_data(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get commitment vs called data for the current tenant"""
-    # Get tenant investments and calculate manually to ensure tenant isolation
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    """Get commitment vs called data for the current tenant with LP data isolation"""
+    # Get investments with LP data isolation
+    investments = _get_user_investments(db, current_user)
 
     total_commitment = sum(inv.commitment_amount for inv in investments)
     total_called = sum(inv.called_amount for inv in investments)
@@ -665,10 +722,10 @@ def get_allocation_by_asset_class(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get asset class allocation for the current tenant"""
+    """Get asset class allocation for the current tenant with LP data isolation"""
     from collections import defaultdict
 
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    investments = _get_user_investments(db, current_user)
 
     if not investments:
         return []
@@ -702,10 +759,10 @@ def get_allocation_by_vintage(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get vintage year allocation for the current tenant"""
+    """Get vintage year allocation for the current tenant with LP data isolation"""
     from collections import defaultdict
 
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    investments = _get_user_investments(db, current_user)
 
     if not investments:
         return []
@@ -739,11 +796,11 @@ def get_portfolio_value_timeline(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get portfolio value timeline for the current tenant"""
+    """Get portfolio value timeline for the current tenant with LP data isolation"""
     from datetime import date, timedelta
     from collections import defaultdict
 
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    investments = _get_user_investments(db, current_user)
 
     if not investments:
         return []
@@ -822,8 +879,8 @@ def get_dashboard_summary_stats(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Get dashboard summary statistics for the current tenant"""
-    investments = crud_tenant.get_investments(db, current_user.tenant_id)
+    """Get dashboard summary statistics for the current tenant with LP data isolation"""
+    investments = _get_user_investments(db, current_user)
 
     # Calculate NAV and distributions from valuations and cash flows
     from datetime import date

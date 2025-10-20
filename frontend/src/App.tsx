@@ -13,6 +13,7 @@ import Benchmarks from './pages/Benchmarks';
 import Reports from './pages/Reports';
 import FundDashboard from './pages/FundDashboard';
 import LPCapitalAccounts from './pages/LPCapitalAccounts';
+import LPPortalDashboard from './pages/LPPortalDashboard';
 import Signup from './pages/Signup';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PageErrorBoundary from './components/PageErrorBoundary';
@@ -45,7 +46,14 @@ const Navigation: React.FC = () => {
           <Link
             key={item.path}
             to={item.path}
-            className={`nav-link ${location.pathname === item.path || (item.path === '/dashboard' && location.pathname === '/') || (item.path === '/liquidity' && location.pathname === '/calendar') || (item.path === '/documents' && location.pathname === '/bulk-upload') ? 'active' : ''}`}
+            className={`nav-link ${
+              location.pathname === item.path ||
+              (item.path === '/dashboard' && location.pathname === '/') ||
+              (item.path === '/lp-portal' && location.pathname === '/') ||
+              (item.path === '/liquidity' && location.pathname === '/calendar') ||
+              (item.path === '/documents' && location.pathname === '/bulk-upload')
+              ? 'active' : ''
+            }`}
           >
             {item.label}
           </Link>
@@ -81,6 +89,19 @@ const UserControls: React.FC = () => {
   );
 };
 
+// Smart redirect component that sends users to appropriate dashboard
+const DashboardRedirect: React.FC = () => {
+  const { authState } = useAuth();
+
+  // Redirect LP_CLIENT users to LP Portal
+  if (authState.user?.role === 'LP_CLIENT') {
+    return <Navigate to="/lp-portal" replace />;
+  }
+
+  // Default to regular dashboard
+  return <Navigate to="/dashboard" replace />;
+};
+
 function AppContent() {
   return (
     <ProtectedRoute>
@@ -92,7 +113,7 @@ function AppContent() {
         <main>
           <Navigation />
           <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<DashboardRedirect />} />
               <Route path="/dashboard" element={
                 <PageErrorBoundary pageName="Dashboard">
                   <Dashboard />
@@ -101,6 +122,11 @@ function AppContent() {
               <Route path="/fund-dashboard" element={
                 <PageErrorBoundary pageName="Fund Manager Dashboard">
                   <FundDashboard />
+                </PageErrorBoundary>
+              } />
+              <Route path="/lp-portal" element={
+                <PageErrorBoundary pageName="LP Portal Dashboard">
+                  <LPPortalDashboard />
                 </PageErrorBoundary>
               } />
               <Route path="/lp-accounts" element={

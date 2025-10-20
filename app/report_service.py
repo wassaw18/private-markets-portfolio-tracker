@@ -326,6 +326,7 @@ class HoldingsReport(ReportGenerator):
             "Asset Class",
             "Commitment",
             "Called",
+            "Fees",
             "Uncalled",
             "Current NAV",
             "TVPI"
@@ -339,23 +340,26 @@ class HoldingsReport(ReportGenerator):
                 holding.get('asset_class', 'Unknown')[:15],
                 self._format_currency(holding.get('commitment_amount', 0)),
                 self._format_currency(holding.get('called_amount', 0)),
+                self._format_currency(holding.get('fees', 0)),
                 self._format_currency(holding.get('uncalled_amount', 0)),
                 self._format_currency(holding.get('current_nav', 0)),
                 self._format_multiple(holding.get('tvpi', 0))
             ])
 
-        col_widths = [1.5 * inch, 1 * inch, 0.9 * inch, 0.9 * inch, 0.8 * inch, 0.8 * inch, 0.9 * inch, 0.6 * inch]
+        col_widths = [1.4 * inch, 0.9 * inch, 0.8 * inch, 0.8 * inch, 0.7 * inch, 0.5 * inch, 0.7 * inch, 0.8 * inch, 0.5 * inch]
         elements.append(self._create_data_table(headers, rows, col_widths))
 
         # Summary totals
         elements.append(Spacer(1, 0.3 * inch))
         total_commitment = sum(h.get('commitment_amount', 0) for h in holdings)
         total_called = sum(h.get('called_amount', 0) for h in holdings)
+        total_fees = sum(h.get('fees', 0) for h in holdings)
         total_nav = sum(h.get('current_nav', 0) for h in holdings)
 
         summary_data = [
             ("Total Commitment", self._format_currency(total_commitment)),
             ("Total Called", self._format_currency(total_called)),
+            ("Total Fees", self._format_currency(total_fees)),
             ("Total NAV", self._format_currency(total_nav)),
             ("Total Investments", str(len(holdings))),
         ]

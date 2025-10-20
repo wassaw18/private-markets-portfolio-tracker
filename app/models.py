@@ -367,6 +367,7 @@ class User(Base):
     """
     Represents users who can access the platform.
     Each user belongs to a tenant and has specific roles and permissions.
+    For LP_CLIENT users, they are associated with a specific entity to enforce data isolation.
     """
     __tablename__ = "users"
 
@@ -384,12 +385,17 @@ class User(Base):
 
     # Foreign keys
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    entity_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)  # For LP_CLIENT users only
 
     # Relationships
     tenant = relationship("Tenant", back_populates="users")
+    entity = relationship("Entity", foreign_keys=[entity_id])  # The entity this LP_CLIENT represents
 
     # Unique constraint: username must be unique within a tenant
-    __table_args__ = (UniqueConstraint('username', 'tenant_id', name='unique_username_per_tenant'),)
+    __table_args__ = (
+        UniqueConstraint('username', 'tenant_id', name='unique_username_per_tenant'),
+        Index('ix_user_entity', 'entity_id'),
+    )
 
 class Invitation(Base):
     """
