@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { calendarAPI, DailyFlow, MonthlyCalendar } from '../services/api';
+import { calendarAPI, unifiedForecastAPI, DailyFlow, MonthlyCalendar } from '../services/api';
 import DateRangePicker from './DateRangePicker';
 import './CashFlowCalendar.css';
 
@@ -26,7 +26,8 @@ const CashFlowCalendar: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<DailyFlow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [includeForecasts, setIncludeForecasts] = useState(true);
+  const [includeManual, setIncludeManual] = useState(true);
+  const [includePacingModel, setIncludePacingModel] = useState(true);
 
   const viewTypes: ViewType[] = [
     { type: 'month', label: 'Month' },
@@ -53,8 +54,63 @@ const CashFlowCalendar: React.FC = () => {
     setError(null);
 
     try {
-      const data = await calendarAPI.getMonthlyCalendar(year, month, includeForecasts);
-      setMonthlyData(data);
+      // Calculate start and end dates for the month
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0);
+
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      // Use unified forecast API with separate toggles
+      const unifiedData = await unifiedForecastAPI.getUnifiedForecasts(
+        startDateStr,
+        endDateStr,
+        includeManual,
+        includePacingModel,
+        'BASE'
+      );
+
+      // Convert unified API response to MonthlyCalendar format
+      const convertedData: MonthlyCalendar = {
+        year: year,
+        month: month,
+        month_name: new Date(year, month - 1).toLocaleString('default', { month: 'long' }),
+        previous_month: month === 1 ? { year: year - 1, month: 12 } : { year: year, month: month - 1 },
+        next_month: month === 12 ? { year: year + 1, month: 1 } : { year: year, month: month + 1 },
+        period_summary: {
+          start_date: startDateStr,
+          end_date: endDateStr,
+          total_inflows: unifiedData.daily_flows.reduce((sum, day) => sum + day.total_inflows, 0),
+          total_outflows: unifiedData.daily_flows.reduce((sum, day) => sum + day.total_outflows, 0),
+          net_flow: unifiedData.daily_flows.reduce((sum, day) => sum + day.net_flow, 0),
+          active_days: unifiedData.daily_flows.filter(day => day.transaction_count > 0).length,
+          total_transactions: unifiedData.daily_flows.reduce((sum, day) => sum + day.transaction_count, 0),
+          largest_single_day: Math.max(...unifiedData.daily_flows.map(day => Math.abs(day.net_flow))),
+          largest_single_day_date: null,
+          most_active_day: null,
+          most_active_day_count: 0
+        },
+        daily_flows: unifiedData.daily_flows.map(day => ({
+          date: day.date,
+          day: parseISODate(day.date).getDate(),
+          total_inflows: day.total_inflows,
+          total_outflows: day.total_outflows,
+          net_flow: day.net_flow,
+          transaction_count: day.transaction_count,
+          transactions: day.transactions.map(txn => ({
+            id: txn.id,
+            investment_id: txn.investment_id,
+            investment_name: txn.investment_name,
+            type: txn.type,
+            amount: txn.amount,
+            is_forecast: txn.is_forecast,
+            source: txn.source,
+            confidence: txn.confidence
+          }))
+        }))
+      };
+
+      setMonthlyData(convertedData);
     } catch (err: any) {
       setError('Failed to load calendar data');
       console.error('Error fetching calendar data:', err);
@@ -65,26 +121,161 @@ const CashFlowCalendar: React.FC = () => {
 
   useEffect(() => {
     // For all view types, we'll fetch monthly data but the rendering will adapt
-    // For simplicity, we'll use the month-based API for now and render differently
-    // Use the start date to determine which month to fetch for now
+    const fetchQuarterData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const quarterStart = new Date(startDate.getFullYear(), Math.floor(startDate.getMonth() / 3) * 3, 1);
+        const quarterEnd = new Date(quarterStart.getFullYear(), quarterStart.getMonth() + 3, 0);
+
+        const startDateStr = quarterStart.toISOString().split('T')[0];
+        const endDateStr = quarterEnd.toISOString().split('T')[0];
+
+        // Use unified forecast API with separate toggles
+        const unifiedData = await unifiedForecastAPI.getUnifiedForecasts(
+          startDateStr,
+          endDateStr,
+          includeManual,
+          includePacingModel,
+          'BASE'
+        );
+
+        // Convert to MonthlyCalendar format
+        const convertedData: MonthlyCalendar = {
+          year: quarterStart.getFullYear(),
+          month: quarterStart.getMonth() + 1,
+          month_name: quarterStart.toLocaleString('default', { month: 'long' }),
+          previous_month: { year: quarterStart.getFullYear(), month: quarterStart.getMonth() },
+          next_month: { year: quarterEnd.getFullYear(), month: quarterEnd.getMonth() + 2 },
+          period_summary: {
+            start_date: startDateStr,
+            end_date: endDateStr,
+            total_inflows: unifiedData.daily_flows.reduce((sum, day) => sum + day.total_inflows, 0),
+            total_outflows: unifiedData.daily_flows.reduce((sum, day) => sum + day.total_outflows, 0),
+            net_flow: unifiedData.daily_flows.reduce((sum, day) => sum + day.net_flow, 0),
+            active_days: unifiedData.daily_flows.filter(day => day.transaction_count > 0).length,
+            total_transactions: unifiedData.daily_flows.reduce((sum, day) => sum + day.transaction_count, 0),
+            largest_single_day: Math.max(...unifiedData.daily_flows.map(day => Math.abs(day.net_flow))),
+            largest_single_day_date: null,
+            most_active_day: null,
+            most_active_day_count: 0
+          },
+          daily_flows: unifiedData.daily_flows.map(day => ({
+            date: day.date,
+            day: parseISODate(day.date).getDate(),
+            total_inflows: day.total_inflows,
+            total_outflows: day.total_outflows,
+            net_flow: day.net_flow,
+            transaction_count: day.transaction_count,
+            transactions: day.transactions.map(txn => ({
+              id: txn.id,
+              investment_id: txn.investment_id,
+              investment_name: txn.investment_name,
+              type: txn.type,
+              amount: txn.amount,
+              is_forecast: txn.is_forecast,
+              source: txn.source,
+              confidence: txn.confidence
+            }))
+          }))
+        };
+
+        setMonthlyData(convertedData);
+      } catch (err: any) {
+        setError('Failed to load calendar data');
+        console.error('Error fetching calendar data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchYearData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const year = startDate.getFullYear();
+        const yearStart = new Date(year, 0, 1);
+        const yearEnd = new Date(year, 11, 31);
+
+        const startDateStr = yearStart.toISOString().split('T')[0];
+        const endDateStr = yearEnd.toISOString().split('T')[0];
+
+        // Use unified forecast API with separate toggles
+        const unifiedData = await unifiedForecastAPI.getUnifiedForecasts(
+          startDateStr,
+          endDateStr,
+          includeManual,
+          includePacingModel,
+          'BASE'
+        );
+
+        // Convert to MonthlyCalendar format
+        const convertedData: MonthlyCalendar = {
+          year: year,
+          month: 1,
+          month_name: 'January',
+          previous_month: { year: year - 1, month: 12 },
+          next_month: { year: year + 1, month: 1 },
+          period_summary: {
+            start_date: startDateStr,
+            end_date: endDateStr,
+            total_inflows: unifiedData.daily_flows.reduce((sum, day) => sum + day.total_inflows, 0),
+            total_outflows: unifiedData.daily_flows.reduce((sum, day) => sum + day.total_outflows, 0),
+            net_flow: unifiedData.daily_flows.reduce((sum, day) => sum + day.net_flow, 0),
+            active_days: unifiedData.daily_flows.filter(day => day.transaction_count > 0).length,
+            total_transactions: unifiedData.daily_flows.reduce((sum, day) => sum + day.transaction_count, 0),
+            largest_single_day: Math.max(...unifiedData.daily_flows.map(day => Math.abs(day.net_flow))),
+            largest_single_day_date: null,
+            most_active_day: null,
+            most_active_day_count: 0
+          },
+          daily_flows: unifiedData.daily_flows.map(day => ({
+            date: day.date,
+            day: parseISODate(day.date).getDate(),
+            total_inflows: day.total_inflows,
+            total_outflows: day.total_outflows,
+            net_flow: day.net_flow,
+            transaction_count: day.transaction_count,
+            transactions: day.transactions.map(txn => ({
+              id: txn.id,
+              investment_id: txn.investment_id,
+              investment_name: txn.investment_name,
+              type: txn.type,
+              amount: txn.amount,
+              is_forecast: txn.is_forecast,
+              source: txn.source,
+              confidence: txn.confidence
+            }))
+          }))
+        };
+
+        setMonthlyData(convertedData);
+      } catch (err: any) {
+        setError('Failed to load calendar data');
+        console.error('Error fetching calendar data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     switch (viewType) {
       case 'month':
         fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
         break;
       case 'quarter':
-        // For quarter view, we'll fetch the first month of the quarter for now
-        // In a full implementation, this would aggregate quarterly data
-        fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
+        // Fetch all 3 months of the quarter
+        fetchQuarterData();
         break;
       case 'year':
-        // For year view, we'll fetch the current month for now
-        // In a full implementation, this would show year overview
-        fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
+        // Fetch all 12 months of the year
+        fetchYearData();
         break;
       default:
         fetchMonthlyData(startDate.getFullYear(), startDate.getMonth() + 1);
     }
-  }, [startDate, endDate, viewType, includeForecasts]);
+  }, [startDate, endDate, viewType, includeManual, includePacingModel]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -104,6 +295,13 @@ const CashFlowCalendar: React.FC = () => {
       return `$${(amount / 1e3).toFixed(1)}K`;
     }
     return formatCurrency(amount);
+  };
+
+  // Helper to parse ISO date strings without timezone conversion
+  const parseISODate = (dateString: string): Date => {
+    // Parse "2025-12-01" as local date, not UTC
+    const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
   };
 
   const navigatePeriod = (direction: 'prev' | 'next' | 'today') => {
@@ -241,7 +439,7 @@ const CashFlowCalendar: React.FC = () => {
           onClick={() => setSelectedDay(flow)}
           title={`${flow.date}: ${formatCurrencyCompact(flow.net_flow)} net${flow.transaction_count > 0 ? ` (${flow.transaction_count} transactions)` : ''}`}
         >
-          <div className="day-number">{flow.day || new Date(flow.date).getDate()}</div>
+          <div className="day-number">{flow.day || parseISODate(flow.date).getDate()}</div>
           {flow.transaction_count > 0 && (
             <div className="day-amount">
               {formatCurrencyCompact(flow.net_flow)}
@@ -289,11 +487,11 @@ const CashFlowCalendar: React.FC = () => {
       <div className="day-detail-panel">
         <div className="day-detail-header">
           <h4>
-            {new Date(selectedDay.date).toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {parseISODate(selectedDay.date).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </h4>
           <button 
@@ -323,23 +521,56 @@ const CashFlowCalendar: React.FC = () => {
 
         <div className="transactions-list">
           <h5>Transactions ({selectedDay.transaction_count})</h5>
-          {selectedDay.transactions.map((txn, index) => (
-            <div key={`${txn.id}-${index}`} className="transaction-item">
-              <div className="transaction-main">
-                <span className="investment-name">{txn.investment_name}</span>
-                <span className={`transaction-amount ${txn.type.includes('Distribution') || txn.type.includes('Forecasted Distribution') ? 'positive' : 'negative'}`}>
-                  {txn.type.includes('Distribution') || txn.type.includes('Forecasted Distribution') ? '+' : '-'}
-                  {formatCurrency(txn.amount)}
-                </span>
+          {selectedDay.transactions.map((txn: any, index) => {
+            // Check if this is an inflow (distribution, yield, return of principal)
+            const isInflow = txn.type.includes('Distribution') ||
+                           txn.type.includes('Yield') ||
+                           txn.type.includes('Return of Principal') ||
+                           txn.type.includes('Forecasted Distribution');
+
+            // Determine the source badge
+            let sourceBadge = '';
+            let sourceBadgeClass = '';
+            if (txn.source) {
+              if (txn.source === 'actual') {
+                // Don't show badge for historical actuals - they're the default
+                sourceBadge = '';
+                sourceBadgeClass = '';
+              } else if (txn.source === 'manual') {
+                sourceBadge = 'Manual';
+                sourceBadgeClass = 'source-manual';
+              } else if (txn.source === 'pacing_model') {
+                sourceBadge = 'Pacing';
+                sourceBadgeClass = 'source-pacing';
+              }
+            } else if (txn.is_forecast) {
+              // Fallback for legacy data
+              sourceBadge = 'Forecast';
+              sourceBadgeClass = 'source-forecast';
+            }
+
+            return (
+              <div key={`${txn.id}-${index}`} className="transaction-item">
+                <div className="transaction-main">
+                  <span className="investment-name">{txn.investment_name}</span>
+                  <span className={`transaction-amount ${isInflow ? 'positive' : 'negative'}`}>
+                    {isInflow ? '+' : '-'}
+                    {formatCurrency(txn.amount)}
+                  </span>
+                </div>
+                <div className="transaction-meta">
+                  <span className={`transaction-type ${txn.is_forecast ? 'forecast' : 'actual'}`}>
+                    {txn.type}
+                  </span>
+                  {sourceBadge && (
+                    <span className={`source-badge ${sourceBadgeClass}`}>
+                      {sourceBadge}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="transaction-meta">
-                <span className={`transaction-type ${txn.is_forecast ? 'forecast' : 'actual'}`}>
-                  {txn.type}
-                  {txn.is_forecast && ' (Projected)'}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -375,12 +606,12 @@ const CashFlowCalendar: React.FC = () => {
     // Calculate month totals and determine intensity for color coding
     const monthData = months.map(month => {
       const monthTotal = monthlyData?.daily_flows.reduce((sum, flow) => {
-        const flowDate = new Date(flow.date);
+        const flowDate = parseISODate(flow.date);
         return flowDate.getMonth() === month.getMonth() ? sum + flow.net_flow : sum;
       }, 0) || 0;
 
       const transactionCount = monthlyData?.daily_flows.reduce((count, flow) => {
-        const flowDate = new Date(flow.date);
+        const flowDate = parseISODate(flow.date);
         return flowDate.getMonth() === month.getMonth() ? count + flow.transaction_count : count;
       }, 0) || 0;
 
@@ -412,17 +643,23 @@ const CashFlowCalendar: React.FC = () => {
 
             // Generate detailed tooltip for this month
             const monthFlows = monthlyData?.daily_flows
-              .filter(flow => new Date(flow.date).getMonth() === month.getMonth()) || [];
+              .filter(flow => parseISODate(flow.date).getMonth() === month.getMonth()) || [];
 
             const monthTransactions = monthFlows.flatMap(flow =>
               flow.transactions.map(txn => ({ ...txn, date: flow.date }))
             );
 
             const inflows = monthTransactions.filter(txn =>
-              txn.type.includes('Distribution') || txn.type.includes('Forecasted Distribution')
+              txn.type.includes('Distribution') ||
+              txn.type.includes('Yield') ||
+              txn.type.includes('Return of Principal') ||
+              txn.type.includes('Forecasted Distribution')
             );
             const outflows = monthTransactions.filter(txn =>
-              !txn.type.includes('Distribution') && !txn.type.includes('Forecasted Distribution')
+              !txn.type.includes('Distribution') &&
+              !txn.type.includes('Yield') &&
+              !txn.type.includes('Return of Principal') &&
+              !txn.type.includes('Forecasted Distribution')
             );
 
             const tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -431,10 +668,10 @@ NET FLOW: ${formatCurrency(monthTotal)}
 Total Transactions: ${transactionCount}
 
 INFLOWS (${inflows.length}):
-${inflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${inflows.length > 5 ? `\n... and ${inflows.length - 5} more` : ''}
+${inflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${parseISODate(txn.date).toLocaleDateString()})`).join('\n')}${inflows.length > 5 ? `\n... and ${inflows.length - 5} more` : ''}
 
 OUTFLOWS (${outflows.length}):
-${outflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${outflows.length > 5 ? `\n... and ${outflows.length - 5} more` : ''}`;
+${outflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${parseISODate(txn.date).toLocaleDateString()})`).join('\n')}${outflows.length > 5 ? `\n... and ${outflows.length - 5} more` : ''}`;
             return (
               <div
                 key={month.toISOString()}
@@ -482,26 +719,19 @@ ${outflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(
       months.push(month);
     }
 
-    // For now, we'll use the current month's data as sample data
-    // In a full implementation, you'd fetch annual data
-    const getMonthData = (month: Date) => {
-      // If this is the current month, use actual data
-      if (month.getMonth() === startDate.getMonth() && month.getFullYear() === startDate.getFullYear()) {
-        const monthTotal = monthlyData?.daily_flows.reduce((sum, flow) => sum + flow.net_flow, 0) || 0;
-        const transactionCount = monthlyData?.daily_flows.reduce((count, flow) => count + flow.transaction_count, 0) || 0;
-        return { monthTotal, transactionCount, hasData: true };
-      } else {
-        // Simulate data for other months (in real implementation, fetch from API)
-        const simulatedTotal = Math.random() * 2000000 - 1000000; // Random between -1M and +1M
-        const simulatedCount = Math.floor(Math.random() * 50);
-        return { monthTotal: simulatedTotal, transactionCount: simulatedCount, hasData: false };
-      }
-    };
-
-    // Calculate month data and determine intensity for color coding
+    // Calculate month data from the loaded daily flows
     const monthDataArray = months.map(month => {
-      const data = getMonthData(month);
-      return { month, ...data };
+      // Filter daily flows for this specific month
+      const monthFlows = monthlyData?.daily_flows.filter(flow => {
+        const flowDate = parseISODate(flow.date);
+        return flowDate.getMonth() === month.getMonth() && flowDate.getFullYear() === month.getFullYear();
+      }) || [];
+
+      const monthTotal = monthFlows.reduce((sum, flow) => sum + flow.net_flow, 0);
+      const transactionCount = monthFlows.reduce((count, flow) => count + flow.transaction_count, 0);
+      const hasData = monthFlows.length > 0;
+
+      return { month, monthTotal, transactionCount, hasData };
     });
 
     // Calculate max absolute value for intensity scaling
@@ -531,40 +761,49 @@ ${outflows.slice(0, 5).map(txn => `• ${txn.investment_name}: ${formatCurrency(
             // Generate detailed tooltip for year view
             let tooltipContent;
             if (hasData) {
-              const monthTransactions = monthlyData?.daily_flows.flatMap(flow =>
+              // Filter flows for this specific month
+              const monthFlows = monthlyData?.daily_flows.filter(flow => {
+                const flowDate = parseISODate(flow.date);
+                return flowDate.getMonth() === month.getMonth() && flowDate.getFullYear() === month.getFullYear();
+              }) || [];
+
+              const monthTransactions = monthFlows.flatMap(flow =>
                 flow.transactions.map(txn => ({ ...txn, date: flow.date }))
-              ) || [];
-              const inflows = monthTransactions.filter(txn =>
-                txn.type.includes('Distribution') || txn.type.includes('Forecasted Distribution')
-              );
-              const outflows = monthTransactions.filter(txn =>
-                !txn.type.includes('Distribution') && !txn.type.includes('Forecasted Distribution')
               );
 
-              tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (ACTUAL DATA)
+              const inflows = monthTransactions.filter(txn =>
+                txn.type.includes('Distribution') ||
+                txn.type.includes('Yield') ||
+                txn.type.includes('Return of Principal') ||
+                txn.type.includes('Forecasted Distribution')
+              );
+              const outflows = monthTransactions.filter(txn =>
+                !txn.type.includes('Distribution') &&
+                !txn.type.includes('Yield') &&
+                !txn.type.includes('Return of Principal') &&
+                !txn.type.includes('Forecasted Distribution')
+              );
+
+              tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
 
 NET FLOW: ${formatCurrency(monthTotal)}
 Total Transactions: ${transactionCount}
 
 INFLOWS (${inflows.length}):
-${inflows.slice(0, 3).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${inflows.length > 3 ? `\n... and ${inflows.length - 3} more` : ''}
+${inflows.slice(0, 3).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${parseISODate(txn.date).toLocaleDateString()})`).join('\n')}${inflows.length > 3 ? `\n... and ${inflows.length - 3} more` : ''}
 
 OUTFLOWS (${outflows.length}):
-${outflows.slice(0, 3).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${new Date(txn.date).toLocaleDateString()})`).join('\n')}${outflows.length > 3 ? `\n... and ${outflows.length - 3} more` : ''}`;
+${outflows.slice(0, 3).map(txn => `• ${txn.investment_name}: ${formatCurrency(txn.amount)} (${parseISODate(txn.date).toLocaleDateString()})`).join('\n')}${outflows.length > 3 ? `\n... and ${outflows.length - 3} more` : ''}`;
             } else {
-              tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (SIMULATED)
+              tooltipContent = `${month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
 
-NET FLOW: ${formatCurrency(monthTotal)}
-Transactions: ${transactionCount}
-
-This is simulated data for demonstration.
-Click to view if actual data is available.`;
+Click to view this month's data`;
             }
 
             return (
               <div
                 key={month.toISOString()}
-                className={`year-month-box ${flowDirection} ${intensityClass} ${isCurrentMonth ? 'current-month' : ''} ${!hasData ? 'simulated' : ''}`}
+                className={`year-month-box ${flowDirection} ${intensityClass} ${isCurrentMonth ? 'current-month' : ''}`}
                 onClick={() => {
                   const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
                   const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
@@ -589,13 +828,12 @@ Click to view if actual data is available.`;
                 <div className="month-indicator">
                   <div className={`flow-indicator ${flowDirection} ${intensityClass}`}></div>
                 </div>
-                {!hasData && <div className="simulated-badge">SIM</div>}
               </div>
             );
           })}
         </div>
         <div className="year-view-note">
-          <p><strong>Note:</strong> Only {startDate.toLocaleDateString('en-US', { month: 'long' })} shows actual data. Other months display simulated data for demonstration.</p>
+          <p><strong>Note:</strong> Click any month to view its cash flow details.</p>
         </div>
       </div>
     );
@@ -648,15 +886,25 @@ Click to view if actual data is available.`;
             ))}
           </div>
 
-          <div className="forecast-toggle">
-            <label>
-              <input
-                type="checkbox"
-                checked={includeForecasts}
-                onChange={(e) => setIncludeForecasts(e.target.checked)}
-              />
-              Include Forecasts
-            </label>
+          <div className="forecast-toggles">
+            <div className="toggle-group">
+              <label className="forecast-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={includeManual}
+                  onChange={(e) => setIncludeManual(e.target.checked)}
+                />
+                <span className="toggle-text">Manual Forecasts</span>
+              </label>
+              <label className="forecast-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={includePacingModel}
+                  onChange={(e) => setIncludePacingModel(e.target.checked)}
+                />
+                <span className="toggle-text">Pacing Model</span>
+              </label>
+            </div>
           </div>
 
           <div className="date-navigation-section">

@@ -527,6 +527,7 @@ export const importExportAPI = {
 
 // Pacing Model and Cash Flow Forecasting types
 interface PacingModelInputs {
+  pacing_pattern?: string;
   target_irr: number;
   target_moic: number;
   fund_life: number;
@@ -653,6 +654,8 @@ export interface DailyFlow {
     type: string;
     amount: number;
     is_forecast: boolean;
+    source?: string;
+    confidence?: string;
   }>;
 }
 
@@ -736,6 +739,48 @@ export const calendarAPI = {
     };
   }> => {
     const response = await api.get(`/api/calendar/heatmap/${year}/${month}?include_forecasts=${includeForecasts}`);
+    return response.data;
+  },
+};
+
+// Unified Forecast API - combines manual and pacing model forecasts
+export interface UnifiedForecastResponse {
+  start_date: string;
+  end_date: string;
+  include_manual: boolean;
+  include_pacing_model: boolean;
+  scenario: string;
+  daily_flows: Array<{
+    date: string;
+    total_inflows: number;
+    total_outflows: number;
+    net_flow: number;
+    transaction_count: number;
+    transactions: Array<{
+      id: string;
+      investment_id: number;
+      investment_name: string;
+      type: string;
+      amount: number;
+      is_forecast: boolean;
+      source: string;
+      confidence: string;
+    }>;
+  }>;
+}
+
+export const unifiedForecastAPI = {
+  // Get unified forecasts combining manual and pacing model
+  getUnifiedForecasts: async (
+    startDate: string,
+    endDate: string,
+    includeManual: boolean = true,
+    includePacingModel: boolean = true,
+    scenario: 'BASE' | 'BULL' | 'BEAR' = 'BASE'
+  ): Promise<UnifiedForecastResponse> => {
+    const response = await api.get(
+      `/api/forecasts/unified?start_date=${startDate}&end_date=${endDate}&include_manual=${includeManual}&include_pacing_model=${includePacingModel}&scenario=${scenario}`
+    );
     return response.data;
   },
 };
@@ -1346,6 +1391,22 @@ export interface AcceptInvitationResponse {
   message: string;
 }
 
+// Password Reset interfaces
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetResponse {
+  message: string;
+  reset_token?: string; // Only present in development mode
+}
+
+export interface PasswordResetConfirm {
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
 // Auth API
 export const authAPI = {
   // Signup new organization
@@ -1363,6 +1424,18 @@ export const authAPI = {
   // Accept invitation
   acceptInvitation: async (token: string, acceptData: AcceptInvitationRequest): Promise<AcceptInvitationResponse> => {
     const response = await api.post(`/api/auth/accept-invite/${token}`, acceptData);
+    return response.data;
+  },
+
+  // Request password reset
+  requestPasswordReset: async (email: string): Promise<PasswordResetResponse> => {
+    const response = await api.post('/api/auth/password-reset/request', { email });
+    return response.data;
+  },
+
+  // Confirm password reset
+  confirmPasswordReset: async (resetData: PasswordResetConfirm): Promise<{ message: string }> => {
+    const response = await api.post('/api/auth/password-reset/confirm', resetData);
     return response.data;
   },
 };

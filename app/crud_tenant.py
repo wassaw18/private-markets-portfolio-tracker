@@ -1152,16 +1152,16 @@ def get_document_statistics(db: Session, tenant_id: int) -> dict:
 
     by_investment = {investment_name: count for investment_name, count in investment_stats if count > 0}
 
-    # Pending action count (documents with PENDING_REVIEW or PENDING_APPROVAL status)
+    # Pending action count (documents with ACTION_REQUIRED status)
     pending_action_count = base_query.filter(
-        models.Document.status.in_([models.DocumentStatus.PENDING_REVIEW, models.DocumentStatus.PENDING_APPROVAL])
+        models.Document.status == models.DocumentStatus.ACTION_REQUIRED
     ).count()
 
-    # Overdue count (documents with due_date in the past and not completed)
+    # Overdue count (documents with due_date in the past and still pending review or action required)
     today = datetime.utcnow().date()
     overdue_count = base_query.filter(
         models.Document.due_date < today,
-        models.Document.status != models.DocumentStatus.COMPLETED
+        models.Document.status.in_([models.DocumentStatus.PENDING_REVIEW, models.DocumentStatus.ACTION_REQUIRED])
     ).count()
 
     return {

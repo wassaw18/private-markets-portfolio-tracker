@@ -50,7 +50,6 @@ const LiquidityForecast: React.FC = () => {
       <div className="liquidity-forecast-page">
         <div className="luxury-card page-header">
           <h1 className="luxury-heading-1">Cash Flows</h1>
-          <p className="luxury-body-large">Portfolio cash flow analysis and liquidity planning</p>
         </div>
 
         <div className="cash-flow-calendar-section">

@@ -18,7 +18,8 @@ from ..schemas_auth.auth import (
     LoginRequest, TokenResponse, RefreshTokenRequest, ChangePasswordRequest,
     UserCreate, UserUpdate, UserResponse, UserListResponse, UserProfile,
     UpdateProfileRequest, ErrorResponse, SignupRequest, SignupResponse,
-    InviteUserRequest, InviteUserResponse, AcceptInvitationRequest, AcceptInvitationResponse
+    InviteUserRequest, InviteUserResponse, AcceptInvitationRequest, AcceptInvitationResponse,
+    PasswordResetRequest, PasswordResetResponse, PasswordResetConfirm
 )
 from .. import crud_tenant
 
@@ -205,6 +206,97 @@ async def change_password(
     db.commit()
 
     return {"message": "Password changed successfully"}
+
+# =============================================================================
+# Password Reset Endpoints
+# =============================================================================
+
+@router.post("/password-reset/request", response_model=PasswordResetResponse)
+async def request_password_reset(
+    reset_request: PasswordResetRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Request a password reset token.
+    In production, this would send an email with the reset link.
+    For development, the token is returned in the response.
+    """
+    from datetime import datetime, timedelta
+    import secrets
+    from sqlalchemy import select
+
+    # Find user by email (across all tenants)
+    user = db.execute(
+        select(User).where(User.email == reset_request.email)
+    ).scalar_one_or_none()
+
+    # Always return success to prevent email enumeration
+    if not user:
+        return PasswordResetResponse(
+            message="If an account with that email exists, a password reset link has been sent."
+        )
+
+    # Check if user is active
+    if not user.is_active:
+        return PasswordResetResponse(
+            message="If an account with that email exists, a password reset link has been sent."
+        )
+
+    # Generate reset token
+    reset_token = secrets.token_urlsafe(32)
+
+    # Store token in user record with expiration (1 hour)
+    user.reset_token = reset_token
+    user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+    db.commit()
+
+    # In production, send email here with reset link
+    # For now, return token in response for development
+    reset_link = f"/reset-password/{reset_token}"
+
+    return PasswordResetResponse(
+        message="If an account with that email exists, a password reset link has been sent.",
+        reset_token=reset_token  # Only for development - remove in production
+    )
+
+@router.post("/password-reset/confirm")
+async def confirm_password_reset(
+    reset_confirm: PasswordResetConfirm,
+    db: Session = Depends(get_db)
+):
+    """
+    Confirm password reset using the reset token and set new password.
+    """
+    from datetime import datetime
+    from sqlalchemy import select, and_
+
+    # Find user with valid reset token
+    user = db.execute(
+        select(User).where(
+            and_(
+                User.reset_token == reset_confirm.token,
+                User.reset_token_expires > datetime.utcnow(),
+                User.is_active == True
+            )
+        )
+    ).scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+
+    # Update password
+    user.hashed_password = get_password_hash(reset_confirm.new_password)
+
+    # Clear reset token
+    user.reset_token = None
+    user.reset_token_expires = None
+
+    db.commit()
+
+    return {"message": "Password has been reset successfully. You can now log in with your new password."}
 
 # =============================================================================
 # User Management Endpoints (Admin/Manager only)

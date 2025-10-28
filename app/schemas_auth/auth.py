@@ -341,6 +341,51 @@ class AcceptInvitationResponse(BaseModel):
     role: UserRole
     message: str
 
+# Password Reset Schemas
+
+class PasswordResetRequest(BaseModel):
+    """Request schema for password reset (request token)"""
+    email: EmailStr
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "john.doe@example.com"
+            }
+        }
+
+class PasswordResetResponse(BaseModel):
+    """Response schema for password reset request"""
+    message: str
+    reset_token: Optional[str] = None  # Only include in dev mode
+
+class PasswordResetConfirm(BaseModel):
+    """Request schema for confirming password reset"""
+    token: str
+    new_password: str
+    confirm_password: str
+
+    @validator('confirm_password')
+    def passwords_match(cls, v, values, **kwargs):
+        if 'new_password' in values and v != values['new_password']:
+            raise ValueError('Passwords do not match')
+        return v
+
+    @validator('new_password')
+    def password_strength(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "token": "reset_token_here",
+                "new_password": "new_secure_password",
+                "confirm_password": "new_secure_password"
+            }
+        }
+
 # Error Schemas
 
 class ErrorResponse(BaseModel):

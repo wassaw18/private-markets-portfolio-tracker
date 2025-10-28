@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fundManagerAPI } from '../services/api';
+import '../styles/dashboard-shared.css';
 import './FundDashboard.css';
 
 interface FundOverview {
@@ -125,25 +126,25 @@ const FundDashboard: React.FC = () => {
 
       {/* Key Metrics Cards */}
       <div className="metrics-grid">
-        <div className="metric-card primary">
+        <div className="dashboard-metric-card">
           <div className="metric-label">Total AUM</div>
           <div className="metric-value">{formatCurrency(overview.total_aum)}</div>
           <div className="metric-subtitle">{overview.investment_count} investments</div>
         </div>
 
-        <div className="metric-card">
+        <div className="dashboard-metric-card">
           <div className="metric-label">Total Commitments</div>
           <div className="metric-value">{formatCurrency(overview.total_commitments)}</div>
           <div className="metric-subtitle">Across all funds</div>
         </div>
 
-        <div className="metric-card highlight">
+        <div className="dashboard-metric-card">
           <div className="metric-label">Unfunded Obligations</div>
           <div className="metric-value">{formatCurrency(overview.unfunded_obligations)}</div>
           <div className="metric-subtitle">{formatPercent(overview.deployment_rate)} deployed</div>
         </div>
 
-        <div className="metric-card">
+        <div className="dashboard-metric-card">
           <div className="metric-label">TVPI</div>
           <div className="metric-value">{formatMultiple(overview.tvpi)}</div>
           <div className="metric-detail">

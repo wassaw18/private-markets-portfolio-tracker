@@ -70,7 +70,7 @@ class TenantAwareCalendarService:
     def get_daily_cash_flows(self, start_date: date, end_date: date, include_forecasts: bool = True) -> List[DailyCashFlow]:
         """Get daily cash flow aggregations for date range with tenant filtering"""
 
-        # Get actual cash flows for this tenant
+        # Get all cash flows for this tenant in the date range
         actual_flows = self.db.query(models.CashFlow).filter(
             models.CashFlow.date >= start_date,
             models.CashFlow.date <= end_date,
@@ -85,9 +85,20 @@ class TenantAwareCalendarService:
             'count': 0
         })
 
-        # Process actual cash flows
+        # Determine what "today" is for forecast classification
+        today = date.today()
+
+        # Process cash flows
         for cf in actual_flows:
             flow_date = cf.date
+
+            # Classify as forecast if date is in the future
+            is_future = cf.date > today
+
+            # Skip future cash flows if forecasts are disabled
+            if is_future and not include_forecasts:
+                continue
+
             transaction = {
                 'id': cf.id,
                 'investment_id': cf.investment_id,
@@ -95,7 +106,9 @@ class TenantAwareCalendarService:
                 'type': cf.type.value,
                 'amount': cf.amount,
                 'description': cf.notes or '',
-                'is_forecast': False
+                'is_forecast': is_future,  # Mark as forecast if in the future
+                'source': 'manual' if is_future else 'actual',  # Future = manual forecast, past = actual
+                'confidence': 'high' if is_future else 'actual'  # Manual forecasts have high confidence
             }
 
             daily_data[flow_date]['transactions'].append(transaction)
@@ -108,8 +121,8 @@ class TenantAwareCalendarService:
             else:  # Capital calls, contributions, fees
                 daily_data[flow_date]['outflows'] += abs(cf.amount)
 
-        # TODO: Add forecast cash flows if include_forecasts is True
-        # This would require implementing tenant-aware pacing model integration
+        # TODO: Add pacing model forecast cash flows if include_forecasts is True
+        # This would come from the cash_flow_forecasts table
 
         # Convert to list of DailyCashFlow objects
         result = []

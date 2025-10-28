@@ -198,57 +198,71 @@
 }
 
 .summary-section {
-  background: rgba(255,255,255,0.2);
-  border-radius: 8px;
-  padding: 20px;
+  background: var(--luxury-surface);
+  border-radius: var(--radius-xl);
+  padding: 24px;
   backdrop-filter: none;
-  border: 1px solid rgba(255,255,255,0.3);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: 1px solid var(--luxury-border);
+  box-shadow: var(--luxury-shadow-sm);
 }
 
 .summary-section h4 {
-  margin: 0 0 15px 0;
-  font-size: 1rem;
+  margin: 0 0 20px 0;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: white;
+  color: var(--luxury-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
 }
 
 /* Key Metrics */
 .summary-metrics {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 16px;
 }
 
 .metric-card {
-  background: rgba(255,255,255,0.15);
-  border-radius: 6px;
-  padding: 15px;
+  background: var(--luxury-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
   text-align: center;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid var(--luxury-border);
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .metric-card.primary {
-  background: rgba(255,255,255,0.2);
+  background: var(--luxury-surface);
+  border: 1px solid var(--luxury-border);
 }
 
 .metric-card label {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.9);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--luxury-text-secondary);
   margin-bottom: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .metric-card .value {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  font-family: 'Courier New', monospace;
-  color: white;
+  font-family: var(--font-family-mono);
+  color: var(--luxury-text-primary);
+  line-height: 1.2;
+}
+
+/* Override neutral color for metric cards specifically */
+.metric-card .value.neutral {
+  color: var(--luxury-text-primary) !important;
+  text-shadow: none;
 }
 
 /* Capital Deployment */
@@ -262,8 +276,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--luxury-border);
 }
 
 .capital-item:last-child {
@@ -271,44 +285,45 @@
 }
 
 .capital-item.total-value {
-  padding: 12px 0;
-  border-top: 2px solid rgba(255,255,255,0.3);
-  margin-top: 8px;
+  padding: 16px 0 12px 0;
+  border-top: 2px solid var(--luxury-border);
+  margin-top: 12px;
   font-weight: 600;
 }
 
 .capital-item label {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.9);
+  font-size: 0.875rem;
+  color: var(--luxury-text-secondary);
   font-weight: 500;
 }
 
 .capital-item .value {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  font-family: 'Courier New', monospace;
-  color: white;
+  font-family: var(--font-family-mono);
+  color: var(--luxury-text-primary);
 }
 
 .capital-item.total-value .value {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
 
-/* Performance Colors */
+/* Performance Colors - Subtle luxury styling */
 .value.positive {
-  color: #90EE90 !important;
-  text-shadow: 0 0 10px rgba(144, 238, 144, 0.3);
+  color: #2d5016 !important;
+  text-shadow: none;
 }
 
 .value.negative {
-  color: #FFB6C1 !important;
-  text-shadow: 0 0 10px rgba(255, 182, 193, 0.3);
+  color: #8b1a1a !important;
+  text-shadow: none;
 }
 
 .value.neutral {
-  color: rgba(255,255,255,0.9) !important;
+  color: #1a1a1a !important;
+  text-shadow: none;
 }
 
 /* Portfolio Insights */

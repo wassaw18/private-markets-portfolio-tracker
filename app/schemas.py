@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import date, datetime
 from uuid import UUID
-from app.models import AssetClass, InvestmentStructure, InvestmentStatus, CashFlowType, CallScheduleType, DistributionTimingType, ForecastScenario, EntityType, RelationshipType, AdvancedRelationshipType, OwnershipType, DocumentCategory, DocumentStatus, LiquidityProfile, ReportingFrequency, RiskRating, RelationshipCategory, FamilyRelationshipType, BusinessRelationshipType, TrustRelationshipType, ProfessionalRelationshipType, OtherRelationshipType
+from app.models import AssetClass, InvestmentStructure, InvestmentStatus, CashFlowType, CallScheduleType, DistributionTimingType, ForecastScenario, EntityType, RelationshipType, AdvancedRelationshipType, OwnershipType, DocumentCategory, DocumentStatus, LiquidityProfile, ReportingFrequency, RiskRating, RelationshipCategory, FamilyRelationshipType, BusinessRelationshipType, TrustRelationshipType, ProfessionalRelationshipType, OtherRelationshipType, PacingPattern, PaymentFrequency
 
 class CashFlowBase(BaseModel):
     date: date
@@ -160,6 +160,7 @@ class InvestmentBase(BaseModel):
     benchmark_index: Optional[str] = None
     
     # Pacing Model Parameters
+    pacing_pattern: Optional[PacingPattern] = None
     target_irr: Optional[float] = Field(default=0.15, ge=0, le=1.0, description="Target IRR (0.15 = 15%)")
     target_moic: Optional[float] = Field(default=2.5, ge=1.0, le=10.0, description="Target MOIC multiple")
     fund_life: Optional[int] = Field(default=10, ge=5, le=15, description="Total fund life in years")
@@ -168,7 +169,12 @@ class InvestmentBase(BaseModel):
     call_schedule: Optional[CallScheduleType] = Field(default=CallScheduleType.STEADY)
     distribution_timing: Optional[DistributionTimingType] = Field(default=DistributionTimingType.BACKEND)
     forecast_enabled: Optional[bool] = Field(default=True)
-    
+
+    # Investment-Specific Parameters (override pacing patterns)
+    interest_rate: Optional[float] = Field(None, ge=0, le=1.0, description="Annual interest rate for loans/credit (0.05 = 5%)")
+    maturity_date: Optional[date] = Field(None, description="Maturity date for loans/fixed-term instruments")
+    payment_frequency: Optional[PaymentFrequency] = Field(None, description="Payment frequency for loans and credit instruments")
+
     # Investment Status Management
     status: InvestmentStatus = Field(default=InvestmentStatus.ACTIVE)
     realization_date: Optional[date] = None

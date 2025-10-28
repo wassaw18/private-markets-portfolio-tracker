@@ -1183,7 +1183,6 @@ const Benchmarks: React.FC = () => {
       <div className="benchmarks-container">
         <div className="luxury-card page-header">
           <h1 className="luxury-heading-1">Benchmark Analysis</h1>
-          <p className="luxury-body-large">Compare performance against industry benchmarks and reference data</p>
         </div>
         <div className="loading-message">Loading benchmark data...</div>
       </div>
@@ -1194,7 +1193,6 @@ const Benchmarks: React.FC = () => {
     <div className="benchmarks-container">
       <div className="luxury-card page-header">
         <h1 className="luxury-heading-1">Benchmark Analysis</h1>
-        <p className="luxury-body-large">Compare performance against industry benchmarks and reference data</p>
       </div>
 
       <div className="benchmarks-header">

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Investment } from '../types/investment';
+import { Investment, PacingPattern, AssetClass } from '../types/investment';
 import { investmentAPI } from '../services/api';
 import './PacingModelPanel.css';
 
 interface PacingModelInputs {
+  pacing_pattern?: PacingPattern;
   target_irr: number;
   target_moic: number;
   fund_life: number;
@@ -13,6 +14,75 @@ interface PacingModelInputs {
   distribution_timing: 'Early' | 'Backend' | 'Steady';
   forecast_enabled: boolean;
 }
+
+// Pattern descriptions and default parameters
+const PATTERN_DESCRIPTIONS: Record<PacingPattern, {
+  title: string;
+  description: string;
+  bestFor: string;
+  defaultMOIC: number;
+}> = {
+  [PacingPattern.IMMEDIATE_STEADY_YIELD]: {
+    title: "Immediate Steady Yield",
+    description: "100% capital call upfront, steady quarterly yield payments, principal at maturity",
+    bestFor: "Private debt, loans, bonds with regular interest",
+    defaultMOIC: 1.3
+  },
+  [PacingPattern.IMMEDIATE_BULLET]: {
+    title: "Immediate Bullet",
+    description: "100% capital call upfront, single bullet payment at maturity",
+    bestFor: "Zero-coupon bonds, short-term notes",
+    defaultMOIC: 1.2
+  },
+  [PacingPattern.TRADITIONAL_PE]: {
+    title: "Traditional PE",
+    description: "4-year capital deployment, backend-loaded distributions",
+    bestFor: "Private equity buyout funds",
+    defaultMOIC: 2.0
+  },
+  [PacingPattern.VENTURE_CAPITAL]: {
+    title: "Venture Capital",
+    description: "Fast deployment, long tail distributions with binary outcomes",
+    bestFor: "VC funds, early-stage investing",
+    defaultMOIC: 2.5
+  },
+  [PacingPattern.REAL_ESTATE_CORE]: {
+    title: "Real Estate Core",
+    description: "Moderate deployment, steady income plus appreciation",
+    bestFor: "Core real estate, stabilized properties",
+    defaultMOIC: 1.8
+  },
+  [PacingPattern.REAL_ESTATE_OPPORTUNISTIC]: {
+    title: "Real Estate Opportunistic",
+    description: "Fast deployment, lumpy exits, value-add strategies",
+    bestFor: "Opportunistic real estate, development",
+    defaultMOIC: 2.2
+  },
+  [PacingPattern.CREDIT_FUND]: {
+    title: "Credit Fund",
+    description: "Steady deployment and repayments, regular interest payments",
+    bestFor: "Direct lending, mezzanine debt",
+    defaultMOIC: 1.5
+  },
+  [PacingPattern.CUSTOM]: {
+    title: "Custom",
+    description: "User-defined cash flow pattern",
+    bestFor: "Unique structures or manual forecasting",
+    defaultMOIC: 2.0
+  }
+};
+
+// Asset class default patterns
+const ASSET_CLASS_DEFAULT_PATTERNS: Record<AssetClass, PacingPattern> = {
+  [AssetClass.PRIVATE_CREDIT]: PacingPattern.IMMEDIATE_STEADY_YIELD,
+  [AssetClass.PRIVATE_EQUITY]: PacingPattern.TRADITIONAL_PE,
+  [AssetClass.REAL_ESTATE]: PacingPattern.REAL_ESTATE_CORE,
+  [AssetClass.VENTURE_CAPITAL]: PacingPattern.VENTURE_CAPITAL,
+  [AssetClass.REAL_ASSETS]: PacingPattern.REAL_ESTATE_CORE,
+  [AssetClass.PUBLIC_EQUITY]: PacingPattern.CUSTOM,
+  [AssetClass.PUBLIC_FIXED_INCOME]: PacingPattern.CUSTOM,
+  [AssetClass.CASH_AND_EQUIVALENTS]: PacingPattern.CUSTOM
+};
 
 interface PacingModelPanelProps {
   investment: Investment;
@@ -26,7 +96,16 @@ const PacingModelPanel: React.FC<PacingModelPanelProps> = ({ investment, onUpdat
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   
+  // Determine the default pattern based on asset class if none is set
+  const getDefaultPattern = (): PacingPattern => {
+    if (investment.pacing_pattern) {
+      return investment.pacing_pattern;
+    }
+    return ASSET_CLASS_DEFAULT_PATTERNS[investment.asset_class] || PacingPattern.TRADITIONAL_PE;
+  };
+
   const [inputs, setInputs] = useState<PacingModelInputs>({
+    pacing_pattern: investment.pacing_pattern,
     target_irr: investment.target_irr || 0.15,
     target_moic: investment.target_moic || 2.5,
     fund_life: investment.fund_life || 10,
@@ -39,6 +118,7 @@ const PacingModelPanel: React.FC<PacingModelPanelProps> = ({ investment, onUpdat
 
   useEffect(() => {
     setInputs({
+      pacing_pattern: investment.pacing_pattern,
       target_irr: investment.target_irr || 0.15,
       target_moic: investment.target_moic || 2.5,
       fund_life: investment.fund_life || 10,
@@ -90,6 +170,7 @@ const PacingModelPanel: React.FC<PacingModelPanelProps> = ({ investment, onUpdat
 
   const handleCancel = () => {
     setInputs({
+      pacing_pattern: investment.pacing_pattern,
       target_irr: investment.target_irr || 0.15,
       target_moic: investment.target_moic || 2.5,
       fund_life: investment.fund_life || 10,
@@ -147,6 +228,62 @@ const PacingModelPanel: React.FC<PacingModelPanelProps> = ({ investment, onUpdat
           </div>
 
           {error && <div className="error-message">{error}</div>}
+
+          {/* Pattern Selector Section */}
+          <div className="pattern-selector-section">
+            <h4>Cash Flow Pattern</h4>
+            <div className="pattern-info">
+              {inputs.pacing_pattern ? (
+                <>
+                  <div className="current-pattern">
+                    <span className="pattern-label">Current Pattern:</span>
+                    <span className="pattern-name">{inputs.pacing_pattern}</span>
+                    {!investment.pacing_pattern && (
+                      <span className="default-badge">Default</span>
+                    )}
+                  </div>
+                  <div className="pattern-description">
+                    <p><strong>Description:</strong> {PATTERN_DESCRIPTIONS[inputs.pacing_pattern].description}</p>
+                    <p><strong>Best for:</strong> {PATTERN_DESCRIPTIONS[inputs.pacing_pattern].bestFor}</p>
+                    <p><strong>Target MOIC:</strong> {PATTERN_DESCRIPTIONS[inputs.pacing_pattern].defaultMOIC}x</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="current-pattern">
+                    <span className="pattern-label">Current Pattern:</span>
+                    <span className="pattern-name">{getDefaultPattern()}</span>
+                    <span className="default-badge">Default (based on {investment.asset_class})</span>
+                  </div>
+                  <div className="pattern-description">
+                    <p><strong>Description:</strong> {PATTERN_DESCRIPTIONS[getDefaultPattern()].description}</p>
+                    <p><strong>Best for:</strong> {PATTERN_DESCRIPTIONS[getDefaultPattern()].bestFor}</p>
+                    <p><strong>Target MOIC:</strong> {PATTERN_DESCRIPTIONS[getDefaultPattern()].defaultMOIC}x</p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {isEditing && (
+              <div className="pattern-selector">
+                <label>Change Pattern:</label>
+                <select
+                  value={inputs.pacing_pattern || getDefaultPattern()}
+                  onChange={(e) => handleInputChange('pacing_pattern', e.target.value as PacingPattern)}
+                  className="pattern-select"
+                >
+                  <option value={PacingPattern.IMMEDIATE_STEADY_YIELD}>Immediate Steady Yield</option>
+                  <option value={PacingPattern.IMMEDIATE_BULLET}>Immediate Bullet</option>
+                  <option value={PacingPattern.TRADITIONAL_PE}>Traditional PE</option>
+                  <option value={PacingPattern.VENTURE_CAPITAL}>Venture Capital</option>
+                  <option value={PacingPattern.REAL_ESTATE_CORE}>Real Estate Core</option>
+                  <option value={PacingPattern.REAL_ESTATE_OPPORTUNISTIC}>Real Estate Opportunistic</option>
+                  <option value={PacingPattern.CREDIT_FUND}>Credit Fund</option>
+                  <option value={PacingPattern.CUSTOM}>Custom</option>
+                </select>
+              </div>
+            )}
+          </div>
 
           <div className="parameters-grid">
             <div className="parameter-section">
@@ -229,9 +366,9 @@ const PacingModelPanel: React.FC<PacingModelPanelProps> = ({ investment, onUpdat
                     onChange={(e) => handleInputChange('call_schedule', e.target.value as any)}
                     className="parameter-select"
                   >
-                    <option value="Front Loaded">Front Loaded (40%-35%-20%-5%)</option>
-                    <option value="Steady">Steady (25%-30%-30%-15%)</option>
-                    <option value="Back Loaded">Back Loaded (15%-25%-35%-25%)</option>
+                    <option value="Front Loaded">Fast (Front-loaded deployment)</option>
+                    <option value="Steady">Even (Steady deployment)</option>
+                    <option value="Back Loaded">Slow (Back-loaded deployment)</option>
                   </select>
                 ) : (
                   <span className="parameter-value">{inputs.call_schedule}</span>
@@ -245,9 +382,9 @@ const PacingModelPanel: React.FC<PacingModelPanelProps> = ({ investment, onUpdat
                     onChange={(e) => handleInputChange('distribution_timing', e.target.value as any)}
                     className="parameter-select"
                   >
-                    <option value="Early">Early (Starts year 3)</option>
-                    <option value="Steady">Steady (After investment period)</option>
-                    <option value="Backend">Backend (Year after investment period)</option>
+                    <option value="Early">Fast (Early distributions)</option>
+                    <option value="Steady">Even (Mid-period distributions)</option>
+                    <option value="Backend">Slow (Back-end distributions)</option>
                   </select>
                 ) : (
                   <span className="parameter-value">{inputs.distribution_timing}</span>

@@ -27,6 +27,8 @@ from ..schemas import (
 from .. import crud_tenant
 from .. import dashboard
 from ..tenant_calendar_service import create_tenant_calendar_service
+from ..tenant_unified_forecast_service import create_tenant_unified_forecast_service
+from ..models import ForecastScenario
 
 router = APIRouter(prefix="/api", tags=["Tenant API"])
 
@@ -264,6 +266,173 @@ def read_investments_by_entity(
     return crud_tenant.get_investments_by_entity(
         db=db, entity_id=entity_id, tenant_id=current_user.tenant_id
     )
+
+@router.put("/investments/{investment_id}/pacing-inputs", response_model=Investment)
+def update_pacing_inputs(
+    investment_id: str,
+    pacing_inputs: dict,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """
+    Update pacing model parameters for an investment.
+
+    Accepts a dict with any of these fields:
+    - pacing_pattern: PacingPattern enum value
+    - target_irr: float (0.0 to 1.0)
+    - target_moic: float
+    - fund_life: int (years)
+    - investment_period: int (years)
+    - bow_factor: float (0.1 to 0.5)
+    - call_schedule: 'Front Loaded' | 'Steady' | 'Back Loaded'
+    - distribution_timing: 'Early' | 'Backend' | 'Steady'
+    - forecast_enabled: bool
+    """
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    # Create InvestmentUpdate with the pacing inputs
+    update_data = InvestmentUpdate(**pacing_inputs)
+
+    updated_investment = crud_tenant.update_investment(
+        db=db,
+        investment_id=investment_id,
+        tenant_id=current_user.tenant_id,
+        investment_update=update_data,
+        updated_by_user_id=current_user.id
+    )
+
+    if updated_investment is None:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    return updated_investment
+
+@router.post("/investments/{investment_id}/forecast")
+def generate_forecast(
+    investment_id: str,
+    current_user: User = Depends(require_contributor),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate cash flow forecasts for an investment using the pacing model.
+
+    Generates BASE, BULL, and BEAR scenario forecasts based on the investment's
+    pacing model parameters (pattern, MOIC, IRR, fund life, etc.)
+    """
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    try:
+        from ..pacing_model import create_pacing_model_engine
+
+        # Create pacing model engine
+        engine = create_pacing_model_engine(db)
+
+        # Update forecasts for all scenarios
+        success = engine.update_investment_forecast(investment.id)
+
+        if not success:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to generate forecast. Ensure forecast is enabled and all required parameters are set."
+            )
+
+        return {
+            "message": "Forecast generated successfully",
+            "investment_id": investment_id,
+            "last_forecast_date": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Forecast generation error: {error_traceback}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating forecast: {str(e)}"
+        )
+
+@router.get("/investments/{investment_id}/forecast")
+def get_forecast(
+    investment_id: str,
+    scenario: str = Query("BASE", description="Forecast scenario (BASE, BULL, BEAR)"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get generated forecasts for an investment.
+
+    Returns the most recent forecast data for the specified scenario.
+    """
+    # Verify investment belongs to tenant
+    investment = crud_tenant.get_investment(db, investment_id, current_user.tenant_id)
+    if not investment:
+        raise HTTPException(status_code=404, detail="Investment not found")
+
+    # LP data isolation: verify LP user can only access their entity's investments
+    if current_user.role == models.UserRole.LP_CLIENT:
+        if not current_user.entity_id or investment.entity_id != current_user.entity_id:
+            raise HTTPException(status_code=404, detail="Investment not found")
+
+    try:
+        # Validate and convert scenario string to enum
+        try:
+            forecast_scenario = ForecastScenario[scenario.upper()]
+        except KeyError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid scenario: {scenario}. Valid options: BASE, BULL, BEAR"
+            )
+
+        # Query forecasts
+        forecasts = db.query(models.CashFlowForecast).filter(
+            models.CashFlowForecast.investment_id == investment.id,
+            models.CashFlowForecast.scenario == forecast_scenario
+        ).order_by(models.CashFlowForecast.forecast_year).all()
+
+        if not forecasts:
+            raise HTTPException(
+                status_code=404,
+                detail="No forecasts found for this investment. Generate forecasts first."
+            )
+
+        # Format response
+        return {
+            "investment_id": investment_id,
+            "investment_name": investment.name,
+            "scenario": scenario,
+            "last_forecast_date": investment.last_forecast_date.isoformat() if investment.last_forecast_date else None,
+            "forecasts": [
+                {
+                    "forecast_year": f.forecast_year,
+                    "period_start": f.forecast_period_start.isoformat(),
+                    "period_end": f.forecast_period_end.isoformat(),
+                    "projected_calls": f.projected_calls,
+                    "projected_distributions": f.projected_distributions,
+                    "projected_nav": f.projected_nav,
+                    "cumulative_calls": f.cumulative_calls,
+                    "cumulative_distributions": f.cumulative_distributions,
+                    "cumulative_net_cf": f.cumulative_net_cf,
+                    "confidence_level": f.confidence_level
+                }
+                for f in forecasts
+            ]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Forecast retrieval error: {error_traceback}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving forecast: {str(e)}"
+        )
 
 @router.get("/investments/{investment_id}/performance", response_model=InvestmentPerformance)
 def get_investment_performance(
@@ -1107,6 +1276,73 @@ def get_calendar_heatmap(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving heatmap data: {str(e)}")
+
+# =============================================================================
+# Unified Forecast Endpoints (Combining Manual + Pacing Model)
+# =============================================================================
+
+@router.get("/forecasts/unified")
+def get_unified_forecasts(
+    start_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
+    end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
+    include_manual: bool = Query(True, description="Include manual future cash flows"),
+    include_pacing_model: bool = Query(True, description="Include pacing model forecasts"),
+    scenario: str = Query("BASE", description="Forecast scenario (BASE, BULL, BEAR)"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get unified forecasts combining manual entries and pacing model forecasts
+
+    This endpoint merges:
+    1. Manual future cash flows (user-entered cash flows with date > today)
+    2. Backend pacing model forecasts (sophisticated J-curve based estimates)
+
+    Returns daily aggregated cash flows with source tracking and confidence levels.
+    """
+    try:
+        # Validate and convert scenario string to enum
+        try:
+            forecast_scenario = ForecastScenario[scenario.upper()]
+        except KeyError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid scenario: {scenario}. Valid options: BASE, BULL, BEAR"
+            )
+
+        # Validate date range
+        if start_date > end_date:
+            raise HTTPException(
+                status_code=400,
+                detail="Start date must be before or equal to end date"
+            )
+
+        # Create unified forecast service
+        forecast_service = create_tenant_unified_forecast_service(db, current_user.tenant_id)
+
+        # Get daily aggregates
+        daily_flows = forecast_service.get_daily_aggregates(
+            start_date, end_date, include_manual, include_pacing_model, forecast_scenario
+        )
+
+        return {
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+            "include_manual": include_manual,
+            "include_pacing_model": include_pacing_model,
+            "scenario": scenario,
+            "daily_flows": daily_flows
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Unified forecast error: {error_traceback}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving unified forecasts: {str(e)}"
+        )
 
 # =============================================================================
 # Additional CRUD Endpoints for Cash Flows and Valuations

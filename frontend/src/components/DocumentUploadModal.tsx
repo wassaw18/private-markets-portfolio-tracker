@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { DocumentCategory, DocumentStatus, DocumentUploadForm } from '../types/document';
+import { DocumentCategory, DocumentStatus, DocumentUploadForm, DocumentCategoryGroup, getCategoryGroup } from '../types/document';
 import { validateDocument, ValidationResult } from '../utils/validation';
 import { useAuth } from '../contexts/AuthContext';
 import { documentAPI } from '../services/api';
@@ -19,6 +19,7 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
     title: '',
     description: '',
     category: DocumentCategory.OTHER,
+    category_group: DocumentCategoryGroup.OTHER,
     status: DocumentStatus.PENDING_REVIEW,
     document_date: '',
     due_date: '',
@@ -26,7 +27,8 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
     entity_id: null,
     is_confidential: false,
     uploaded_by: authState.user?.username || '',
-    tags: ''
+    tags: '',
+    document_metadata: {}
   });
 
   const [loading, setLoading] = useState(false);
@@ -96,6 +98,27 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
     }));
   };
 
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCategory = e.target.value as DocumentCategory;
+    setFormData(prev => ({
+      ...prev,
+      category: newCategory,
+      category_group: getCategoryGroup(newCategory),
+      document_metadata: {} // Reset metadata when category changes
+    }));
+  };
+
+  const handleMetadataChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      document_metadata: {
+        ...prev.document_metadata,
+        [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      }
+    }));
+  };
+
   const handleEntityChange = (entityId: number | null) => {
     setFormData(prev => ({
       ...prev,
@@ -134,8 +157,9 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
       uploadData.append('file', formData.file!);
       uploadData.append('title', formData.title);
       uploadData.append('category', formData.category);
+      uploadData.append('category_group', formData.category_group);
       uploadData.append('status', formData.status);
-      
+
       if (formData.description) uploadData.append('description', formData.description);
       if (formData.document_date) uploadData.append('document_date', formData.document_date);
       if (formData.due_date) uploadData.append('due_date', formData.due_date);
@@ -143,7 +167,12 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
       if (formData.entity_id) uploadData.append('entity_id', formData.entity_id.toString());
       if (formData.uploaded_by) uploadData.append('uploaded_by', formData.uploaded_by);
       if (formData.tags) uploadData.append('tags', formData.tags);
-      
+
+      // Add document metadata as JSON string if not empty
+      if (Object.keys(formData.document_metadata).length > 0) {
+        uploadData.append('document_metadata', JSON.stringify(formData.document_metadata));
+      }
+
       uploadData.append('is_confidential', formData.is_confidential.toString());
 
       await documentAPI.uploadDocument(uploadData);
@@ -258,12 +287,61 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
                   id="category"
                   name="category"
                   value={formData.category}
-                  onChange={handleInputChange}
+                  onChange={handleCategoryChange}
                   required
                 >
-                  {Object.values(DocumentCategory).map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
+                  <optgroup label="━━━ TAX DOCUMENTS ━━━">
+                    <option value={DocumentCategory.K1}>{DocumentCategory.K1}</option>
+                    <option value={DocumentCategory.FORM_1099}>{DocumentCategory.FORM_1099}</option>
+                    <option value={DocumentCategory.W9}>{DocumentCategory.W9}</option>
+                    <option value={DocumentCategory.W2}>{DocumentCategory.W2}</option>
+                    <option value={DocumentCategory.OTHER_TAX_DOCUMENT}>{DocumentCategory.OTHER_TAX_DOCUMENT}</option>
+                  </optgroup>
+
+                  <optgroup label="━━━ NOTICES & STATEMENTS ━━━">
+                    <option value={DocumentCategory.CAPITAL_CALL}>{DocumentCategory.CAPITAL_CALL}</option>
+                    <option value={DocumentCategory.DISTRIBUTION_NOTICE}>{DocumentCategory.DISTRIBUTION_NOTICE}</option>
+                    <option value={DocumentCategory.CONTRIBUTION_NOTICE}>{DocumentCategory.CONTRIBUTION_NOTICE}</option>
+                    <option value={DocumentCategory.RETURN_OF_CAPITAL}>{DocumentCategory.RETURN_OF_CAPITAL}</option>
+                    <option value={DocumentCategory.NAV_STATEMENT}>{DocumentCategory.NAV_STATEMENT}</option>
+                    <option value={DocumentCategory.GP_CORRESPONDENCE}>{DocumentCategory.GP_CORRESPONDENCE}</option>
+                    <option value={DocumentCategory.INVESTOR_UPDATE}>{DocumentCategory.INVESTOR_UPDATE}</option>
+                    <option value={DocumentCategory.NOTICE}>{DocumentCategory.NOTICE}</option>
+                    <option value={DocumentCategory.MEETING_MINUTES}>{DocumentCategory.MEETING_MINUTES}</option>
+                  </optgroup>
+
+                  <optgroup label="━━━ PERFORMANCE ━━━">
+                    <option value={DocumentCategory.PERFORMANCE_REPORT}>{DocumentCategory.PERFORMANCE_REPORT}</option>
+                  </optgroup>
+
+                  <optgroup label="━━━ LEGAL DOCUMENTS ━━━">
+                    <option value={DocumentCategory.LEGAL_DOCUMENT}>{DocumentCategory.LEGAL_DOCUMENT}</option>
+                    <option value={DocumentCategory.SIDE_LETTER}>{DocumentCategory.SIDE_LETTER}</option>
+                    <option value={DocumentCategory.SUBSCRIPTION_DOCUMENT}>{DocumentCategory.SUBSCRIPTION_DOCUMENT}</option>
+                    <option value={DocumentCategory.PARTNERSHIP_AGREEMENT}>{DocumentCategory.PARTNERSHIP_AGREEMENT}</option>
+                    <option value={DocumentCategory.OPERATING_AGREEMENT}>{DocumentCategory.OPERATING_AGREEMENT}</option>
+                    <option value={DocumentCategory.AMENDMENT}>{DocumentCategory.AMENDMENT}</option>
+                  </optgroup>
+
+                  <optgroup label="━━━ FINANCIAL STATEMENTS ━━━">
+                    <option value={DocumentCategory.FINANCIAL_STATEMENT}>{DocumentCategory.FINANCIAL_STATEMENT}</option>
+                    <option value={DocumentCategory.AUDITED_FINANCIALS}>{DocumentCategory.AUDITED_FINANCIALS}</option>
+                    <option value={DocumentCategory.BALANCE_SHEET}>{DocumentCategory.BALANCE_SHEET}</option>
+                    <option value={DocumentCategory.INCOME_STATEMENT}>{DocumentCategory.INCOME_STATEMENT}</option>
+                    <option value={DocumentCategory.CASH_FLOW_STATEMENT}>{DocumentCategory.CASH_FLOW_STATEMENT}</option>
+                  </optgroup>
+
+                  <optgroup label="━━━ INVESTMENT DOCUMENTS ━━━">
+                    <option value={DocumentCategory.INVESTMENT_MEMO}>{DocumentCategory.INVESTMENT_MEMO}</option>
+                    <option value={DocumentCategory.DUE_DILIGENCE_REPORT}>{DocumentCategory.DUE_DILIGENCE_REPORT}</option>
+                    <option value={DocumentCategory.VALUATION_REPORT}>{DocumentCategory.VALUATION_REPORT}</option>
+                    <option value={DocumentCategory.APPRAISAL}>{DocumentCategory.APPRAISAL}</option>
+                    <option value={DocumentCategory.OTHER_DILIGENCE_ITEM}>{DocumentCategory.OTHER_DILIGENCE_ITEM}</option>
+                  </optgroup>
+
+                  <optgroup label="━━━ OTHER ━━━">
+                    <option value={DocumentCategory.OTHER}>{DocumentCategory.OTHER}</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -361,10 +439,372 @@ const DocumentUploadModal: React.FC<Props> = ({ onSuccess, onCancel }) => {
             </div>
           </div>
 
+          {/* Category-Specific Metadata */}
+          {formData.category_group === DocumentCategoryGroup.TAX_DOCUMENTS && (
+            <div className="form-section">
+              <label className="section-label">Tax Document Details</label>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="tax_year">Tax Year</label>
+                  <input
+                    type="text"
+                    id="tax_year"
+                    name="tax_year"
+                    value={formData.document_metadata.tax_year || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., 2024"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="document_type">Document Type</label>
+                  <input
+                    type="text"
+                    id="document_type"
+                    name="document_type"
+                    value={formData.document_metadata.document_type || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., Final, Amended"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="filing_status">Filing Status</label>
+                  <select
+                    id="filing_status"
+                    name="filing_status"
+                    value={formData.document_metadata.filing_status || ''}
+                    onChange={handleMetadataChange}
+                  >
+                    <option value="">Select status...</option>
+                    <option value="Single">Single</option>
+                    <option value="Married Filing Jointly">Married Filing Jointly</option>
+                    <option value="Married Filing Separately">Married Filing Separately</option>
+                    <option value="Head of Household">Head of Household</option>
+                  </select>
+                </div>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="is_amendment"
+                      checked={formData.document_metadata.is_amendment || false}
+                      onChange={handleMetadataChange}
+                    />
+                    <span>This is an amended return</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {formData.category_group === DocumentCategoryGroup.NOTICES_AND_STATEMENTS && (
+            <div className="form-section">
+              <label className="section-label">Notice & Statement Details</label>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="statement_notice_date">Notice Date</label>
+                  <input
+                    type="date"
+                    id="statement_notice_date"
+                    name="statement_notice_date"
+                    value={formData.document_metadata.statement_notice_date || ''}
+                    onChange={handleMetadataChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="amount">Amount</label>
+                  <input
+                    type="text"
+                    id="amount"
+                    name="amount"
+                    value={formData.document_metadata.amount || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., $50,000"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="from_sender">From/Sender</label>
+                  <input
+                    type="text"
+                    id="from_sender"
+                    name="from_sender"
+                    value={formData.document_metadata.from_sender || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="GP or fund name"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="subject">Subject</label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.document_metadata.subject || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="Brief subject"
+                  />
+                </div>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="response_required"
+                      checked={formData.document_metadata.response_required || false}
+                      onChange={handleMetadataChange}
+                    />
+                    <span>Response required</span>
+                  </label>
+                </div>
+                {formData.document_metadata.response_required && (
+                  <div className="form-group">
+                    <label htmlFor="response_due_date">Response Due Date</label>
+                    <input
+                      type="date"
+                      id="response_due_date"
+                      name="response_due_date"
+                      value={formData.document_metadata.response_due_date || ''}
+                      onChange={handleMetadataChange}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {formData.category_group === DocumentCategoryGroup.PERFORMANCE && (
+            <div className="form-section">
+              <label className="section-label">Performance Report Details</label>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="report_period">Report Period</label>
+                  <input
+                    type="text"
+                    id="report_period"
+                    name="report_period"
+                    value={formData.document_metadata.report_period || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., Q1 2024, 2024 Annual"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="as_of_date">As Of Date</label>
+                  <input
+                    type="date"
+                    id="as_of_date"
+                    name="as_of_date"
+                    value={formData.document_metadata.as_of_date || ''}
+                    onChange={handleMetadataChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="report_type">Report Type</label>
+                  <select
+                    id="report_type"
+                    name="report_type"
+                    value={formData.document_metadata.report_type || ''}
+                    onChange={handleMetadataChange}
+                  >
+                    <option value="">Select type...</option>
+                    <option value="Quarterly">Quarterly</option>
+                    <option value="Annual">Annual</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Ad Hoc">Ad Hoc</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {formData.category_group === DocumentCategoryGroup.LEGAL_DOCUMENTS && (
+            <div className="form-section">
+              <label className="section-label">Legal Document Details</label>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="effective_date">Effective Date</label>
+                  <input
+                    type="date"
+                    id="effective_date"
+                    name="effective_date"
+                    value={formData.document_metadata.effective_date || ''}
+                    onChange={handleMetadataChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="parties_involved">Parties Involved</label>
+                  <input
+                    type="text"
+                    id="parties_involved"
+                    name="parties_involved"
+                    value={formData.document_metadata.parties_involved || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., Entity A, Entity B"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="document_version">Document Version</label>
+                  <input
+                    type="text"
+                    id="document_version"
+                    name="document_version"
+                    value={formData.document_metadata.document_version || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., v2.1, Final"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="supersedes">Supersedes</label>
+                  <input
+                    type="text"
+                    id="supersedes"
+                    name="supersedes"
+                    value={formData.document_metadata.supersedes || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="Previous version reference"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {formData.category_group === DocumentCategoryGroup.FINANCIAL_STATEMENTS && (
+            <div className="form-section">
+              <label className="section-label">Financial Statement Details</label>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="period_end_date">Period End Date</label>
+                  <input
+                    type="date"
+                    id="period_end_date"
+                    name="period_end_date"
+                    value={formData.document_metadata.period_end_date || ''}
+                    onChange={handleMetadataChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="fiscal_year">Fiscal Year</label>
+                  <input
+                    type="text"
+                    id="fiscal_year"
+                    name="fiscal_year"
+                    value={formData.document_metadata.fiscal_year || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., FY2024"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="auditor_name">Auditor Name</label>
+                  <input
+                    type="text"
+                    id="auditor_name"
+                    name="auditor_name"
+                    value={formData.document_metadata.auditor_name || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="Auditing firm name"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="audit_status">Audit Status</label>
+                  <select
+                    id="audit_status"
+                    name="audit_status"
+                    value={formData.document_metadata.audit_status || ''}
+                    onChange={handleMetadataChange}
+                  >
+                    <option value="">Select status...</option>
+                    <option value="Audited">Audited</option>
+                    <option value="Reviewed">Reviewed</option>
+                    <option value="Compiled">Compiled</option>
+                    <option value="Unaudited">Unaudited</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {formData.category_group === DocumentCategoryGroup.INVESTMENT_DOCUMENTS && (
+            <div className="form-section">
+              <label className="section-label">Investment Document Details</label>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="valuation_date">Valuation Date</label>
+                  <input
+                    type="date"
+                    id="valuation_date"
+                    name="valuation_date"
+                    value={formData.document_metadata.valuation_date || ''}
+                    onChange={handleMetadataChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="prepared_by">Prepared By</label>
+                  <input
+                    type="text"
+                    id="prepared_by"
+                    name="prepared_by"
+                    value={formData.document_metadata.prepared_by || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="Firm or individual name"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="valuation_method">Valuation Method</label>
+                  <input
+                    type="text"
+                    id="valuation_method"
+                    name="valuation_method"
+                    value={formData.document_metadata.valuation_method || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="e.g., DCF, Market Comp"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="asset_investment_reference">Asset/Investment Reference</label>
+                  <input
+                    type="text"
+                    id="asset_investment_reference"
+                    name="asset_investment_reference"
+                    value={formData.document_metadata.asset_investment_reference || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="Reference to specific asset"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {formData.category_group === DocumentCategoryGroup.OTHER && (
+            <div className="form-section">
+              <label className="section-label">Other Document Details</label>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="custom_category">Custom Category</label>
+                  <input
+                    type="text"
+                    id="custom_category"
+                    name="custom_category"
+                    value={formData.document_metadata.custom_category || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="Describe the document type"
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label htmlFor="document_purpose">Document Purpose</label>
+                  <textarea
+                    id="document_purpose"
+                    name="document_purpose"
+                    value={formData.document_metadata.document_purpose || ''}
+                    onChange={handleMetadataChange}
+                    placeholder="Explain the purpose of this document"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Additional Options */}
           <div className="form-section">
             <label className="section-label">Additional Options</label>
-            
+
             <div className="form-group">
               <label htmlFor="tags">Tags</label>
               <input

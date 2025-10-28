@@ -81,6 +81,108 @@
   border: 1px solid #e9ecef;
 }
 
+/* Pattern Selector Section */
+.pattern-selector-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.pattern-selector-section h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 8px;
+}
+
+.pattern-info {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.current-pattern {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.pattern-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.pattern-name {
+  font-weight: 600;
+  color: #007bff;
+  font-size: 1.05rem;
+}
+
+.default-badge {
+  background: #28a745;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pattern-description {
+  color: #555;
+  line-height: 1.6;
+}
+
+.pattern-description p {
+  margin: 8px 0;
+}
+
+.pattern-description strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.pattern-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+.pattern-selector label {
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+.pattern-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background: white;
+  min-width: 250px;
+}
+
+.pattern-select:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
 .status-item {
   display: flex;
   align-items: center;

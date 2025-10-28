@@ -1,0 +1,382 @@
+.tax-tracking-container {
+  padding: var(--space-2xl);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Filters Section */
+.filters-card {
+  margin-bottom: var(--space-2xl);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3xl);
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.filter-label {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--luxury-navy);
+}
+
+.year-buttons {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.year-button {
+  padding: var(--space-md) var(--space-xl);
+  border: 2px solid var(--luxury-pale-gray);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  color: var(--luxury-navy);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-medium);
+  min-width: 80px;
+  box-shadow: var(--luxury-shadow-subtle);
+}
+
+.year-button:hover {
+  border-color: var(--luxury-gold);
+  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-white) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--luxury-shadow-medium);
+}
+
+.year-button.active {
+  border-color: var(--luxury-gold);
+  background: linear-gradient(135deg, var(--luxury-gold) 0%, var(--luxury-medium-gold) 100%);
+  color: var(--luxury-white);
+  box-shadow: var(--luxury-shadow-medium);
+  transform: translateY(-2px);
+}
+
+/* Summary Cards */
+.summary-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-xl);
+  margin-top: var(--space-xl);
+}
+
+.summary-metric-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  background: linear-gradient(135deg, var(--luxury-white) 0%, var(--luxury-cream) 100%);
+  border: 2px solid var(--luxury-pale-gray);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--luxury-shadow-subtle);
+  transition: all var(--transition-medium);
+}
+
+.summary-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--luxury-shadow-medium);
+}
+
+.summary-metric-card.success {
+  border-color: #10b981;
+}
+
+.summary-metric-card .metric-icon {
+  font-size: 2.5rem;
+}
+
+.summary-metric-card .metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.summary-metric-card .metric-label {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--luxury-dark-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-metric-card .metric-value {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--luxury-navy);
+}
+
+.summary-metric-card .metric-description {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-xs);
+  color: var(--luxury-dark-gray);
+  margin: 0;
+}
+
+/* Tax Table */
+.table-card {
+  margin-bottom: var(--space-2xl);
+}
+
+.tax-table-container {
+  overflow-x: auto;
+  margin-top: var(--space-xl);
+}
+
+.tax-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-family-primary);
+}
+
+.tax-table thead {
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 100%);
+}
+
+.tax-table th {
+  padding: var(--space-lg) var(--space-md);
+  text-align: left;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--luxury-white);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 3px solid var(--luxury-gold);
+  white-space: nowrap;
+}
+
+.tax-table th:first-child {
+  border-top-left-radius: var(--radius-md);
+}
+
+.tax-table th:last-child {
+  border-top-right-radius: var(--radius-md);
+}
+
+.tax-table tbody tr {
+  background: var(--luxury-white);
+  border-bottom: 1px solid var(--luxury-pale-gray);
+  transition: all var(--transition-fast);
+}
+
+.tax-table tbody tr:hover {
+  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-white) 100%);
+  box-shadow: var(--luxury-shadow-subtle);
+}
+
+.tax-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.tax-table td {
+  padding: var(--space-lg) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--luxury-navy);
+}
+
+.investment-name-cell {
+  font-weight: var(--font-weight-semibold);
+  color: var(--luxury-dark-blue);
+}
+
+.center-align {
+  text-align: center;
+}
+
+.right-align {
+  text-align: right;
+}
+
+.currency-cell {
+  font-family: var(--font-family-mono, 'Courier New', monospace);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Tax Document Badge */
+.tax-doc-badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  background: linear-gradient(135deg, var(--luxury-gold) 0%, var(--luxury-medium-gold) 100%);
+  color: var(--luxury-white);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Received Checkbox */
+.received-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--luxury-gold);
+}
+
+/* Activity Badge */
+.activity-badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.activity-badge.passive {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.activity-badge.active {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+/* Totals Row */
+.totals-row {
+  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-pale-gray) 100%) !important;
+  border-top: 3px solid var(--luxury-gold) !important;
+  font-weight: var(--font-weight-bold);
+}
+
+.totals-row:hover {
+  background: linear-gradient(135deg, var(--luxury-cream) 0%, var(--luxury-pale-gray) 100%) !important;
+}
+
+.totals-label {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--luxury-navy);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.totals-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--luxury-dark-blue);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: var(--space-4xl) var(--space-2xl);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: var(--space-lg);
+}
+
+.empty-message {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--luxury-navy);
+  margin-bottom: var(--space-md);
+}
+
+.empty-hint {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-md);
+  color: var(--luxury-dark-gray);
+}
+
+/* Info Banner */
+.info-banner {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #60a5fa;
+}
+
+.info-content {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: flex-start;
+}
+
+.info-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.info-text {
+  flex: 1;
+}
+
+.info-title {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--luxury-navy);
+  margin-bottom: var(--space-sm);
+}
+
+.info-description {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  color: var(--luxury-dark-gray);
+  line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+}
+
+@media (max-width: 768px) {
+  .tax-tracking-container {
+    padding: var(--space-lg);
+  }
+
+  .filters-grid {
+    gap: var(--space-lg);
+  }
+
+  .year-buttons {
+    flex-wrap: wrap;
+  }
+
+  .year-button {
+    flex: 1;
+    min-width: 70px;
+  }
+
+  .summary-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tax-table-container {
+    overflow-x: scroll;
+  }
+
+  .tax-table {
+    min-width: 900px;
+  }
+
+  .info-content {
+    flex-direction: column;
+  }
+}

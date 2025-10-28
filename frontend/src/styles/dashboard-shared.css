@@ -1,0 +1,311 @@
+/* ===================================================================
+   SHARED DASHBOARD STYLES - MASTER FILE
+   Used by: Dashboard, LPPortalDashboard, FundDashboard
+   ================================================================== */
+
+/* Portfolio Summary Container */
+.portfolio-summary {
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 50%, var(--luxury-medium-blue) 100%);
+  color: white;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-3xl);
+  margin-bottom: var(--space-3xl);
+  box-shadow: var(--luxury-shadow-medium);
+  border: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.portfolio-summary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.05);
+  z-index: 1;
+}
+
+.portfolio-summary > * {
+  position: relative;
+  z-index: 2;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.summary-header h3 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* Portfolio Value Hero Section */
+.portfolio-value-hero {
+  background: rgba(255,255,255,0.15);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl);
+  margin: var(--space-2xl) 0;
+  text-align: center;
+  border: 2px solid var(--luxury-gold);
+  box-shadow: var(--luxury-shadow-bold);
+  backdrop-filter: blur(20px);
+  position: relative;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.hero-label {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hero-value {
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-black);
+  font-family: var(--font-family-mono);
+  color: white;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  line-height: 1;
+  background: linear-gradient(135deg, white 0%, var(--luxury-cream) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Summary Grid */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.summary-section {
+  background: linear-gradient(135deg, var(--luxury-navy) 0%, var(--luxury-dark-blue) 50%, var(--luxury-medium-blue) 100%);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  backdrop-filter: none;
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: var(--luxury-shadow-medium);
+}
+
+.summary-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+/* Metric Cards - MASTER STYLING (No yellow!) */
+.summary-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.dashboard-metric-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+  height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard-metric-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
+  background: rgba(255,255,255,1);
+}
+
+.dashboard-metric-card label,
+.dashboard-metric-card .metric-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--luxury-text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.dashboard-metric-card .value,
+.dashboard-metric-card .metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: var(--font-family-mono);
+  color: var(--luxury-navy);
+  line-height: 1.2;
+}
+
+.dashboard-metric-card .metric-subtitle {
+  font-size: 0.875rem;
+  color: var(--luxury-text-secondary);
+  margin-top: 8px;
+}
+
+.dashboard-metric-card .metric-detail {
+  font-size: 0.75rem;
+  color: var(--luxury-text-secondary);
+  margin-top: 8px;
+}
+
+/* Metric Icons */
+.dashboard-metric-card .metric-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.dashboard-metric-card .metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Performance Colors */
+.value.positive,
+.metric-value.positive {
+  color: #2d5016 !important;
+  text-shadow: none;
+}
+
+.value.negative,
+.metric-value.negative {
+  color: #8b1a1a !important;
+  text-shadow: none;
+}
+
+.value.neutral,
+.metric-value.neutral {
+  color: var(--luxury-text-primary) !important;
+  text-shadow: none;
+}
+
+/* Capital Deployment */
+.capital-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.capital-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.capital-item:last-child {
+  border-bottom: none;
+}
+
+.capital-item.total-value {
+  padding: 12px 0;
+  border-top: 1px solid rgba(255,255,255,0.3);
+  margin-top: 0;
+  font-weight: 600;
+}
+
+.capital-item label {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.85);
+  font-weight: 500;
+}
+
+.capital-item .value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  font-family: var(--font-family-mono);
+  color: white;
+}
+
+.capital-item.total-value .value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Capital Metrics Grid (for LP Portal) */
+.capital-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+/* Loading & Error States */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: rgba(255,255,255,0.8);
+  font-size: 1.1rem;
+}
+
+.error-message {
+  background-color: rgba(255,255,255,0.1);
+  color: white;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .portfolio-summary {
+    padding: 20px;
+  }
+
+  .summary-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .portfolio-value-hero {
+    padding: 20px;
+    margin: 20px 0;
+  }
+
+  .hero-value {
+    font-size: 2.4rem;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .summary-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .capital-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

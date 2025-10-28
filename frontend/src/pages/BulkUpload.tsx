@@ -577,7 +577,6 @@ const BulkUpload: React.FC = () => {
     <>
       <div className="luxury-card page-header">
         <h1 className="luxury-heading-1">Document Management</h1>
-        <p className="luxury-body-large">Streamlined document upload and data management for portfolio administration</p>
       </div>
 
       {/* Advanced Options Toggle */}

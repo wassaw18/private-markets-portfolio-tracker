@@ -14,13 +14,14 @@ import Reports from './pages/Reports';
 import FundDashboard from './pages/FundDashboard';
 import LPCapitalAccounts from './pages/LPCapitalAccounts';
 import LPPortalDashboard from './pages/LPPortalDashboard';
+import TaxTracking from './pages/TaxTracking';
 import Signup from './pages/Signup';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PageErrorBoundary from './components/PageErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { setupGlobalErrorHandlers } from './hooks/useErrorHandler';
-import { getFilteredNavigation } from './config/navigationConfig';
+import { getFilteredNavigation, shouldShowNavItem, NavItem } from './config/navigationConfig';
 import './styles/luxury-design-system.css';
 import './App.css';
 
@@ -39,25 +40,73 @@ const Navigation: React.FC = () => {
 
   const navItems = getFilteredNavigation(accountType, userRole);
 
+  // Helper function to check if any child path is active
+  const isChildActive = (children: NavItem[] | undefined): boolean => {
+    if (!children) return false;
+    return children.some(child =>
+      location.pathname === child.path ||
+      (child.path === '/documents' && location.pathname === '/bulk-upload')
+    );
+  };
+
   return (
     <nav className="main-navigation">
       <div className="nav-links">
-        {navItems.map(item => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`nav-link ${
-              location.pathname === item.path ||
-              (item.path === '/dashboard' && location.pathname === '/') ||
-              (item.path === '/lp-portal' && location.pathname === '/') ||
-              (item.path === '/liquidity' && location.pathname === '/calendar') ||
-              (item.path === '/documents' && location.pathname === '/bulk-upload')
-              ? 'active' : ''
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
+        {navItems.map(item => {
+          // If item has children, render as dropdown
+          if (item.children && item.children.length > 0) {
+            const filteredChildren = item.children.filter(child =>
+              shouldShowNavItem(child, accountType, userRole)
+            );
+
+            if (filteredChildren.length === 0) return null;
+
+            const isActive = isChildActive(filteredChildren);
+
+            return (
+              <div key={item.path} className={`nav-dropdown ${isActive ? 'active' : ''}`}>
+                <span className="nav-link dropdown-trigger">
+                  {item.label}
+                  <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style={{ marginLeft: '4px' }}>
+                    <path fillRule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </span>
+                <div className="dropdown-menu">
+                  {filteredChildren.map(child => (
+                    <Link
+                      key={child.path}
+                      to={child.path}
+                      className={`dropdown-item ${
+                        location.pathname === child.path ||
+                        (child.path === '/documents' && location.pathname === '/bulk-upload')
+                        ? 'active' : ''
+                      }`}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
+          // Regular nav item without children
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`nav-link ${
+                location.pathname === item.path ||
+                (item.path === '/dashboard' && location.pathname === '/') ||
+                (item.path === '/lp-portal' && location.pathname === '/') ||
+                (item.path === '/liquidity' && location.pathname === '/calendar')
+                ? 'active' : ''
+              }`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
@@ -152,6 +201,11 @@ function AppContent() {
               <Route path="/documents" element={
                 <PageErrorBoundary pageName="Document Management">
                   <Documents />
+                </PageErrorBoundary>
+              } />
+              <Route path="/tax-tracking" element={
+                <PageErrorBoundary pageName="Tax Document Tracking">
+                  <TaxTracking />
                 </PageErrorBoundary>
               } />
               <Route path="/entities" element={

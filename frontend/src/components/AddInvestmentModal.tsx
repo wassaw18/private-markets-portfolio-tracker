@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { InvestmentCreate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating, TaxClassification, ActivityClassification } from '../types/investment';
+import { InvestmentCreate, AssetClass, InvestmentStructure, LiquidityProfile, ReportingFrequency, RiskRating, TaxClassification, ActivityClassification, PacingPattern, PaymentFrequency } from '../types/investment';
 import { investmentAPI } from '../services/api';
 import EntitySelector from './EntitySelector';
 import CreateEntityModal from './CreateEntityModal';
@@ -142,17 +142,17 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     let processedValue: any = value;
-    
+
     // Type conversion for numeric fields
     if (['vintage_year', 'commitment_amount', 'fees', 'target_raise'].includes(name)) {
       processedValue = parseFloat(value) || 0;
-    } else if (['management_fee', 'performance_fee', 'hurdle_rate'].includes(name)) {
+    } else if (['management_fee', 'performance_fee', 'hurdle_rate', 'interest_rate'].includes(name)) {
       // Convert percentage to decimal (e.g., 2.5% -> 0.025)
       processedValue = value ? parseFloat(value) / 100 : undefined;
     }
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: processedValue
@@ -232,6 +232,26 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
 
   const formatPercentageValue = (value?: number): string => {
     return value ? (value * 100).toString() : '';
+  };
+
+  // Helper function to determine if we should show loan-specific fields
+  const showLoanFields = (): boolean => {
+    return (
+      (formData.asset_class === AssetClass.PRIVATE_CREDIT) &&
+      (formData.investment_structure === InvestmentStructure.LOAN)
+    );
+  };
+
+  // Helper function to determine if we should show fund-specific fields (pattern selector)
+  const showFundFields = (): boolean => {
+    const fundStructures = [
+      InvestmentStructure.LIMITED_PARTNERSHIP,
+      InvestmentStructure.FUND_OF_FUNDS,
+      InvestmentStructure.CO_INVESTMENT,
+      InvestmentStructure.SEPARATE_ACCOUNT,
+      InvestmentStructure.HEDGE_FUND
+    ];
+    return fundStructures.includes(formData.investment_structure);
   };
 
   if (!isOpen) return null;
@@ -555,6 +575,94 @@ const AddInvestmentModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => 
                         ))}
                       </select>
                     </div>
+
+                    {/* Loan-specific fields: Show for Private Credit + Loan structure */}
+                    {showLoanFields() && (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor="interest_rate">Interest Rate (%) *</label>
+                          <input
+                            type="number"
+                            id="interest_rate"
+                            name="interest_rate"
+                            value={formatPercentageValue(formData.interest_rate)}
+                            onChange={handleChange}
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            placeholder="5.0"
+                            required
+                          />
+                          <small>Annual interest rate (e.g., 5.0 for 5%)</small>
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="payment_frequency">Payment Frequency *</label>
+                          <select
+                            id="payment_frequency"
+                            name="payment_frequency"
+                            value={formData.payment_frequency || ''}
+                            onChange={handleChange}
+                            required
+                          >
+                            <option value="">Select frequency</option>
+                            {Object.values(PaymentFrequency).map(freq => (
+                              <option key={freq} value={freq}>{freq}</option>
+                            ))}
+                          </select>
+                          <small>How often interest/principal payments are made</small>
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="maturity_date">Maturity Date *</label>
+                          <input
+                            type="date"
+                            id="maturity_date"
+                            name="maturity_date"
+                            value={formData.maturity_date || ''}
+                            onChange={handleChange}
+                            required
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Fund-specific fields: Show pattern selector for fund structures */}
+                    {showFundFields() && (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor="pacing_pattern">Pacing Pattern</label>
+                          <select
+                            id="pacing_pattern"
+                            name="pacing_pattern"
+                            value={formData.pacing_pattern || ''}
+                            onChange={handleChange}
+                          >
+                            <option value="">Select pacing pattern</option>
+                            {Object.values(PacingPattern).map(pattern => (
+                              <option key={pattern} value={pattern}>{pattern}</option>
+                            ))}
+                          </select>
+                          <small>Cash flow projection pattern for this fund</small>
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="target_moic">Target MOIC</label>
+                          <input
+                            type="number"
+                            id="target_moic"
+                            name="target_moic"
+                            value={formData.target_moic || ''}
+                            onChange={handleChange}
+                            min="1.0"
+                            max="10.0"
+                            step="0.1"
+                            placeholder="2.5"
+                          />
+                          <small>Target multiple on invested capital (e.g., 2.5 for 2.5x)</small>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

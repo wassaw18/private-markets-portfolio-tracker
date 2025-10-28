@@ -219,7 +219,6 @@ const Visuals: React.FC = () => {
       <div className="visuals-container">
         <div className="luxury-card page-header">
           <h1 className="luxury-heading-1">Portfolio Visuals & Analytics</h1>
-          <p className="luxury-body-large">Institutional-grade portfolio analysis and data visualization</p>
         </div>
         <div className="loading">Loading dashboard...</div>
       </div>
@@ -231,7 +230,6 @@ const Visuals: React.FC = () => {
       <div className="visuals-container">
         <div className="luxury-card page-header">
           <h1 className="luxury-heading-1">Portfolio Visuals & Analytics</h1>
-          <p className="luxury-body-large">Institutional-grade portfolio analysis and data visualization</p>
         </div>
         <div className="error-message">{error || 'Unable to load dashboard data'}</div>
       </div>
@@ -242,7 +240,6 @@ const Visuals: React.FC = () => {
     <div className="visuals-container">
       <div className="luxury-card page-header">
         <h1 className="luxury-heading-1">Portfolio Visuals & Analytics</h1>
-        <p className="luxury-body-large">Institutional-grade portfolio analysis and data visualization</p>
       </div>
 
       {/* Summary Statistics Bar */}

@@ -61,16 +61,35 @@ export enum ActivityClassification {
   PORTFOLIO = "Portfolio"
 }
 
+export enum PacingPattern {
+  TRADITIONAL_PE = "Traditional PE",
+  VENTURE_CAPITAL = "Venture Capital",
+  IMMEDIATE_STEADY_YIELD = "Immediate Steady Yield",
+  IMMEDIATE_BULLET = "Immediate Bullet",
+  REAL_ESTATE_CORE = "Real Estate Core",
+  REAL_ESTATE_OPPORTUNISTIC = "Real Estate Opportunistic",
+  CREDIT_FUND = "Credit Fund",
+  CUSTOM = "Custom"
+}
+
+export enum PaymentFrequency {
+  MONTHLY = "Monthly",
+  QUARTERLY = "Quarterly",
+  SEMI_ANNUALLY = "Semi-annually",
+  ANNUALLY = "Annually",
+  AT_MATURITY = "At Maturity"
+}
+
 export enum CashFlowType {
   // Capital calls and contributions
   CAPITAL_CALL = "Capital Call",
   CONTRIBUTION = "Contribution",
-  
+
   // Distributions
   DISTRIBUTION = "Distribution",
   YIELD = "Yield",
   RETURN_OF_PRINCIPAL = "Return of Principal",
-  
+
   // Fees
   FEES = "Fees"
 }
@@ -167,6 +186,7 @@ export interface Investment {
   benchmark_index?: string;
   
   // Pacing Model Parameters
+  pacing_pattern?: PacingPattern;
   target_irr?: number;
   target_moic?: number;
   fund_life?: number;
@@ -176,6 +196,11 @@ export interface Investment {
   distribution_timing?: 'Early' | 'Backend' | 'Steady';
   forecast_enabled?: boolean;
   last_forecast_date?: string;
+
+  // Investment-Specific Parameters (override pacing patterns)
+  interest_rate?: number;  // For loans and credit instruments (annual rate as decimal)
+  maturity_date?: string;  // For loans and fixed-term instruments
+  payment_frequency?: PaymentFrequency;  // Payment frequency for loans and credit instruments
   
   // Investment Status Management
   status: InvestmentStatus;
@@ -195,12 +220,12 @@ export interface InvestmentCreate {
   commitment_amount: number;
   called_amount?: number;
   fees?: number;
-  
+
   // Basic Information (new fields)
   manager?: string;
   target_raise?: number;
   geography_focus?: string;
-  
+
   // Financial Terms (new fields)
   commitment_date: string;  // Required for creation
   management_fee?: number;
@@ -209,7 +234,7 @@ export interface InvestmentCreate {
   distribution_target?: string;
   currency?: string;
   liquidity_profile: LiquidityProfile;
-  
+
   // Operational Details
   expected_maturity_date?: string;
   reporting_frequency?: ReportingFrequency;
@@ -217,7 +242,7 @@ export interface InvestmentCreate {
   email?: string;
   portal_link?: string;
   fund_administrator?: string;
-  
+
   // Legal & Risk
   fund_domicile?: string;
   tax_classification?: TaxClassification;
@@ -226,6 +251,15 @@ export interface InvestmentCreate {
   ic_approval_date?: string;
   risk_rating?: RiskRating;
   benchmark_index?: string;
+
+  // Pacing Model Parameters
+  pacing_pattern?: PacingPattern;
+  target_moic?: number;
+
+  // Investment-Specific Parameters (loan terms)
+  interest_rate?: number;
+  maturity_date?: string;
+  payment_frequency?: PaymentFrequency;
 }
 
 export interface InvestmentUpdate {
@@ -271,6 +305,7 @@ export interface InvestmentUpdate {
   benchmark_index?: string;
   
   // Pacing Model Parameters updates
+  pacing_pattern?: PacingPattern;
   target_irr?: number;
   target_moic?: number;
   fund_life?: number;

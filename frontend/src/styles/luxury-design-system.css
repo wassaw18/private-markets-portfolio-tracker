@@ -292,7 +292,7 @@ body {
   border-bottom: 1px solid var(--luxury-border);
   border-radius: 0;
   box-shadow: 0 2px 16px rgba(11, 20, 38, 0.06), 0 1px 4px rgba(11, 20, 38, 0.04);
-  margin: var(--space-2xl) 0 var(--space-lg) 0;
+  margin: var(--space-lg) 0 var(--space-lg) 0;
   padding: var(--space-xl) var(--space-3xl) var(--space-xl);
   position: relative;
   overflow: hidden;
@@ -314,7 +314,7 @@ body {
   font-size: var(--font-size-5xl);
   font-weight: var(--font-weight-black);
   letter-spacing: -0.025em;
-  text-align: center;
+  text-align: left;
   position: relative;
 }
 

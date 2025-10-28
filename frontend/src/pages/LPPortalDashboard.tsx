@@ -4,6 +4,7 @@ import { investmentAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import SectionErrorBoundary from '../components/SectionErrorBoundary';
 import '../styles/luxury-design-system.css';
+import '../styles/dashboard-shared.css';
 import './LPPortalDashboard.css';
 
 interface CapitalAccountSummary {
@@ -184,35 +185,35 @@ const LPPortalDashboard: React.FC = () => {
         <div className="luxury-card summary-card">
           <h2 className="luxury-heading-2 section-title">Capital Account Summary</h2>
           <div className="capital-metrics-grid">
-            <div className="capital-metric-card primary">
+            <div className="dashboard-metric-card">
               <div className="metric-icon">💰</div>
               <div className="metric-content">
                 <label className="metric-label">Total Commitment</label>
                 <span className="metric-value">{formatCurrency(capitalAccountSummary.total_commitment)}</span>
               </div>
             </div>
-            <div className="capital-metric-card">
+            <div className="dashboard-metric-card">
               <div className="metric-icon">📥</div>
               <div className="metric-content">
                 <label className="metric-label">Called Capital</label>
                 <span className="metric-value">{formatCurrency(capitalAccountSummary.total_called)}</span>
               </div>
             </div>
-            <div className="capital-metric-card">
+            <div className="dashboard-metric-card">
               <div className="metric-icon">📤</div>
               <div className="metric-content">
                 <label className="metric-label">Distributions</label>
                 <span className="metric-value positive">{formatCurrency(capitalAccountSummary.total_distributed)}</span>
               </div>
             </div>
-            <div className="capital-metric-card highlight">
+            <div className="dashboard-metric-card">
               <div className="metric-icon">📊</div>
               <div className="metric-content">
                 <label className="metric-label">Current NAV</label>
                 <span className="metric-value">{formatCurrency(capitalAccountSummary.current_nav)}</span>
               </div>
             </div>
-            <div className="capital-metric-card">
+            <div className="dashboard-metric-card">
               <div className="metric-icon">⏳</div>
               <div className="metric-content">
                 <label className="metric-label">Unfunded Commitment</label>

@@ -18,7 +18,6 @@ const Entities: React.FC = () => {
     <div className="entities-page">
       <div className="luxury-card page-header">
         <h1 className="luxury-heading-1">Entity & Relationship Management</h1>
-        <p className="luxury-body-large">Manage family office entities, relationships, and organizational structures</p>
       </div>
 
       <div className="entities-header">

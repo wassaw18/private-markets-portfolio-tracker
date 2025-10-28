@@ -11,6 +11,7 @@ export interface NavItem {
   accountTypes: AccountType[];  // Which account types can see this tab
   excludedRoles?: UserRole[];   // Which roles CANNOT see this tab (optional)
   requiredRoles?: UserRole[];   // If specified, ONLY these roles can see this tab (overrides excludedRoles)
+  children?: NavItem[];          // Optional child items for dropdown menus
 }
 
 /**
@@ -97,11 +98,23 @@ export const navigationConfig: NavItem[] = [
     accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER']
   },
 
-  // Operations (Documents) - All account types (LP_CLIENT can access for quarterly statements)
+  // Operations - Dropdown menu with Documents and Tax Tracking
   {
-    path: '/documents',
-    label: 'Documents',
-    accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER']
+    path: '/operations',
+    label: 'Operations',
+    accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER'],
+    children: [
+      {
+        path: '/documents',
+        label: 'Documents',
+        accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER']
+      },
+      {
+        path: '/tax-tracking',
+        label: 'Tax Tracking',
+        accountTypes: ['INDIVIDUAL', 'FAMILY_OFFICE', 'FUND_MANAGER']
+      }
+    ]
   }
 ];
 

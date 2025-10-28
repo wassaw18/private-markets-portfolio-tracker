@@ -180,7 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const user: User = JSON.parse(storedUser);
 
-        // Check if access token is expired
+        // Check if access token is expired and refresh if needed
         if (isTokenExpired()) {
           // Try to refresh token
           const refreshSuccess = await refreshToken();
@@ -188,30 +188,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             dispatch({ type: 'LOGIN_FAILURE' });
             return;
           }
+          // If refresh succeeded, get the new tokens from localStorage
+          const tokens: AuthTokens = {
+            access_token: localStorage.getItem('access_token')!,
+            refresh_token: localStorage.getItem('refresh_token')!,
+            token_type: 'bearer',
+            expires_in: 1800
+          };
+          dispatch({
+            type: 'RESTORE_SESSION',
+            payload: { user, tokens, accountType: storedAccountType || undefined }
+          });
+        } else {
+          // Token not expired, restore session immediately
+          const tokens: AuthTokens = {
+            access_token: accessToken,
+            refresh_token: refreshTokenValue,
+            token_type: 'bearer',
+            expires_in: 1800
+          };
+          dispatch({
+            type: 'RESTORE_SESSION',
+            payload: { user, tokens, accountType: storedAccountType || undefined }
+          });
         }
-
-        // Verify token is still valid
-        const isValid = await authAPI.verifyToken(accessToken);
-        if (!isValid) {
-          // Try to refresh token
-          const refreshSuccess = await refreshToken();
-          if (!refreshSuccess) {
-            dispatch({ type: 'LOGIN_FAILURE' });
-            return;
-          }
-        }
-
-        const tokens: AuthTokens = {
-          access_token: localStorage.getItem('access_token')!,
-          refresh_token: localStorage.getItem('refresh_token')!,
-          token_type: 'bearer',
-          expires_in: 1800 // Default 30 minutes
-        };
-
-        dispatch({
-          type: 'RESTORE_SESSION',
-          payload: { user, tokens, accountType: storedAccountType || undefined }
-        });
 
       } catch (error) {
         console.error('Error restoring session:', error);

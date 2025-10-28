@@ -60,7 +60,7 @@
   box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
 }
 
-/* Metrics Grid */
+/* Metrics Grid - Fund Dashboard Specific */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -68,71 +68,7 @@
   margin-bottom: 2.5rem;
 }
 
-.metric-card {
-  background: linear-gradient(135deg, #1a1f3a 0%, #252b4a 100%);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 8px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
-  border-color: rgba(212, 175, 55, 0.4);
-}
-
-.metric-card.primary {
-  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
-  border-color: #d4af37;
-}
-
-.metric-card.primary .metric-label,
-.metric-card.primary .metric-value,
-.metric-card.primary .metric-subtitle {
-  color: #0a0e27;
-}
-
-.metric-card.highlight {
-  border-color: #4a9eff;
-  background: linear-gradient(135deg, #1a1f3a 0%, #1e2945 100%);
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  color: #a0a4b8;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.metric-value {
-  font-size: 2rem;
-  font-weight: 300;
-  color: #d4af37;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.5px;
-}
-
-.metric-card.primary .metric-value {
-  font-size: 2.25rem;
-  font-weight: 400;
-}
-
-.metric-subtitle {
-  font-size: 0.875rem;
-  color: #7a7f9a;
-  font-weight: 300;
-}
-
-.metric-detail {
-  font-size: 0.8rem;
-  color: #7a7f9a;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(212, 175, 55, 0.1);
-}
+/* Note: .dashboard-metric-card styles are in dashboard-shared.css */
 
 /* Dashboard Sections */
 .dashboard-section {

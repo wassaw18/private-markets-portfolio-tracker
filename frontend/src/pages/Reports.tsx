@@ -271,25 +271,24 @@ const Reports: React.FC = () => {
   };
 
   return (
-    <div className="reports-page">
-      <div className="reports-header">
-        <h1>Reports</h1>
-        <p className="reports-subtitle">Generate professional PDF reports for your portfolio analytics</p>
+    <>
+      <div className="luxury-card page-header">
+        <h1 className="luxury-heading-1">Reports</h1>
       </div>
 
-      {error && (
-        <div className="error-message">
-          <span className="error-icon">⚠️</span>
-          {error}
-        </div>
-      )}
+      <div className="reports-page">
+        {error && (
+          <div className="error-message">
+            <span className="error-icon">⚠️</span>
+            {error}
+          </div>
+        )}
 
-      <div className="reports-grid">
+        <div className="reports-grid">
         {reportSections.map(section => (
           <div key={section.id} className="report-section">
             <div className="section-header">
               <h2>{section.title}</h2>
-              <p className="section-description">{section.description}</p>
             </div>
 
             <div className="reports-list">
@@ -337,18 +336,19 @@ const Reports: React.FC = () => {
         </ul>
       </div>
 
-      <CashFlowReportModal
-        isOpen={showCashFlowModal}
-        onClose={() => setShowCashFlowModal(false)}
-        onGenerate={handleGenerateCashFlowReport}
-      />
+        <CashFlowReportModal
+          isOpen={showCashFlowModal}
+          onClose={() => setShowCashFlowModal(false)}
+          onGenerate={handleGenerateCashFlowReport}
+        />
 
-      <LPQuarterlyStatementModal
-        isOpen={showLPStatementModal}
-        onClose={() => setShowLPStatementModal(false)}
-        onGenerate={handleGenerateLPStatement}
-      />
-    </div>
+        <LPQuarterlyStatementModal
+          isOpen={showLPStatementModal}
+          onClose={() => setShowLPStatementModal(false)}
+          onGenerate={handleGenerateLPStatement}
+        />
+      </div>
+    </>
   );
 };
 

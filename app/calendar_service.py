@@ -163,24 +163,57 @@ class CashFlowCalendarService:
         return daily_flows
     
     def _get_forecasted_flows(self, start_date: date, end_date: date) -> List[Dict]:
-        """Get forecasted cash flows from pacing model"""
+        """Get forecasted cash flows from pacing model, distributed across months"""
+        # Query forecasts that overlap with the requested date range
         forecasts = self.db.query(models.CashFlowForecast).filter(
-            models.CashFlowForecast.forecast_period_start >= start_date,
-            models.CashFlowForecast.forecast_period_end <= end_date,
+            models.CashFlowForecast.forecast_period_start <= end_date,
+            models.CashFlowForecast.forecast_period_end >= start_date,
             models.CashFlowForecast.scenario == models.ForecastScenario.BASE  # Use base case
         ).join(models.Investment).all()
-        
+
         forecast_flows = []
+
         for f in forecasts:
-            # Use period start date for calendar display
-            forecast_flows.append({
-                'date': f.forecast_period_start,
-                'investment_id': f.investment_id,
-                'investment_name': f.investment.name,
-                'calls': f.projected_calls,
-                'distributions': f.projected_distributions
-            })
-        
+            # Calculate the number of months in the forecast period
+            period_start = max(f.forecast_period_start, start_date)
+            period_end = min(f.forecast_period_end, end_date)
+
+            # Calculate total months in the forecast period
+            total_months_in_forecast = (
+                (f.forecast_period_end.year - f.forecast_period_start.year) * 12 +
+                (f.forecast_period_end.month - f.forecast_period_start.month) + 1
+            )
+
+            # Distribute the forecast amounts evenly across months in the period
+            monthly_calls = f.projected_calls / total_months_in_forecast if total_months_in_forecast > 0 else 0
+            monthly_distributions = f.projected_distributions / total_months_in_forecast if total_months_in_forecast > 0 else 0
+
+            # Generate monthly entries for each month in the period that overlaps with our date range
+            current_month = period_start.replace(day=1)
+            while current_month <= period_end:
+                # Only include if this month falls within both the forecast period and requested range
+                if (current_month >= f.forecast_period_start and
+                    current_month <= f.forecast_period_end and
+                    current_month >= start_date and
+                    current_month <= end_date):
+
+                    # Use the 15th of each month as the representative date for monthly forecasts
+                    forecast_date = current_month.replace(day=15)
+
+                    forecast_flows.append({
+                        'date': forecast_date,
+                        'investment_id': f.investment_id,
+                        'investment_name': f.investment.name,
+                        'calls': monthly_calls,
+                        'distributions': monthly_distributions
+                    })
+
+                # Move to next month
+                if current_month.month == 12:
+                    current_month = current_month.replace(year=current_month.year + 1, month=1)
+                else:
+                    current_month = current_month.replace(month=current_month.month + 1)
+
         return forecast_flows
     
     def get_period_summary(self, start_date: date, end_date: date, include_forecasts: bool = True) -> PeriodSummary:

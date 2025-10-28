@@ -251,7 +251,6 @@ const Documents: React.FC = () => {
     <>
       <div className="luxury-card page-header">
         <h1 className="luxury-heading-1">Document Management</h1>
-        <p className="luxury-body-large">Organize and manage your family office documents including capital calls, K-1s, quarterly reports, and GP correspondence</p>
       </div>
 
       <div className="luxury-card">

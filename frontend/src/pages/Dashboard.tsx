@@ -163,7 +163,6 @@ const Dashboard: React.FC = () => {
     <>
       <div className="luxury-card page-header">
         <h1 className="luxury-heading-1">Portfolio Dashboard</h1>
-        <p className="luxury-body-large">Executive overview of your private markets portfolio</p>
       </div>
 
       {error && (

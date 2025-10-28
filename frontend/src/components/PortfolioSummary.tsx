@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PortfolioPerformance } from '../types/investment';
 import { performanceAPI } from '../services/api';
-import './PortfolioSummary.css';
+import '../styles/dashboard-shared.css';
 
 interface Props {
   onUpdate?: number; // Trigger for performance recalculation
@@ -112,25 +112,25 @@ const PortfolioSummary: React.FC<Props> = ({ onUpdate }) => {
         <div className="summary-section">
           <h4>Performance Metrics</h4>
           <div className="summary-metrics">
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>IRR</label>
               <span className={`value ${getPerformanceColor(perf.irr)}`}>
                 {formatPercentage(perf.irr)}
               </span>
             </div>
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>TVPI</label>
               <span className={`value ${getMultipleColor(perf.tvpi)}`}>
                 {formatMultiple(perf.tvpi)}
               </span>
             </div>
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>DPI</label>
               <span className={`value ${getPerformanceColor(perf.dpi)}`}>
                 {formatMultiple(perf.dpi)}
               </span>
             </div>
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>RVPI</label>
               <span className={`value ${getMultipleColor(perf.rvpi)}`}>
                 {formatMultiple(perf.rvpi)}
@@ -166,25 +166,25 @@ const PortfolioSummary: React.FC<Props> = ({ onUpdate }) => {
         <div className="summary-section">
           <h4>Portfolio Overview</h4>
           <div className="summary-metrics">
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>Active Investments</label>
               <span className="value">
                 {portfolio.active_investment_count}
               </span>
             </div>
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>With Recent NAV</label>
               <span className="value">
                 {portfolio.investments_with_nav}
               </span>
             </div>
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>Entities</label>
               <span className="value">
                 {portfolio.entity_count}
               </span>
             </div>
-            <div className="metric-card primary">
+            <div className="dashboard-metric-card">
               <label>Realized Investments</label>
               <span className="value">
                 {portfolio.realized_investment_count}

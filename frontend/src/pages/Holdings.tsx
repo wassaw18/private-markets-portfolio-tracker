@@ -216,7 +216,6 @@ const Holdings: React.FC = () => {
     <div className="holdings-container">
       <div className="luxury-card page-header">
         <h1 className="luxury-heading-1">Portfolio Holdings</h1>
-        <p className="luxury-body-large">Manage and analyze your investment portfolio holdings</p>
       </div>
 
       {error && (

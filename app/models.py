@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Enum, Boolean, Text, DateTime, Index, Numeric, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import enum
@@ -68,6 +68,25 @@ class ForecastScenario(str, enum.Enum):
     BULL = "Bull"
     BASE = "Base"
     BEAR = "Bear"
+
+class PacingPattern(str, enum.Enum):
+    """Cash flow pacing patterns for different investment types"""
+    TRADITIONAL_PE = "Traditional PE"  # 4-year calls, backend distributions
+    VENTURE_CAPITAL = "Venture Capital"  # Fast calls, long tail distributions
+    IMMEDIATE_STEADY_YIELD = "Immediate Steady Yield"  # Upfront call, quarterly yields
+    IMMEDIATE_BULLET = "Immediate Bullet"  # Upfront call, bullet payment at maturity
+    REAL_ESTATE_CORE = "Real Estate Core"  # Moderate calls, steady income
+    REAL_ESTATE_OPPORTUNISTIC = "Real Estate Opportunistic"  # Fast calls, lumpy exits
+    CREDIT_FUND = "Credit Fund"  # Steady calls, steady interest + principal returns
+    CUSTOM = "Custom"  # User-defined pattern
+
+class PaymentFrequency(str, enum.Enum):
+    """Payment frequency for loans and credit instruments"""
+    MONTHLY = "Monthly"
+    QUARTERLY = "Quarterly"
+    SEMI_ANNUALLY = "Semi-annually"
+    ANNUALLY = "Annually"
+    AT_MATURITY = "At Maturity"  # Bullet payment at maturity
 
 class TaxDocumentStatus(str, enum.Enum):
     PENDING = "Pending"
@@ -383,6 +402,10 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+    # Password reset fields
+    reset_token = Column(String, nullable=True, index=True)
+    reset_token_expires = Column(DateTime, nullable=True)
+
     # Foreign keys
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
     entity_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)  # For LP_CLIENT users only
@@ -614,11 +637,17 @@ class Investment(Base):
     bow_factor = Column(Float, default=0.3)  # J-curve depth factor (0.1-0.5)
     call_schedule = Column(Enum(CallScheduleType), default=CallScheduleType.STEADY)
     distribution_timing = Column(Enum(DistributionTimingType), default=DistributionTimingType.BACKEND)
-    
+    pacing_pattern = Column(Enum(PacingPattern), nullable=True)  # Pattern-based cash flow model
+
     # Forecast configuration
     forecast_enabled = Column(Boolean, default=True)
     last_forecast_date = Column(DateTime)
-    
+
+    # Investment-Specific Parameters (override pacing patterns)
+    interest_rate = Column(Float, nullable=True)  # Annual interest rate for loans/credit (0.05 for 5%)
+    maturity_date = Column(Date, nullable=True)  # Maturity date for loans/fixed-term instruments
+    payment_frequency = Column(Enum(PaymentFrequency), nullable=True)  # Payment frequency for loans
+
     # Investment Status Management
     status = Column(Enum(InvestmentStatus), default=InvestmentStatus.ACTIVE, nullable=False)
     realization_date = Column(Date, nullable=True)
@@ -984,6 +1013,7 @@ class Document(Base):
     title = Column(String, nullable=False, index=True)
     description = Column(Text, nullable=True)
     category = Column(Enum(DocumentCategory), nullable=False, index=True)
+    category_group = Column(String, nullable=True, index=True)  # Hierarchical category group
     status = Column(Enum(DocumentStatus), nullable=False, default=DocumentStatus.PENDING_REVIEW)
 
     # File information
@@ -1009,6 +1039,7 @@ class Document(Base):
     is_confidential = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
     notes = Column(Text, nullable=True)
+    document_metadata = Column(JSONB, name='metadata', nullable=True)  # Category-specific metadata (tax_year, document_type, etc.) - Python attr maps to 'metadata' DB column
     
     # Audit trail
     uploaded_by = Column(String, nullable=True)  # User who uploaded the document (kept for backward compatibility)

@@ -61,20 +61,27 @@ def get_table_data(table_name, limit=100):
     return columns, rows
 
 def execute_query(query):
-    """Execute a custom SQL query"""
+    """Execute a custom SQL query (supports SELECT, INSERT, UPDATE, DELETE)"""
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
         cur.execute(query)
+
+        # Check if it's a SELECT query (has results to fetch)
         if cur.description:
             columns = [desc[0] for desc in cur.description]
             rows = cur.fetchall()
+            conn.commit()
             return columns, rows, None
         else:
-            return [], [], "Query executed successfully (no results)"
+            # For INSERT, UPDATE, DELETE queries
+            affected_rows = cur.rowcount
+            conn.commit()
+            return [], [], f"Query executed successfully. {affected_rows} row(s) affected."
     except Exception as e:
-        return [], [], str(e)
+        conn.rollback()
+        return [], [], f"Error: {str(e)}"
     finally:
         cur.close()
         conn.close()
@@ -292,9 +299,16 @@ HTML_TEMPLATE = """
 
                 <div class="examples">
                     <h4>💡 Example Queries:</h4>
-                    <code>SELECT name, account_type FROM tenants;</code>
-                    <code>SELECT username, email, role FROM users WHERE tenant_id = 1;</code>
-                    <code>SELECT t.name, COUNT(i.id) as investments FROM tenants t LEFT JOIN investments i ON i.tenant_id = t.id GROUP BY t.name;</code>
+                    <strong>SELECT (Read):</strong>
+                    <code>SELECT username, email, role FROM users;</code>
+                    <code>SELECT * FROM users WHERE username = 'testuser';</code>
+                    <strong>DELETE (Remove):</strong>
+                    <code>DELETE FROM users WHERE username = 'testuser' AND id = 123;</code>
+                    <strong>UPDATE (Modify):</strong>
+                    <code>UPDATE users SET email = 'newemail@example.com' WHERE username = 'testuser';</code>
+                    <strong>INSERT (Add):</strong>
+                    <code>INSERT INTO users (username, email, tenant_id) VALUES ('newuser', 'new@example.com', 1);</code>
+                    <p style="color: #e74c3c; margin-top: 10px; font-weight: 600;">⚠️ Warning: DELETE/UPDATE operations are permanent!</p>
                 </div>
             </div>
 
